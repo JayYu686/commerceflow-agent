@@ -1,0 +1,39 @@
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.pip-cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.npm-cache/
+.next/
+out/
+dist/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local tooling
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.tmp/
+
+# Generated reports and local data
+eval/reports/*.json
+eval/reports/*.md
+!eval/reports/.gitkeep
+data/local/
