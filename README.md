@@ -1,14 +1,14 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. Phase 0 only establishes the local engineering baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell plus the Phase 1A mock commerce data layer: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, dependency management, linting, and tests.
 
-Business modules are intentionally out of scope for Phase 0. There is no order system, logistics system, RAG, LangGraph workflow, MCP server, approval flow, refund execution, seed data, or evaluation dataset in this baseline.
+Executable business workflows are still intentionally out of scope. There is no order/logistics HTTP API, RAG, LangGraph workflow, MCP server, approval flow, refund execution, coupon issue flow, ticketing system, LLM call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
 ```text
 apps/web/       Next.js console shell
-services/api/   FastAPI API baseline
+services/api/   FastAPI API baseline and Phase 1A data layer
 docker-compose.yml
 .env.example
 ```
@@ -40,6 +40,32 @@ docker compose up -d postgres redis
 ```
 
 This starts PostgreSQL with pgvector and Redis. Application containers are intentionally deferred to later phases.
+
+## Phase 1A Database Baseline
+
+Phase 1A adds a local mock commerce data layer for read-only facts. It creates only these
+tables: `customers`, `products`, `orders`, `order_items`, `shipments`, and
+`shipment_events`.
+
+Run migrations from the API service directory:
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Seed deterministic mock data:
+
+```powershell
+..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
+```
+
+`--reset` is a local development tool. It clears and rebuilds the six Phase 1A mock commerce
+tables, so do not run it against any database that contains data you need to keep.
+
+The seed includes at least 50 customers, 60 products, 300 orders, 300 shipments, and three or
+more events per shipment. It also includes fixed demo orders `CF202605180023` and
+`CF202605200071` for later phases.
 
 ## Run The API
 
