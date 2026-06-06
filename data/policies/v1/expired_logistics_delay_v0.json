@@ -1,0 +1,25 @@
+{
+  "policy_id": "POL-LOGISTICS-DELAY-V0",
+  "title": "Expired Logistics Delay Compensation Policy",
+  "version": "v0",
+  "status": "active",
+  "category": "all",
+  "aftersales_type": "all",
+  "intent": "logistics_delay_compensation",
+  "effective_from": "2025-01-01T00:00:00Z",
+  "effective_to": "2025-12-31T23:59:59Z",
+  "sections": [
+    {
+      "section": "Expired Delay Rule",
+      "content": "This expired policy used a 48 hour delay threshold and must not support current logistics compensation decisions."
+    },
+    {
+      "section": "Expired Amount",
+      "content": "This expired policy allowed a legacy compensation amount and has been replaced by the current policy."
+    },
+    {
+      "section": "Historical Context",
+      "content": "Expired logistics policies may be stored for audit history but should be filtered out from active retrieval."
+    }
+  ]
+}

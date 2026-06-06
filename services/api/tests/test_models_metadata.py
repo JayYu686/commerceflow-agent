@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     DateTime,
     ForeignKeyConstraint,
@@ -13,6 +14,7 @@ from alembic import command
 from alembic.config import Config
 from app.db.base import Base
 from app.models import commerce as commerce_models
+from app.models import policy as policy_models
 
 EXPECTED_TABLES = {
     "customers",
@@ -21,6 +23,8 @@ EXPECTED_TABLES = {
     "order_items",
     "shipments",
     "shipment_events",
+    "policy_documents",
+    "policy_chunks",
 }
 
 
@@ -43,8 +47,9 @@ def foreign_key_targets(table_name: str) -> set[str]:
     return targets
 
 
-def test_metadata_contains_only_phase_1a_tables() -> None:
+def test_metadata_contains_phase_1a_and_phase_2a_tables() -> None:
     assert commerce_models.Customer.__tablename__ == "customers"
+    assert policy_models.PolicyDocument.__tablename__ == "policy_documents"
     assert set(Base.metadata.tables) == EXPECTED_TABLES
 
 
@@ -54,6 +59,9 @@ def test_unique_constraints_exist_for_business_identifiers() -> None:
     assert "uq_shipments_tracking_no" in unique_constraint_names("shipments")
     assert "uq_shipments_order_id" in unique_constraint_names("shipments")
     assert "uq_shipment_events_shipment_sequence" in unique_constraint_names("shipment_events")
+    assert "uq_policy_documents_policy_id" in unique_constraint_names("policy_documents")
+    assert "uq_policy_chunks_chunk_id" in unique_constraint_names("policy_chunks")
+    assert "uq_policy_chunks_document_sequence" in unique_constraint_names("policy_chunks")
 
 
 def test_foreign_keys_exist_for_commerce_relationships() -> None:
@@ -61,6 +69,7 @@ def test_foreign_keys_exist_for_commerce_relationships() -> None:
     assert foreign_key_targets("order_items") == {"orders.id", "products.id"}
     assert foreign_key_targets("shipments") == {"orders.id"}
     assert foreign_key_targets("shipment_events") == {"shipments.id"}
+    assert foreign_key_targets("policy_chunks") == {"policy_documents.id"}
 
 
 def test_money_and_time_columns_use_expected_types() -> None:
@@ -86,10 +95,22 @@ def test_money_and_time_columns_use_expected_types() -> None:
         Base.metadata.tables["shipments"].c.delivered_at,
         Base.metadata.tables["shipments"].c.last_event_at,
         Base.metadata.tables["shipment_events"].c.occurred_at,
+        Base.metadata.tables["policy_documents"].c.effective_from,
+        Base.metadata.tables["policy_documents"].c.effective_to,
+        Base.metadata.tables["policy_documents"].c.created_at,
+        Base.metadata.tables["policy_documents"].c.updated_at,
+        Base.metadata.tables["policy_chunks"].c.created_at,
     ]
     for column in time_columns:
         assert isinstance(column.type, DateTime)
         assert column.type.timezone is True
+
+
+def test_policy_chunk_embedding_uses_pgvector_dimension() -> None:
+    embedding_column = Base.metadata.tables["policy_chunks"].c.embedding
+
+    assert isinstance(embedding_column.type, Vector)
+    assert embedding_column.type.dim == 1536
 
 
 def test_alembic_upgrade_head_creates_phase_1a_tables(tmp_path: Path) -> None:

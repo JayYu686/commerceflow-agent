@@ -1,0 +1,33 @@
+{
+  "policy_id": "POL-LOGISTICS-DELAY-V1",
+  "title": "Logistics Delay Compensation Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "all",
+  "aftersales_type": "all",
+  "intent": "logistics_delay_compensation",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Delay Definition",
+      "content": "A shipment is considered delayed when there is no carrier movement update for more than 72 hours or delivery exceeds the promised time."
+    },
+    {
+      "section": "Eligible Orders",
+      "content": "Delay compensation may apply to paid orders that are not cancelled and have a valid tracking number with carrier events."
+    },
+    {
+      "section": "Small Compensation",
+      "content": "A small coupon may be proposed for eligible logistics delay cases when the amount is within the configured automatic compensation limit."
+    },
+    {
+      "section": "High Value Compensation",
+      "content": "Compensation above CNY 10 is high risk and must require human approval before any coupon can be issued."
+    },
+    {
+      "section": "No Evidence",
+      "content": "If logistics events are missing or inconsistent, the case should be escalated instead of fabricating delay evidence."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "policy_id": "POL-FINAL-SALE-EXCLUSION-V1",
+  "title": "Final Sale Exclusion Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "all",
+  "aftersales_type": "final_sale",
+  "intent": "final_sale_exclusion",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "No Return",
+      "content": "Final sale products are not eligible for return or refund unless required by a confirmed quality or safety issue."
+    },
+    {
+      "section": "Disclosure",
+      "content": "The final sale limitation must be visible on the product page or order confirmation to be used as policy evidence."
+    },
+    {
+      "section": "Escalation",
+      "content": "If the customer reports a serious defect for a final sale item, escalate for manual review instead of automatic rejection."
+    }
+  ]
+}
