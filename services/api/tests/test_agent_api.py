@@ -65,15 +65,14 @@ def test_agent_preview_api_regresses_existing_read_only_endpoints(client: TestCl
     assert policy_response.json()["hits"][0]["policy_id"] == "POL-QUALITY-ELECTRONICS-V2"
 
 
-def test_agent_preview_routes_do_not_expose_phase_4_capabilities(client: TestClient) -> None:
-    forbidden_fragments = ("refund", "coupon", "ticket", "approval", "mcp")
+def test_agent_preview_routes_do_not_expose_execution_or_mcp_capabilities(
+    client: TestClient,
+) -> None:
+    forbidden_fragments = ("refunds", "coupons", "tickets", "mcp", "sql")
     paths = {getattr(route, "path", "") for route in client.app.routes}
 
     forbidden_paths = [
-        path
-        for path in paths
-        if path != "/api/agent/after-sales/preview"
-        and any(fragment in path.lower() for fragment in forbidden_fragments)
+        path for path in paths if any(fragment in path.lower() for fragment in forbidden_fragments)
     ]
     assert forbidden_paths == []
 

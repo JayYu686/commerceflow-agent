@@ -1,8 +1,8 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, and the Phase 3B controlled LLM adapter boundary: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, the Phase 3B controlled LLM adapter boundary, and the Phase 4A action plan / approval / audit baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, MCP server, approval flow, real LLM provider call, or evaluation dataset in this baseline.
+Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue execution, ticketing system, MCP server, real LLM provider call, or evaluation dataset in this baseline. Phase 4A records approval decisions only so a later phase can execute through controlled tools.
 
 ## Project Layout
 
@@ -198,6 +198,58 @@ override order facts, logistics facts, policy evidence, the final recommendation
 body. It does not create refunds, issue coupons, create tickets, create approval records, write audit
 events, or modify order/logistics/policy state. The customer-facing reply must not claim that a
 refund, compensation, coupon, ticket, approval bypass, or automatic after-sales action has happened.
+
+## Phase 4A Action Plans, Approvals, and Audit
+
+Phase 4A persists an Agent preview as an action plan and approval request when approval is required.
+It writes only `action_plans`, `approval_requests`, and `audit_logs`. It does not execute refunds,
+issue coupons, create tickets, call MCP tools, or modify order, logistics, or policy tables.
+
+Before using the Phase 4A APIs, start dependencies, run migrations, seed commerce data, ingest policy
+data, and start the API:
+
+```powershell
+docker compose up -d postgres redis
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
+..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
+..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Create an action plan from the existing preview workflow:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/agent/after-sales/action-plans" -Headers @{"Idempotency-Key"="demo-quality-plan-001"} -ContentType "application/json" -Body '{"message":"Earbuds left speaker has no sound, order CF202605180023, I want a refund.","as_of":"2026-06-06T00:00:00Z"}'
+```
+
+High-risk refund plans are saved as `pending_approval` and create a pending approval request. Low or
+medium risk planned actions stay `not_executed`; blocked, missing-information, or unsupported cases
+are saved as `not_executable`.
+
+Read an action plan:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/action-plans/<action_plan_id>"
+```
+
+List and read approval requests:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/approvals?status=pending&limit=20"
+Invoke-RestMethod "http://localhost:8000/api/approvals/<approval_id>"
+```
+
+Record an approval decision:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/approvals/<approval_id>/decision" -Headers @{"Idempotency-Key"="demo-approval-decision-001"} -ContentType "application/json" -Body '{"decision":"approve","reviewer":"demo_reviewer","comment":"Evidence and policy match the proposed action."}'
+```
+
+An approved approval request only means a later phase may execute through controlled tools. Phase 4A
+returns `execution_status=not_executed` and does not create refund, coupon, or ticket results.
+`Idempotency-Key` is required for action plan creation and approval decisions. Reusing the same key
+with the same request returns the existing result; reusing it with different content returns `409`.
 
 ## Run The API
 

@@ -9,3 +9,10 @@ class NotFoundError(Exception):
     @property
     def message(self) -> str:
         return f"{self.resource} not found"
+
+
+@dataclass(frozen=True)
+class ConflictError(Exception):
+    code: str
+    message: str
+    existing_identifier: str | None = None

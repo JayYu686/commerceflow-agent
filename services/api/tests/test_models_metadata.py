@@ -13,10 +13,14 @@ from sqlalchemy import (
 from alembic import command
 from alembic.config import Config
 from app.db.base import Base
+from app.models import aftersales as aftersales_models
 from app.models import commerce as commerce_models
 from app.models import policy as policy_models
 
 EXPECTED_TABLES = {
+    "action_plans",
+    "approval_requests",
+    "audit_logs",
     "customers",
     "products",
     "orders",
@@ -50,6 +54,7 @@ def foreign_key_targets(table_name: str) -> set[str]:
 def test_metadata_contains_phase_1a_and_phase_2a_tables() -> None:
     assert commerce_models.Customer.__tablename__ == "customers"
     assert policy_models.PolicyDocument.__tablename__ == "policy_documents"
+    assert aftersales_models.ActionPlan.__tablename__ == "action_plans"
     assert set(Base.metadata.tables) == EXPECTED_TABLES
 
 
@@ -62,6 +67,15 @@ def test_unique_constraints_exist_for_business_identifiers() -> None:
     assert "uq_policy_documents_policy_id" in unique_constraint_names("policy_documents")
     assert "uq_policy_chunks_chunk_id" in unique_constraint_names("policy_chunks")
     assert "uq_policy_chunks_document_sequence" in unique_constraint_names("policy_chunks")
+    assert "uq_action_plans_action_plan_id" in unique_constraint_names("action_plans")
+    assert "uq_action_plans_idempotency_key" in unique_constraint_names("action_plans")
+    assert "uq_action_plans_business_dedupe_key" in unique_constraint_names("action_plans")
+    assert "uq_approval_requests_approval_id" in unique_constraint_names("approval_requests")
+    assert "uq_approval_requests_action_plan_id" in unique_constraint_names("approval_requests")
+    assert "uq_approval_requests_decision_idempotency_key" in unique_constraint_names(
+        "approval_requests"
+    )
+    assert "uq_audit_logs_event_id" in unique_constraint_names("audit_logs")
 
 
 def test_foreign_keys_exist_for_commerce_relationships() -> None:
@@ -70,6 +84,8 @@ def test_foreign_keys_exist_for_commerce_relationships() -> None:
     assert foreign_key_targets("shipments") == {"orders.id"}
     assert foreign_key_targets("shipment_events") == {"shipments.id"}
     assert foreign_key_targets("policy_chunks") == {"policy_documents.id"}
+    assert foreign_key_targets("approval_requests") == {"action_plans.id"}
+    assert foreign_key_targets("audit_logs") == {"action_plans.id", "approval_requests.id"}
 
 
 def test_money_and_time_columns_use_expected_types() -> None:
@@ -78,6 +94,8 @@ def test_money_and_time_columns_use_expected_types() -> None:
         Base.metadata.tables["orders"].c.paid_amount,
         Base.metadata.tables["order_items"].c.unit_price,
         Base.metadata.tables["order_items"].c.line_amount,
+        Base.metadata.tables["action_plans"].c.proposed_amount,
+        Base.metadata.tables["approval_requests"].c.proposed_amount,
     ]
     for column in money_columns:
         assert isinstance(column.type, Numeric)
@@ -100,6 +118,12 @@ def test_money_and_time_columns_use_expected_types() -> None:
         Base.metadata.tables["policy_documents"].c.created_at,
         Base.metadata.tables["policy_documents"].c.updated_at,
         Base.metadata.tables["policy_chunks"].c.created_at,
+        Base.metadata.tables["action_plans"].c.created_at,
+        Base.metadata.tables["action_plans"].c.updated_at,
+        Base.metadata.tables["approval_requests"].c.requested_at,
+        Base.metadata.tables["approval_requests"].c.decided_at,
+        Base.metadata.tables["approval_requests"].c.updated_at,
+        Base.metadata.tables["audit_logs"].c.created_at,
     ]
     for column in time_columns:
         assert isinstance(column.type, DateTime)
@@ -113,7 +137,7 @@ def test_policy_chunk_embedding_uses_pgvector_dimension() -> None:
     assert embedding_column.type.dim == 1536
 
 
-def test_alembic_upgrade_head_creates_phase_1a_tables(tmp_path: Path) -> None:
+def test_alembic_upgrade_head_creates_expected_tables(tmp_path: Path) -> None:
     api_root = Path(__file__).resolve().parents[1]
     database_url = f"sqlite:///{tmp_path / 'migration.db'}"
     config = Config(str(api_root / "alembic.ini"))
