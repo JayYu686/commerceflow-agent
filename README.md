@@ -1,8 +1,8 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, and the Phase 2B read-only policy retrieval API: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, policy ingestion, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, and the Phase 3A deterministic after-sales preview workflow: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
+Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
@@ -125,6 +125,44 @@ If no active applicable policy meets the filters and score threshold, the API re
 
 Phase 2B still does not implement an Agent, MCP server, refund execution, coupon issue flow,
 approval workflow, LLM decision call, or automatic after-sales action.
+
+## Phase 3A Deterministic Agent Preview
+
+Phase 3A adds a deterministic LangGraph workflow for after-sales previews. It reads existing order,
+logistics, and policy facts, then returns a structured recommendation, evidence, workflow steps, and
+risk classification.
+
+Before running the preview API, start dependencies, run migrations, seed commerce data, ingest policy
+data, and start the API:
+
+```powershell
+docker compose up -d postgres redis
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
+..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
+..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Quality issue refund preview:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/agent/after-sales/preview" -ContentType "application/json" -Body '{"message":"Earbuds left speaker has no sound, order CF202605180023, I want a refund.","as_of":"2026-06-06T00:00:00Z"}'
+```
+
+Logistics delay compensation preview:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/agent/after-sales/preview" -ContentType "application/json" -Body '{"message":"Order CF202605200071 logistics has no movement, request delay compensation.","as_of":"2026-06-06T00:00:00Z"}'
+```
+
+The preview response includes `status`, `intent`, `order_no`, `facts`, `fact_evidence`,
+`policy_evidence`, `recommendation`, `risk`, `errors`, and `steps`. Every recommendation has
+`action_status` set to `preview_only`.
+
+`POST /api/agent/after-sales/preview` uses POST only to carry a structured natural-language request
+body. It does not create refunds, issue coupons, create tickets, create approval records, write audit
+events, or modify order/logistics/policy state.
 
 ## Run The API
 
