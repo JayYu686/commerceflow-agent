@@ -1,0 +1,29 @@
+{
+  "policy_id": "POL-APPAREL-SIZE-EXCHANGE-V1",
+  "title": "Apparel Size Exchange Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "apparel",
+  "aftersales_type": "standard",
+  "intent": "size_exchange",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Eligibility",
+      "content": "Standard apparel can be exchanged for size issues within 7 days after delivery when tags and original packaging are intact."
+    },
+    {
+      "section": "Condition Requirement",
+      "content": "Used, washed, stained, or damaged apparel is not eligible for automatic exchange."
+    },
+    {
+      "section": "Shipping",
+      "content": "The customer may be responsible for return shipping unless the size issue was caused by merchant fulfillment error."
+    },
+    {
+      "section": "Refund Boundary",
+      "content": "Size exchange policy does not automatically justify refund; refund requests require separate eligibility review."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "policy_id": "POL-QUALITY-ELECTRONICS-V2",
+  "title": "Electronics Quality Issue Refund Policy",
+  "version": "v2",
+  "status": "active",
+  "category": "electronics",
+  "aftersales_type": "standard",
+  "intent": "quality_issue_refund",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Eligibility",
+      "content": "For standard electronics, quality defects reported within 7 days after delivery may qualify for return and refund after evidence review."
+    },
+    {
+      "section": "Evidence",
+      "content": "Customers should provide photos, video, or a clear description showing the defect, such as a headphone speaker with no sound or intermittent audio."
+    },
+    {
+      "section": "Refund Limit",
+      "content": "The refundable amount must not exceed the paid order amount for the affected item, excluding unrelated shipping or coupon adjustments."
+    },
+    {
+      "section": "Manual Approval",
+      "content": "Any refund action is high risk and must wait for human approval before execution, even when the quality issue is policy eligible."
+    },
+    {
+      "section": "Exclusions",
+      "content": "Damage caused by misuse, unauthorized repair, or missing required evidence should be escalated for manual review instead of automatic approval."
+    }
+  ]
+}

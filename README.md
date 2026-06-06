@@ -1,14 +1,15 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, and the Phase 1B read-only order/logistics query API: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, and the Phase 2A policy RAG data/service baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, RAG, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
+Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, policy search HTTP API, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
 ```text
 apps/web/       Next.js console shell
-services/api/   FastAPI API baseline and Phase 1A data layer
+data/policies/  Structured local policy documents
+services/api/   FastAPI API baseline, commerce data layer, and policy RAG service
 docker-compose.yml
 .env.example
 ```
@@ -66,6 +67,34 @@ tables, so do not run it against any database that contains data you need to kee
 The seed includes at least 50 customers, 60 products, 300 orders, 300 shipments, and three or
 more events per shipment. It also includes fixed demo orders `CF202605180023` and
 `CF202605200071` for later phases.
+
+## Phase 2A Policy RAG Baseline
+
+Phase 2A adds structured local after-sales policy documents, `policy_documents` and
+`policy_chunks` tables, deterministic fake embeddings, and a service-level retrieval flow.
+It does not expose a policy HTTP API; that is deferred to Phase 2B.
+
+Run the latest migration from the API service directory:
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Ingest deterministic local policy data:
+
+```powershell
+..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
+```
+
+`--reset` is a local development tool. It clears and rebuilds the Phase 2A policy mock data
+only; it does not reset customers, products, orders, shipments, or shipment events.
+
+Service-level retrieval can be verified from `services/api`:
+
+```powershell
+..\..\.venv\Scripts\python.exe -c "from datetime import UTC, datetime; from app.db.session import SessionLocal; from app.services.policy_retrieval import search_policies; s=SessionLocal(); r=search_policies(s, query='earbuds no sound return refund', intent='quality_issue_refund', category='electronics', aftersales_type='standard', as_of=datetime(2026, 6, 6, tzinfo=UTC)); print(r.model_dump()); s.close()"
+```
 
 ## Run The API
 

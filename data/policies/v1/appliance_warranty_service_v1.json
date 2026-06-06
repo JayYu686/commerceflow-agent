@@ -1,0 +1,29 @@
+{
+  "policy_id": "POL-APPLIANCE-WARRANTY-V1",
+  "title": "Appliance Warranty Service Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "appliance",
+  "aftersales_type": "special",
+  "intent": "warranty_service",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Warranty Scope",
+      "content": "Special appliance products may receive repair or replacement support for manufacturing defects during the warranty window."
+    },
+    {
+      "section": "Proof",
+      "content": "Warranty service requires order proof, product serial information when available, and a description of the appliance failure."
+    },
+    {
+      "section": "Replacement Review",
+      "content": "Replacement should be reviewed against stock availability and defect confirmation before any customer promise is made."
+    },
+    {
+      "section": "Refund Escalation",
+      "content": "Refund for appliance warranty cases should be escalated and cannot be executed without human approval."
+    }
+  ]
+}

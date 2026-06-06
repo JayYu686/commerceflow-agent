@@ -1,0 +1,29 @@
+{
+  "policy_id": "POL-FRESH-PERISHABLE-V1",
+  "title": "Fresh Perishable After-sales Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "fresh",
+  "aftersales_type": "perishable",
+  "intent": "perishable_after_sales",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Reporting Window",
+      "content": "Fresh perishable goods must be reported within 24 hours after delivery for quality or spoilage review."
+    },
+    {
+      "section": "Evidence",
+      "content": "Customers should provide package photos and spoilage evidence before any after-sales action can be considered."
+    },
+    {
+      "section": "Storage Exclusion",
+      "content": "Issues caused by improper storage after delivery are not eligible for automatic refund or compensation."
+    },
+    {
+      "section": "Manual Review",
+      "content": "Borderline fresh food claims should be escalated for manual review when evidence or delivery timing is unclear."
+    }
+  ]
+}

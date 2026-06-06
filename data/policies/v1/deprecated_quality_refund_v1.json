@@ -1,0 +1,25 @@
+{
+  "policy_id": "POL-QUALITY-ELECTRONICS-V1",
+  "title": "Deprecated Electronics Quality Refund Policy",
+  "version": "v1",
+  "status": "deprecated",
+  "category": "electronics",
+  "aftersales_type": "standard",
+  "intent": "quality_issue_refund",
+  "effective_from": "2025-01-01T00:00:00Z",
+  "effective_to": "2025-12-31T23:59:59Z",
+  "sections": [
+    {
+      "section": "Old Eligibility",
+      "content": "This deprecated policy used an old three day electronics quality refund window and must not support current decisions."
+    },
+    {
+      "section": "Old Evidence",
+      "content": "This old version accepted limited evidence and has been replaced by version v2."
+    },
+    {
+      "section": "Deprecated Status",
+      "content": "Deprecated policies can remain searchable for audit context but must not be returned as active decision evidence."
+    }
+  ]
+}

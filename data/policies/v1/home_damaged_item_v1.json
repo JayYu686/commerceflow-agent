@@ -1,0 +1,29 @@
+{
+  "policy_id": "POL-HOME-DAMAGED-ITEM-V1",
+  "title": "Home Goods Damaged Item Policy",
+  "version": "v1",
+  "status": "active",
+  "category": "home",
+  "aftersales_type": "standard",
+  "intent": "damaged_item_refund",
+  "effective_from": "2026-01-01T00:00:00Z",
+  "effective_to": null,
+  "sections": [
+    {
+      "section": "Damage Evidence",
+      "content": "Home goods reported as damaged should include photos of the item, outer package, and inner protection material."
+    },
+    {
+      "section": "Carrier Damage",
+      "content": "When damage appears caused by shipping, logistics evidence and package photos should be attached to the case."
+    },
+    {
+      "section": "Resolution Options",
+      "content": "Eligible damaged home goods may be proposed for replacement, partial compensation, or refund depending on evidence."
+    },
+    {
+      "section": "Approval Rule",
+      "content": "Refund and high value compensation remain controlled actions and must follow approval requirements before execution."
+    }
+  ]
+}
