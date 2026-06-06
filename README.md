@@ -1,8 +1,8 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell plus the Phase 1A mock commerce data layer: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, and the Phase 1B read-only order/logistics query API: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, dependency management, linting, and tests.
 
-Executable business workflows are still intentionally out of scope. There is no order/logistics HTTP API, RAG, LangGraph workflow, MCP server, approval flow, refund execution, coupon issue flow, ticketing system, LLM call, or evaluation dataset in this baseline.
+Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, RAG, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
@@ -85,13 +85,41 @@ Health check:
 Invoke-RestMethod http://localhost:8000/health
 ```
 
+## Phase 1B Read-only Commerce API
+
+Before querying the API, start dependencies, run the existing migration, and seed local mock
+data:
+
+```powershell
+docker compose up -d postgres redis
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
+..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Read-only order snapshot:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/api/orders/CF202605180023
+```
+
+Read-only logistics snapshot:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/api/orders/CF202605200071/logistics
+```
+
+Only `GET` order/logistics query endpoints are implemented in Phase 1B. There are no business
+state-changing HTTP APIs.
+
 ## Run API Checks
 
 ```powershell
 Set-Location services/api
 ..\..\.venv\Scripts\python.exe -m pytest -q
-..\..\.venv\Scripts\python.exe -m ruff check app tests
-..\..\.venv\Scripts\python.exe -m ruff format --check app tests
+..\..\.venv\Scripts\python.exe -m ruff check app tests scripts
+..\..\.venv\Scripts\python.exe -m ruff format --check app tests scripts
 ```
 
 ## Run The Web Console
