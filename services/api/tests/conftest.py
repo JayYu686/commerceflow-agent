@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import create_app
+from scripts.ingest_policies import ingest_policies
 from scripts.seed_demo_data import seed_session
 
 
@@ -21,6 +22,7 @@ def seeded_session() -> Session:
     SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     with SessionLocal() as session:
         seed_session(session, reset=True)
+        ingest_policies(session, reset=True)
         yield session
     Base.metadata.drop_all(engine)
     engine.dispose()

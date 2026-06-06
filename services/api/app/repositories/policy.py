@@ -10,28 +10,32 @@ from app.models import PolicyChunk, PolicyDocument
 
 def build_active_policy_filters(
     *,
-    intent: str,
-    category: str,
-    aftersales_type: str,
+    intent: str | None,
+    category: str | None,
+    aftersales_type: str | None,
     as_of: datetime,
 ) -> list[Any]:
-    return [
+    filters: list[Any] = [
         PolicyDocument.status == "active",
-        PolicyDocument.intent == intent,
         PolicyDocument.effective_from <= as_of,
         or_(PolicyDocument.effective_to.is_(None), PolicyDocument.effective_to > as_of),
-        PolicyDocument.category.in_([category, "all"]),
-        PolicyDocument.aftersales_type.in_([aftersales_type, "all"]),
     ]
+    if intent:
+        filters.append(PolicyDocument.intent == intent)
+    if category:
+        filters.append(PolicyDocument.category.in_([category, "all"]))
+    if aftersales_type:
+        filters.append(PolicyDocument.aftersales_type.in_([aftersales_type, "all"]))
+    return filters
 
 
 def search_policy_chunks(
     session: Session,
     *,
     query_embedding: list[float],
-    intent: str,
-    category: str,
-    aftersales_type: str,
+    intent: str | None,
+    category: str | None,
+    aftersales_type: str | None,
     as_of: datetime,
     limit: int,
 ) -> list[tuple[PolicyChunk, float]]:
@@ -61,9 +65,9 @@ def search_policy_chunks_with_pgvector(
     session: Session,
     *,
     query_embedding: list[float],
-    intent: str,
-    category: str,
-    aftersales_type: str,
+    intent: str | None,
+    category: str | None,
+    aftersales_type: str | None,
     as_of: datetime,
     limit: int,
 ) -> list[tuple[PolicyChunk, float]]:
@@ -91,9 +95,9 @@ def search_policy_chunks_in_python(
     session: Session,
     *,
     query_embedding: list[float],
-    intent: str,
-    category: str,
-    aftersales_type: str,
+    intent: str | None,
+    category: str | None,
+    aftersales_type: str | None,
     as_of: datetime,
     limit: int,
 ) -> list[tuple[PolicyChunk, float]]:
