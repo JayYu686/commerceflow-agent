@@ -35,6 +35,9 @@ def test_quality_issue_refund_preview_is_grounded_and_high_risk(
     assert response.recommendation.proposed_amount == "299.00"
     assert response.risk.level == "high"
     assert response.risk.requires_approval is True
+    assert response.customer_reply
+    assert response.llm.provider == "disabled"
+    assert response.llm.fallback_reason == "provider_disabled"
     assert "idempotency_key" not in response.model_dump_json()
 
 

@@ -6,6 +6,17 @@ from typing import Any
 from langgraph.graph import END, StateGraph
 from sqlalchemy.orm import Session
 
+from app.agent.llm import (
+    CUSTOMER_REPLY_TASK,
+    DISABLED_LLM_PROVIDER,
+    INTENT_TASK,
+    MIN_LLM_INTENT_CONFIDENCE,
+    LLMProvider,
+    LLMResult,
+    create_llm_provider,
+    parse_customer_reply,
+    parse_intent_candidate,
+)
 from app.agent.parser import (
     LOGISTICS_INTENT,
     QUALITY_INTENT,
@@ -14,13 +25,16 @@ from app.agent.parser import (
     extract_order_numbers,
     has_unsafe_instruction,
 )
+from app.agent.prompts import build_customer_reply_prompt, build_intent_prompt
 from app.agent.state import AgentState
+from app.core.config import get_settings
 from app.schemas.agent import (
     AgentError,
     AgentFacts,
     AgentPreviewRequest,
     AgentPreviewResponse,
     FactEvidence,
+    LLMMetadata,
     PreviewRecommendation,
     RiskAssessment,
     WorkflowStep,
@@ -54,13 +68,18 @@ RISK_CRITICAL = "critical"
 def run_after_sales_preview(
     session: Session,
     request: AgentPreviewRequest,
+    llm_provider: LLMProvider | None = None,
 ) -> AgentPreviewResponse:
+    settings = get_settings()
+    provider = llm_provider if llm_provider is not None else create_llm_provider(settings)
     graph = build_workflow()
     result = graph.invoke(
         {
             "message": request.message,
             "as_of": request.as_of or datetime.now(UTC),
             "session": session,
+            "llm_provider": provider,
+            "llm": default_llm_metadata(provider, settings.llm_provider),
             "status": STATUS_RUNNING,
             "errors": [],
             "steps": [],
@@ -74,21 +93,24 @@ def run_after_sales_preview(
 def build_workflow():
     workflow = StateGraph(AgentState)
     workflow.add_node("parse_request", parse_request)
+    workflow.add_node("llm_understand_request", llm_understand_request)
     workflow.add_node("validate_context", validate_context)
     workflow.add_node("query_order_facts", query_order_facts)
     workflow.add_node("query_logistics_facts", query_logistics_facts)
     workflow.add_node("retrieve_policy", retrieve_policy)
     workflow.add_node("recommend_action", recommend_action)
     workflow.add_node("classify_risk", classify_risk)
+    workflow.add_node("generate_customer_reply", generate_customer_reply)
     workflow.add_node("build_response", build_response)
 
     workflow.set_entry_point("parse_request")
-    workflow.add_edge("parse_request", "validate_context")
+    workflow.add_edge("parse_request", "llm_understand_request")
+    workflow.add_edge("llm_understand_request", "validate_context")
     workflow.add_conditional_edges(
         "validate_context",
         route_after_validate_context,
         {
-            "stop": "build_response",
+            "stop": "generate_customer_reply",
             "continue": "query_order_facts",
         },
     )
@@ -96,7 +118,7 @@ def build_workflow():
         "query_order_facts",
         route_after_order_facts,
         {
-            "stop": "build_response",
+            "stop": "generate_customer_reply",
             "continue": "query_logistics_facts",
         },
     )
@@ -105,12 +127,13 @@ def build_workflow():
         "retrieve_policy",
         route_after_policy,
         {
-            "stop": "build_response",
+            "stop": "generate_customer_reply",
             "continue": "recommend_action",
         },
     )
     workflow.add_edge("recommend_action", "classify_risk")
-    workflow.add_edge("classify_risk", "build_response")
+    workflow.add_edge("classify_risk", "generate_customer_reply")
+    workflow.add_edge("generate_customer_reply", "build_response")
     workflow.add_edge("build_response", END)
     return workflow.compile()
 
@@ -125,6 +148,76 @@ def parse_request(state: AgentState) -> AgentState:
         "unsafe_request": has_unsafe_instruction(message),
         "steps": add_step(state, "parse_request", "completed", "Parsed message deterministically."),
     }
+
+
+def llm_understand_request(state: AgentState) -> AgentState:
+    provider = state.get("llm_provider")
+    if provider is None:
+        return {
+            "steps": add_step(
+                state,
+                "llm_understand_request",
+                "disabled",
+                "LLM provider disabled; deterministic parser remains authoritative.",
+            )
+        }
+
+    prompt = build_intent_prompt(
+        message=state["message"],
+        deterministic_intent=state.get("intent", UNKNOWN_INTENT),
+        deterministic_order_numbers=state.get("order_numbers", []),
+        deterministic_unsafe=state.get("unsafe_request", False),
+    )
+    try:
+        result = provider.generate_structured(
+            task=INTENT_TASK,
+            prompt=prompt,
+            schema_name="LLMIntentCandidate",
+        )
+        candidate = parse_intent_candidate(result)
+    except Exception:
+        return {
+            "llm": record_llm_fallback(state, "intent_extraction_failed"),
+            "steps": add_step(
+                state,
+                "llm_understand_request",
+                "fallback",
+                "LLM intent candidate rejected; deterministic parser remains authoritative.",
+            ),
+        }
+
+    deterministic_order_numbers = set(state.get("order_numbers", []))
+    candidate_order_numbers = set(candidate.order_numbers)
+    if candidate_order_numbers - deterministic_order_numbers:
+        return {
+            "llm": record_llm_fallback(state, "intent_extraction_unverified_order_number"),
+            "steps": add_step(
+                state,
+                "llm_understand_request",
+                "fallback",
+                "LLM candidate included an order number not extracted deterministically.",
+            ),
+        }
+
+    updates: AgentState = {
+        "llm": record_llm_success(state, result, INTENT_TASK),
+        "llm_intent_candidate": candidate.model_dump(),
+        "steps": add_step(
+            state,
+            "llm_understand_request",
+            "completed",
+            "LLM intent candidate validated as auxiliary signal.",
+        ),
+    }
+    if candidate.unsafe_request:
+        updates["unsafe_request"] = True
+    if (
+        state.get("intent") == UNKNOWN_INTENT
+        and candidate.intent != UNKNOWN_INTENT
+        and candidate.confidence >= MIN_LLM_INTENT_CONFIDENCE
+    ):
+        updates["intent"] = candidate.intent
+    return updates
 
 
 def validate_context(state: AgentState) -> AgentState:
@@ -454,6 +547,70 @@ def classify_risk(state: AgentState) -> AgentState:
     }
 
 
+def generate_customer_reply(state: AgentState) -> AgentState:
+    provider = state.get("llm_provider")
+    if provider is None or state.get("unsafe_request"):
+        fallback_reason = (
+            "unsafe_request_blocked" if state.get("unsafe_request") else "provider_disabled"
+        )
+        return {
+            "customer_reply": deterministic_customer_reply(state),
+            "llm": record_llm_fallback(state, fallback_reason),
+            "steps": add_step(
+                state,
+                "generate_customer_reply",
+                "fallback",
+                "Generated deterministic customer reply.",
+            ),
+        }
+
+    fact_fields = fact_field_ids(state)
+    policy_ids = [hit.policy_id for hit in state.get("policy_hits", [])]
+    prompt = build_customer_reply_prompt(
+        status=state.get("status", STATUS_COMPLETED),
+        order_no=state.get("order_no"),
+        intent=state.get("intent"),
+        fact_fields=fact_fields,
+        policy_ids=policy_ids,
+        recommendation=state.get("recommendation", default_recommendation()),
+        risk=state.get("risk", risk(RISK_LOW, False, ["No execution proposed."])),
+        error_codes=[error["code"] for error in state.get("errors", [])],
+    )
+    try:
+        result = provider.generate_structured(
+            task=CUSTOMER_REPLY_TASK,
+            prompt=prompt,
+            schema_name="LLMCustomerReplyDraft",
+        )
+        draft = parse_customer_reply(
+            result,
+            allowed_policy_ids=set(policy_ids),
+            allowed_fact_fields=set(fact_fields),
+        )
+    except Exception:
+        return {
+            "customer_reply": deterministic_customer_reply(state),
+            "llm": record_llm_fallback(state, "customer_reply_failed"),
+            "steps": add_step(
+                state,
+                "generate_customer_reply",
+                "fallback",
+                "LLM customer reply rejected; deterministic reply used.",
+            ),
+        }
+
+    return {
+        "customer_reply": draft.reply,
+        "llm": record_llm_success(state, result, CUSTOMER_REPLY_TASK),
+        "steps": add_step(
+            state,
+            "generate_customer_reply",
+            "completed",
+            "Customer reply generated from validated evidence context.",
+        ),
+    }
+
+
 def build_response(state: AgentState) -> AgentState:
     response = AgentPreviewResponse(
         status=state.get("status", STATUS_COMPLETED),
@@ -469,6 +626,8 @@ def build_response(state: AgentState) -> AgentState:
             **state.get("recommendation", default_recommendation())
         ),
         risk=RiskAssessment(**state.get("risk", risk(RISK_LOW, False, ["No execution proposed."]))),
+        customer_reply=state.get("customer_reply", deterministic_customer_reply(state)),
+        llm=LLMMetadata(**state.get("llm", default_llm_metadata(None, DISABLED_LLM_PROVIDER))),
         errors=[AgentError(**item) for item in state.get("errors", [])],
         steps=[WorkflowStep(**item) for item in state.get("steps", [])]
         + [
@@ -592,3 +751,110 @@ def require_order_no(state: AgentState) -> str:
     if order_no is None:
         raise ValueError("order_no is required")
     return order_no
+
+
+def default_llm_metadata(
+    provider: LLMProvider | None,
+    configured_provider: str,
+) -> dict[str, Any]:
+    if provider is None:
+        return {
+            "provider": DISABLED_LLM_PROVIDER,
+            "model": None,
+            "used_for": [],
+            "fallback_used": True,
+            "fallback_reason": "provider_disabled",
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "estimated_cost": None,
+            "latency_ms": None,
+        }
+    return {
+        "provider": getattr(provider, "provider", configured_provider),
+        "model": getattr(provider, "model", None),
+        "used_for": [],
+        "fallback_used": False,
+        "fallback_reason": None,
+        "prompt_tokens": None,
+        "completion_tokens": None,
+        "estimated_cost": None,
+        "latency_ms": None,
+    }
+
+
+def record_llm_success(state: AgentState, result: LLMResult, task: str) -> dict[str, Any]:
+    metadata = dict(state.get("llm", default_llm_metadata(None, DISABLED_LLM_PROVIDER)))
+    used_for = list(metadata.get("used_for", []))
+    if task not in used_for:
+        used_for.append(task)
+    metadata.update(
+        {
+            "provider": result.provider,
+            "model": result.model,
+            "used_for": used_for,
+            "prompt_tokens": add_optional_int(metadata.get("prompt_tokens"), result.prompt_tokens),
+            "completion_tokens": add_optional_int(
+                metadata.get("completion_tokens"), result.completion_tokens
+            ),
+            "latency_ms": add_optional_int(metadata.get("latency_ms"), result.latency_ms),
+        }
+    )
+    if result.estimated_cost is not None:
+        metadata["estimated_cost"] = result.estimated_cost
+    return metadata
+
+
+def record_llm_fallback(state: AgentState, reason: str) -> dict[str, Any]:
+    metadata = dict(state.get("llm", default_llm_metadata(None, DISABLED_LLM_PROVIDER)))
+    metadata["fallback_used"] = True
+    if metadata.get("fallback_reason") in {None, "provider_disabled"}:
+        metadata["fallback_reason"] = reason
+    return metadata
+
+
+def add_optional_int(current: int | None, incoming: int | None) -> int | None:
+    if incoming is None:
+        return current
+    if current is None:
+        return incoming
+    return current + incoming
+
+
+def fact_field_ids(state: AgentState) -> list[str]:
+    return [
+        f"{item['source']}.{item['field']}"
+        for item in state.get("fact_evidence", [])
+        if "source" in item and "field" in item
+    ]
+
+
+def deterministic_customer_reply(state: AgentState) -> str:
+    error_codes = {error["code"] for error in state.get("errors", [])}
+    action_type = state.get("recommendation", default_recommendation()).get("action_type")
+
+    if state.get("status") == STATUS_BLOCKED or state.get("unsafe_request"):
+        return (
+            "当前请求包含绕过审批或直接执行业务动作的内容，系统已阻止继续处理；"
+            "请提交正常的售后诉求。"
+        )
+    if "missing_order_no" in error_codes:
+        return "当前还缺少订单号，请先提供一个订单号；系统只会生成处理建议预览。"
+    if "multiple_order_numbers" in error_codes:
+        return "当前请求包含多个订单号，请一次只提供一个订单号；系统不会执行任何业务动作。"
+    if "unknown_intent" in error_codes:
+        return "当前售后诉求类型还不明确，请说明是商品质量问题还是物流延误；系统只会生成预览。"
+    if "order_not_found" in error_codes:
+        return "当前没有查到该订单的业务事实，请先核对订单号；系统不会执行退款、赔付或工单操作。"
+    if state.get("status") == STATUS_NO_POLICY_EVIDENCE:
+        return "当前没有找到有效的售后政策依据，建议转人工核查；系统不会生成执行承诺。"
+    if action_type == ACTION_REFUND_REVIEW:
+        return (
+            "已基于订单事实和有效政策依据生成质量问题退款审核预览；"
+            "当前不会直接执行退款，后续仍需按规则进行人工审批。"
+        )
+    if action_type == ACTION_DELAY_COMPENSATION_REVIEW:
+        return (
+            "已基于物流事实和有效政策依据生成延误补偿审核预览；"
+            "当前不会直接发放优惠券或修改业务状态。"
+        )
+    return "当前仅生成售后处理建议预览，不会直接执行退款、赔付、发券或工单操作。"

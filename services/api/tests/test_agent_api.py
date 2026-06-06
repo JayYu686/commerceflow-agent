@@ -28,6 +28,10 @@ def test_agent_preview_api_returns_quality_refund_preview(client: TestClient) ->
     assert payload["risk"]["level"] == "high"
     assert payload["risk"]["requires_approval"] is True
     assert payload["policy_evidence"][0]["policy_id"] == "POL-QUALITY-ELECTRONICS-V2"
+    assert payload["customer_reply"]
+    assert payload["llm"]["provider"] == "disabled"
+    assert payload["llm"]["fallback_used"] is True
+    assert payload["llm"]["fallback_reason"] == "provider_disabled"
 
 
 def test_agent_preview_api_rejects_invalid_request(client: TestClient) -> None:
@@ -79,6 +83,10 @@ def test_agent_preview_does_not_mutate_existing_tables(
     seeded_session: Session,
 ) -> None:
     before_counts = table_counts(seeded_session)
+    before_aftersales_status = order_aftersales_status(
+        seeded_session,
+        FIXED_DELAYED_ORDER_NO,
+    )
 
     response = client.post(
         "/api/agent/after-sales/preview",
@@ -93,6 +101,9 @@ def test_agent_preview_does_not_mutate_existing_tables(
 
     assert response.status_code == 200
     assert table_counts(seeded_session) == before_counts
+    assert (
+        order_aftersales_status(seeded_session, FIXED_DELAYED_ORDER_NO) == before_aftersales_status
+    )
 
 
 def table_counts(session: Session) -> dict[str, int]:
@@ -102,3 +113,7 @@ def table_counts(session: Session) -> dict[str, int]:
         "policy_documents": session.scalar(select(func.count()).select_from(PolicyDocument)),
         "policy_chunks": session.scalar(select(func.count()).select_from(PolicyChunk)),
     }
+
+
+def order_aftersales_status(session: Session, order_no: str) -> str | None:
+    return session.scalar(select(Order.aftersales_status).where(Order.order_no == order_no))

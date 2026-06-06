@@ -12,6 +12,10 @@ class AgentState(TypedDict, total=False):
     order_no: str | None
     intent: str
     unsafe_request: bool
+    llm_provider: Any
+    llm: dict[str, Any]
+    llm_intent_candidate: dict[str, Any]
+    customer_reply: str
     status: str
     order_snapshot: Any
     logistics_snapshot: Any

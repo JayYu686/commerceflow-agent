@@ -1,8 +1,8 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, and the Phase 3A deterministic after-sales preview workflow: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, and the Phase 3B controlled LLM adapter boundary: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
+Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, MCP server, approval flow, real LLM provider call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
@@ -33,6 +33,19 @@ Copy-Item .env.example .env
 ```
 
 The values in `.env.example` are local development placeholders only. Do not commit real secrets.
+
+Phase 3B keeps real LLM access disabled by default:
+
+```env
+LLM_PROVIDER=disabled
+LLM_MODEL=
+OPENAI_API_KEY=
+OPENAI_COMPATIBLE_BASE_URL=
+```
+
+`LLM_PROVIDER=fake` enables the deterministic local `FakeLLMProvider` for development and tests.
+It does not call any network service. OpenAI-compatible configuration is documented only as a
+future boundary; this phase does not implement a real provider and no API key is required.
 
 ## Start Dependencies
 
@@ -128,9 +141,9 @@ approval workflow, LLM decision call, or automatic after-sales action.
 
 ## Phase 3A Deterministic Agent Preview
 
-Phase 3A adds a deterministic LangGraph workflow for after-sales previews. It reads existing order,
-logistics, and policy facts, then returns a structured recommendation, evidence, workflow steps, and
-risk classification.
+Phase 3A adds a deterministic LangGraph workflow for after-sales previews. Phase 3B keeps that
+workflow deterministic for facts, policy evidence, recommendations, and risk, while adding a
+controlled LLM adapter boundary for auxiliary intent candidates and customer-facing reply text.
 
 Before running the preview API, start dependencies, run migrations, seed commerce data, ingest policy
 data, and start the API:
@@ -157,12 +170,34 @@ Invoke-RestMethod -Method Post "http://localhost:8000/api/agent/after-sales/prev
 ```
 
 The preview response includes `status`, `intent`, `order_no`, `facts`, `fact_evidence`,
-`policy_evidence`, `recommendation`, `risk`, `errors`, and `steps`. Every recommendation has
-`action_status` set to `preview_only`.
+`policy_evidence`, `recommendation`, `risk`, `customer_reply`, `llm`, `errors`, and `steps`. Every
+recommendation has `action_status` set to `preview_only`.
+
+With the default disabled provider, `llm` reports deterministic fallback metadata:
+
+```json
+{
+  "provider": "disabled",
+  "model": null,
+  "used_for": [],
+  "fallback_used": true,
+  "fallback_reason": "provider_disabled",
+  "prompt_tokens": null,
+  "completion_tokens": null,
+  "estimated_cost": null,
+  "latency_ms": null
+}
+```
+
+When `LLM_PROVIDER=fake` is configured, the API uses a deterministic local fake provider. The fake
+provider may populate `used_for` with `intent_extraction` and `customer_reply`, but it still cannot
+override order facts, logistics facts, policy evidence, the final recommendation, risk level, or
+`preview_only` status.
 
 `POST /api/agent/after-sales/preview` uses POST only to carry a structured natural-language request
 body. It does not create refunds, issue coupons, create tickets, create approval records, write audit
-events, or modify order/logistics/policy state.
+events, or modify order/logistics/policy state. The customer-facing reply must not claim that a
+refund, compensation, coupon, ticket, approval bypass, or automatic after-sales action has happened.
 
 ## Run The API
 

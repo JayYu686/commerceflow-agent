@@ -67,6 +67,18 @@ class WorkflowStep(BaseModel):
     detail: str
 
 
+class LLMMetadata(BaseModel):
+    provider: str
+    model: str | None
+    used_for: list[str]
+    fallback_used: bool
+    fallback_reason: str | None
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    estimated_cost: str | None
+    latency_ms: int | None
+
+
 class AgentPreviewResponse(BaseModel):
     status: str
     intent: str | None
@@ -76,5 +88,7 @@ class AgentPreviewResponse(BaseModel):
     policy_evidence: list[PolicySearchHit]
     recommendation: PreviewRecommendation
     risk: RiskAssessment
+    customer_reply: str
+    llm: LLMMetadata
     errors: list[AgentError]
     steps: list[WorkflowStep]
