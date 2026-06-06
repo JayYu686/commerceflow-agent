@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.repositories.policy import search_policy_chunks
-from app.schemas.policy import PolicySearchHit, PolicySearchResponse
+from app.schemas.policy import PolicySearchFilters, PolicySearchHit, PolicySearchResponse
 from app.services.embeddings import DeterministicEmbeddingProvider, EmbeddingProvider
 
 DEFAULT_MIN_SCORE = 0.55
@@ -15,9 +15,9 @@ def search_policies(
     session: Session,
     *,
     query: str,
-    intent: str,
-    category: str,
-    aftersales_type: str,
+    intent: str | None = None,
+    category: str | None = None,
+    aftersales_type: str | None = None,
     as_of: datetime | None = None,
     limit: int = DEFAULT_LIMIT,
     min_score: float = DEFAULT_MIN_SCORE,
@@ -27,6 +27,8 @@ def search_policies(
         raise ValueError("query must not be empty")
     if limit < 1 or limit > MAX_LIMIT:
         raise ValueError(f"limit must be between 1 and {MAX_LIMIT}")
+    if min_score < 0 or min_score > 1:
+        raise ValueError("min_score must be between 0 and 1")
 
     effective_as_of = as_of or datetime.now(UTC)
     if effective_as_of.tzinfo is None:
@@ -46,7 +48,17 @@ def search_policies(
     hits = [chunk_to_hit(chunk, score) for chunk, score in scored_chunks if score >= min_score][
         :limit
     ]
-    return PolicySearchResponse(query=query, hits=hits)
+    return PolicySearchResponse(
+        query=query,
+        filters=PolicySearchFilters(
+            intent=intent,
+            category=category,
+            aftersales_type=aftersales_type,
+            as_of=effective_as_of,
+            limit=limit,
+        ),
+        hits=hits,
+    )
 
 
 def chunk_to_hit(chunk, score: float) -> PolicySearchHit:

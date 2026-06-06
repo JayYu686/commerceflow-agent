@@ -1,8 +1,8 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, and the Phase 2A policy RAG data/service baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, policy ingestion, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, and the Phase 2B read-only policy retrieval API: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, policy search HTTP API, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
+Executable business workflows are still intentionally out of scope. There is no refund execution, coupon issue flow, ticketing system, LangGraph workflow, MCP server, approval flow, LLM call, or evaluation dataset in this baseline.
 
 ## Project Layout
 
@@ -72,7 +72,7 @@ more events per shipment. It also includes fixed demo orders `CF202605180023` an
 
 Phase 2A adds structured local after-sales policy documents, `policy_documents` and
 `policy_chunks` tables, deterministic fake embeddings, and a service-level retrieval flow.
-It does not expose a policy HTTP API; that is deferred to Phase 2B.
+Phase 2B exposes the same retrieval capability through a read-only HTTP API.
 
 Run the latest migration from the API service directory:
 
@@ -95,6 +95,36 @@ Service-level retrieval can be verified from `services/api`:
 ```powershell
 ..\..\.venv\Scripts\python.exe -c "from datetime import UTC, datetime; from app.db.session import SessionLocal; from app.services.policy_retrieval import search_policies; s=SessionLocal(); r=search_policies(s, query='earbuds no sound return refund', intent='quality_issue_refund', category='electronics', aftersales_type='standard', as_of=datetime(2026, 6, 6, tzinfo=UTC)); print(r.model_dump()); s.close()"
 ```
+
+## Phase 2B Read-only Policy Search API
+
+Before querying policies through HTTP, start dependencies, run the latest migration, ingest local
+policy data, and start the API:
+
+```powershell
+docker compose up -d postgres redis
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
+..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Read-only policy search:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/policies/search?query=earbuds%20no%20sound%20return%20refund&intent=quality_issue_refund&category=electronics&aftersales_type=standard&limit=5"
+```
+
+The response includes the original `query`, applied `filters`, and `hits`. A successful quality
+issue query should include `POL-QUALITY-ELECTRONICS-V2` in the top results. A logistics delay query
+such as `logistics delay compensation` with `intent=logistics_delay_compensation` should include
+`POL-LOGISTICS-DELAY-V1`.
+
+If no active applicable policy meets the filters and score threshold, the API returns `200` with
+`"hits": []`. It does not fabricate policy evidence.
+
+Phase 2B still does not implement an Agent, MCP server, refund execution, coupon issue flow,
+approval workflow, LLM decision call, or automatic after-sales action.
 
 ## Run The API
 

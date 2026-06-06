@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api.commerce import router as commerce_router
+from app.api.policies import router as policies_router
 from app.core.config import get_settings
 from app.schemas.health import HealthResponse
 from app.services.errors import NotFoundError
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
         )
 
     api.include_router(commerce_router)
+    api.include_router(policies_router)
     return api
 
 

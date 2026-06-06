@@ -43,6 +43,15 @@ class PolicySearchHit(BaseModel):
     content_excerpt: str
 
 
+class PolicySearchFilters(BaseModel):
+    intent: str | None
+    category: str | None
+    aftersales_type: str | None
+    as_of: datetime
+    limit: int
+
+
 class PolicySearchResponse(BaseModel):
     query: str
+    filters: PolicySearchFilters
     hits: list[PolicySearchHit]
