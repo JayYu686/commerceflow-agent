@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.api.agent import router as agent_router
 from app.api.commerce import router as commerce_router
 from app.api.policies import router as policies_router
 from app.core.config import get_settings
@@ -15,7 +16,7 @@ def create_app() -> FastAPI:
     api = FastAPI(
         title="CommerceFlow Agent API",
         version="0.1.0",
-        description="CommerceFlow Agent API with read-only mock commerce facts.",
+        description="CommerceFlow Agent API with read-only facts, policy retrieval, and previews.",
     )
 
     @api.exception_handler(NotFoundError)
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
 
     api.include_router(commerce_router)
     api.include_router(policies_router)
+    api.include_router(agent_router)
     return api
 
 
