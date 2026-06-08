@@ -2,7 +2,10 @@
 
 CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, the Phase 3B controlled LLM adapter boundary, and the Phase 4A action plan / approval / audit baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
-Executable business actions are still intentionally out of scope. There is no refund execution, coupon issue execution, ticketing system, MCP server, real LLM provider call, or evaluation dataset in this baseline. Phase 4A records approval decisions only so a later phase can execute through controlled tools.
+Real external business actions are still intentionally out of scope. There is no real refund execution,
+real coupon system, real ticketing system, MCP server, real LLM provider call, or evaluation dataset in
+this baseline. Phase 4B-1 stores only local mock refund, coupon, and ticket result records through
+controlled demo tools.
 
 ## Project Layout
 
@@ -250,6 +253,48 @@ An approved approval request only means a later phase may execute through contro
 returns `execution_status=not_executed` and does not create refund, coupon, or ticket results.
 `Idempotency-Key` is required for action plan creation and approval decisions. Reusing the same key
 with the same request returns the existing result; reusing it with different content returns `409`.
+
+## Phase 4B-1 Mock Tool Execution API
+
+Phase 4B-1 adds internal tool execution service logic and local demo HTTP APIs for mock business
+results. It does not implement MCP, does not let the Agent automatically call tools, and does not call
+real payment, coupon, logistics, or ticketing systems. Successful tool calls only write
+`refund_records`, `coupon_records`, or `ticket_records`, update `action_plans.execution_status` to
+`executed`, and append audit logs.
+
+Before using the tool APIs, run the same dependency, migration, seed, ingestion, and API startup
+commands shown in Phase 4A.
+
+Approved refund execution:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/tools/refund-apply" -Headers @{"Idempotency-Key"="demo-refund-tool-001"} -ContentType "application/json" -Body '{"action_plan_id":"<approved_refund_action_plan_id>","approval_id":"<approved_approval_id>","order_no":"CF202605180023","amount":"299.00","currency":"CNY","reason":"Quality issue refund."}'
+```
+
+Small planned coupon execution:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/tools/coupon-issue" -Headers @{"Idempotency-Key"="demo-coupon-tool-001"} -ContentType "application/json" -Body '{"action_plan_id":"<planned_coupon_action_plan_id>","approval_id":null,"order_no":"CF202605200071","amount":"10.00","currency":"CNY","reason":"Delay compensation."}'
+```
+
+Ticket creation from a planned or approved ticket action plan:
+
+```powershell
+Invoke-RestMethod -Method Post "http://localhost:8000/api/tools/ticket-create" -Headers @{"Idempotency-Key"="demo-ticket-tool-001"} -ContentType "application/json" -Body '{"action_plan_id":"<ticket_action_plan_id>","order_no":"CF202605180023","category":"quality_issue","summary":"Create follow-up ticket for evidence review."}'
+```
+
+Read mock result records:
+
+```powershell
+Invoke-RestMethod "http://localhost:8000/api/refunds/<refund_id>"
+Invoke-RestMethod "http://localhost:8000/api/coupons/<coupon_id>"
+Invoke-RestMethod "http://localhost:8000/api/tickets/<ticket_id>"
+```
+
+Every tool endpoint requires `Idempotency-Key`. Reusing the same key with the same body returns the
+existing mock result; reusing it with different content returns `409`. Refunds always require an
+approved approval request. Coupons greater than CNY 10 require approval; CNY 10 or less can execute a
+planned coupon action. Tool execution never modifies order, shipment, or policy rows.
 
 ## Run The API
 

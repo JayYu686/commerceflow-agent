@@ -268,14 +268,15 @@ def test_approval_decision_does_not_mutate_existing_business_tables(
     assert order_aftersales_status(seeded_session, FIXED_QUALITY_ORDER_NO) == before_status
 
 
-def test_phase_4a_routes_do_not_expose_execution_or_mcp_apis(client: TestClient) -> None:
+def test_phase_4b_routes_do_not_expose_mcp_or_sql_apis(client: TestClient) -> None:
     paths = {getattr(route, "path", "") for route in client.app.routes}
-    forbidden_fragments = ("refunds", "coupons", "tickets", "mcp", "sql")
+    forbidden_fragments = ("mcp", "sql")
 
     forbidden_paths = [
         path for path in paths if any(fragment in path.lower() for fragment in forbidden_fragments)
     ]
     assert forbidden_paths == []
+    assert not any(path.startswith("/api/agent") and "/tools/" in path for path in paths)
 
     for route in client.app.routes:
         path = getattr(route, "path", "")
