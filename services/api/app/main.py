@@ -7,6 +7,7 @@ from app.api.agent import router as agent_router
 from app.api.approvals import router as approvals_router
 from app.api.commerce import router as commerce_router
 from app.api.policies import router as policies_router
+from app.api.tools import router as tools_router
 from app.core.config import get_settings
 from app.schemas.health import HealthResponse
 from app.services.errors import ConflictError, NotFoundError
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     api.include_router(policies_router)
     api.include_router(agent_router)
     api.include_router(approvals_router)
+    api.include_router(tools_router)
     return api
 
 

@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 DecisionValue = Literal["approve", "reject"]
+ExecutionStatus = Literal["not_executed", "not_applicable", "executed", "execution_failed"]
 
 
 class ApprovalSummary(BaseModel):
@@ -27,7 +28,7 @@ class ActionPlanResponse(BaseModel):
     planned_tool_name: str | None
     action_type: str
     status: str
-    execution_status: Literal["not_executed", "not_applicable"]
+    execution_status: ExecutionStatus
     risk_level: str
     requires_approval: bool
     proposed_amount: str | None
@@ -51,7 +52,7 @@ class ActionPlanCreateResponse(BaseModel):
     planned_tool_name: str | None
     action_type: str
     status: str
-    execution_status: Literal["not_executed", "not_applicable"]
+    execution_status: ExecutionStatus
     risk_level: str
     requires_approval: bool
     approval_id: str | None

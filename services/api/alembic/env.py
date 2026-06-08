@@ -9,14 +9,17 @@ from app.models import (  # noqa: F401
     ActionPlan,
     ApprovalRequest,
     AuditLog,
+    CouponRecord,
     Customer,
     Order,
     OrderItem,
     PolicyChunk,
     PolicyDocument,
     Product,
+    RefundRecord,
     Shipment,
     ShipmentEvent,
+    TicketRecord,
 )
 
 config = context.config

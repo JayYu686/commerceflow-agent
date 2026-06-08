@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKeyConstraint,
     Numeric,
@@ -21,12 +22,15 @@ EXPECTED_TABLES = {
     "action_plans",
     "approval_requests",
     "audit_logs",
+    "coupon_records",
     "customers",
     "products",
+    "refund_records",
     "orders",
     "order_items",
     "shipments",
     "shipment_events",
+    "ticket_records",
     "policy_documents",
     "policy_chunks",
 }
@@ -49,6 +53,14 @@ def foreign_key_targets(table_name: str) -> set[str]:
             for element in constraint.elements:
                 targets.add(f"{element.column.table.name}.{element.column.name}")
     return targets
+
+
+def check_constraint_sql(table_name: str, constraint_name: str) -> str:
+    table = Base.metadata.tables[table_name]
+    for constraint in table.constraints:
+        if isinstance(constraint, CheckConstraint) and constraint.name == constraint_name:
+            return str(constraint.sqltext)
+    return ""
 
 
 def test_metadata_contains_phase_1a_and_phase_2a_tables() -> None:
@@ -76,6 +88,15 @@ def test_unique_constraints_exist_for_business_identifiers() -> None:
         "approval_requests"
     )
     assert "uq_audit_logs_event_id" in unique_constraint_names("audit_logs")
+    assert "uq_refund_records_refund_id" in unique_constraint_names("refund_records")
+    assert "uq_refund_records_idempotency_key" in unique_constraint_names("refund_records")
+    assert "uq_refund_records_action_plan_id" in unique_constraint_names("refund_records")
+    assert "uq_coupon_records_coupon_id" in unique_constraint_names("coupon_records")
+    assert "uq_coupon_records_idempotency_key" in unique_constraint_names("coupon_records")
+    assert "uq_coupon_records_action_plan_id" in unique_constraint_names("coupon_records")
+    assert "uq_ticket_records_ticket_id" in unique_constraint_names("ticket_records")
+    assert "uq_ticket_records_idempotency_key" in unique_constraint_names("ticket_records")
+    assert "uq_ticket_records_action_plan_id" in unique_constraint_names("ticket_records")
 
 
 def test_foreign_keys_exist_for_commerce_relationships() -> None:
@@ -86,6 +107,15 @@ def test_foreign_keys_exist_for_commerce_relationships() -> None:
     assert foreign_key_targets("policy_chunks") == {"policy_documents.id"}
     assert foreign_key_targets("approval_requests") == {"action_plans.id"}
     assert foreign_key_targets("audit_logs") == {"action_plans.id", "approval_requests.id"}
+    assert foreign_key_targets("refund_records") == {
+        "action_plans.id",
+        "approval_requests.id",
+    }
+    assert foreign_key_targets("coupon_records") == {
+        "action_plans.id",
+        "approval_requests.id",
+    }
+    assert foreign_key_targets("ticket_records") == {"action_plans.id"}
 
 
 def test_money_and_time_columns_use_expected_types() -> None:
@@ -96,6 +126,8 @@ def test_money_and_time_columns_use_expected_types() -> None:
         Base.metadata.tables["order_items"].c.line_amount,
         Base.metadata.tables["action_plans"].c.proposed_amount,
         Base.metadata.tables["approval_requests"].c.proposed_amount,
+        Base.metadata.tables["refund_records"].c.amount,
+        Base.metadata.tables["coupon_records"].c.amount,
     ]
     for column in money_columns:
         assert isinstance(column.type, Numeric)
@@ -124,6 +156,9 @@ def test_money_and_time_columns_use_expected_types() -> None:
         Base.metadata.tables["approval_requests"].c.decided_at,
         Base.metadata.tables["approval_requests"].c.updated_at,
         Base.metadata.tables["audit_logs"].c.created_at,
+        Base.metadata.tables["refund_records"].c.created_at,
+        Base.metadata.tables["coupon_records"].c.created_at,
+        Base.metadata.tables["ticket_records"].c.created_at,
     ]
     for column in time_columns:
         assert isinstance(column.type, DateTime)
@@ -135,6 +170,20 @@ def test_policy_chunk_embedding_uses_pgvector_dimension() -> None:
 
     assert isinstance(embedding_column.type, Vector)
     assert embedding_column.type.dim == 1536
+
+
+def test_phase_4b_check_constraints_allow_tool_execution_states() -> None:
+    execution_status_sql = check_constraint_sql(
+        "action_plans",
+        "ck_action_plans_execution_status",
+    )
+    audit_event_sql = check_constraint_sql("audit_logs", "ck_audit_logs_event_type")
+
+    assert "executed" in execution_status_sql
+    assert "execution_failed" in execution_status_sql
+    assert "tool_execution_succeeded" in audit_event_sql
+    assert "tool_execution_blocked" in audit_event_sql
+    assert "tool_execution_idempotent_replay" in audit_event_sql
 
 
 def test_alembic_upgrade_head_creates_expected_tables(tmp_path: Path) -> None:

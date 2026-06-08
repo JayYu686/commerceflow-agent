@@ -40,7 +40,12 @@ class ActionPlan(Base):
             name="ck_action_plans_status",
         ),
         CheckConstraint(
-            "execution_status IN ('not_executed', 'not_applicable')",
+            "execution_status IN ("
+            "'not_executed', "
+            "'not_applicable', "
+            "'executed', "
+            "'execution_failed'"
+            ")",
             name="ck_action_plans_execution_status",
         ),
         CheckConstraint(
@@ -158,7 +163,10 @@ class AuditLog(Base):
             "'approval_requested', "
             "'approval_approved', "
             "'approval_rejected', "
-            "'action_plan_not_executable'"
+            "'action_plan_not_executable', "
+            "'tool_execution_succeeded', "
+            "'tool_execution_blocked', "
+            "'tool_execution_idempotent_replay'"
             ")",
             name="ck_audit_logs_event_type",
         ),
