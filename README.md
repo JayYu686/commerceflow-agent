@@ -1,11 +1,12 @@
 # CommerceFlow Agent
 
-CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, the Phase 3B controlled LLM adapter boundary, and the Phase 4A action plan / approval / audit baseline: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
+CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, the Phase 3B controlled LLM adapter boundary, the Phase 4A action plan / approval / audit baseline, the Phase 4B-1 controlled mock tool execution service, and the Phase 4B-2 local stdio MCP server wrapper: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
 Real external business actions are still intentionally out of scope. There is no real refund execution,
-real coupon system, real ticketing system, MCP server, real LLM provider call, or evaluation dataset in
-this baseline. Phase 4B-1 stores only local mock refund, coupon, and ticket result records through
-controlled demo tools.
+real coupon system, real ticketing system, real LLM provider call, Agent-driven MCP tool execution,
+LangGraph interrupt/resume flow, or evaluation dataset in this baseline. Phase 4B-1 stores only local
+mock refund, coupon, and ticket result records through controlled demo tools. Phase 4B-2 exposes those
+same controlled tools through a local stdio MCP wrapper only.
 
 ## Project Layout
 
@@ -295,6 +296,89 @@ Every tool endpoint requires `Idempotency-Key`. Reusing the same key with the sa
 existing mock result; reusing it with different content returns `409`. Refunds always require an
 approved approval request. Coupons greater than CNY 10 require approval; CNY 10 or less can execute a
 planned coupon action. Tool execution never modifies order, shipment, or policy rows.
+
+## Phase 4B-2 Local Stdio MCP Server
+
+Phase 4B-2 adds a local stdio MCP server wrapper around the Phase 4B-1 internal tool execution
+service. It uses the official MCP Python SDK v1.x and `FastMCP`:
+
+```python
+from mcp.server.fastmcp import FastMCP
+```
+
+The MCP server is not mounted into FastAPI, does not expose Streamable HTTP or SSE, does not open a
+new public endpoint, and does not listen on a network port. It is intended for local orchestrators,
+Codex or other MCP clients, and MCP Inspector over stdio.
+
+Run the stdio MCP server from the API service directory:
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m app.mcp_server.server
+```
+
+Registered MCP tools:
+
+- `refund_apply`
+- `coupon_issue`
+- `ticket_create`
+
+For MCP calls, the idempotency key is part of the tool input because stdio MCP calls do not have HTTP
+headers.
+
+Example `coupon_issue` MCP arguments:
+
+```json
+{
+  "action_plan_id": "<planned_coupon_action_plan_id>",
+  "approval_id": null,
+  "order_no": "CF202605200071",
+  "amount": "10.00",
+  "currency": "CNY",
+  "reason": "Delay compensation.",
+  "idempotency_key": "demo-mcp-coupon-tool-001"
+}
+```
+
+Example `refund_apply` MCP arguments:
+
+```json
+{
+  "action_plan_id": "<approved_refund_action_plan_id>",
+  "approval_id": "<approved_approval_id>",
+  "order_no": "CF202605180023",
+  "amount": "299.00",
+  "currency": "CNY",
+  "reason": "Quality issue refund.",
+  "idempotency_key": "demo-mcp-refund-tool-001"
+}
+```
+
+The MCP wrapper is intentionally thin. It converts MCP arguments into the existing Pydantic request
+schemas, creates a short-lived database session, calls the internal tool execution service, and maps
+known failures to safe MCP tool errors. It does not reimplement approval checks, coupon thresholds,
+policy evidence checks, duplicate execution checks, idempotency, result persistence, action plan
+updates, or audit writes.
+
+Successful MCP tool calls can only write local mock result records, update the matching action plan
+execution status to `executed`, and append audit logs. They never call real payment, coupon, or
+customer support systems, and they never modify original order, shipment, or policy rows.
+
+MCP Inspector manual smoke:
+
+```powershell
+npx @modelcontextprotocol/inspector ..\..\.venv\Scripts\python.exe -m app.mcp_server.server
+```
+
+Run that command from `services/api`. In Inspector, verify that the three tools are visible, inspect
+their input schemas, call one blocked refund case, and call one executable mock tool case. If the
+Inspector cannot run in your local shell, use the automated stdio MCP protocol test in the backend
+test suite as the reproducible baseline and run Inspector manually when the shell environment allows
+it.
+
+Phase 4B-2 still does not let the Agent automatically call MCP tools. It does not implement
+LangGraph interrupt/resume, real external services, arbitrary SQL, or any automatic after-sales
+closure.
 
 ## Run The API
 
