@@ -65,6 +65,23 @@ def test_quality_refund_creates_pending_approval_action_plan(
     assert approval_response.json()["status"] == "pending"
 
 
+def test_chinese_quality_refund_creates_pending_approval_action_plan(
+    client: TestClient,
+) -> None:
+    message = f"我的耳机左耳没有声音，订单号 {FIXED_QUALITY_ORDER_NO}，我想退款"
+
+    response = create_action_plan(client, "chinese-quality-plan-1", message)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["intent"] == "quality_issue_refund"
+    assert payload["action_type"] == "refund_apply"
+    assert payload["planned_tool_name"] == "refund_apply"
+    assert payload["status"] == "pending_approval"
+    assert payload["risk_level"] == "high"
+    assert payload["approval_id"] is not None
+
+
 def test_delay_compensation_creates_planned_coupon_action_without_execution(
     client: TestClient,
     seeded_session: Session,
