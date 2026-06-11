@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.agent import router as agent_router
@@ -19,6 +20,12 @@ def create_app() -> FastAPI:
         title="CommerceFlow Agent API",
         version="0.1.0",
         description="CommerceFlow Agent API with read-only facts, policy retrieval, and previews.",
+    )
+    api.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Idempotency-Key"],
     )
 
     @api.exception_handler(NotFoundError)
