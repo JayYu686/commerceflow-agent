@@ -325,6 +325,7 @@ def openai_compatible_system_message(schema_name: str) -> str:
     return (
         "You are a restricted auxiliary LLM for CommerceFlow Agent. "
         f"Return JSON only matching {schema_name}. "
+        "Do not wrap JSON in markdown fences or add prose around it. "
         "Do not call tools, execute business actions, create approvals, "
         "modify facts, invent policy evidence, or claim refunds/coupons/tickets "
         "were executed."
@@ -338,6 +339,33 @@ def extract_chat_completion_content(payload: dict[str, Any]) -> str:
     return content
 
 
+def extract_json_object_text(text: str) -> str:
+    stripped = strip_json_code_fence(text.strip())
+    if not stripped:
+        raise ValueError("empty LLM JSON output")
+
+    decoder = json.JSONDecoder()
+    for index, character in enumerate(stripped):
+        if character != "{":
+            continue
+        try:
+            decoded, end_index = decoder.raw_decode(stripped[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(decoded, dict):
+            return stripped[index : index + end_index]
+    raise ValueError("LLM output did not contain a JSON object")
+
+
+def strip_json_code_fence(text: str) -> str:
+    if not text.startswith("```"):
+        return text
+    match = re.fullmatch(r"```(?:json|JSON)?\s*(.*?)\s*```", text, flags=re.DOTALL)
+    if match is None:
+        return text
+    return match.group(1).strip()
+
+
 def optional_usage_int(value: Any) -> int | None:
     if value is None or isinstance(value, bool):
         return None
@@ -348,7 +376,7 @@ def optional_usage_int(value: Any) -> int | None:
 
 def parse_intent_candidate(result: LLMResult) -> LLMIntentCandidate:
     try:
-        return LLMIntentCandidate.model_validate_json(result.raw_text)
+        return LLMIntentCandidate.model_validate_json(extract_json_object_text(result.raw_text))
     except (ValidationError, ValueError) as exc:
         raise LLMOutputError("invalid intent extraction output") from exc
 
@@ -360,7 +388,7 @@ def parse_customer_reply(
     allowed_fact_fields: set[str],
 ) -> LLMCustomerReplyDraft:
     try:
-        draft = LLMCustomerReplyDraft.model_validate_json(result.raw_text)
+        draft = LLMCustomerReplyDraft.model_validate_json(extract_json_object_text(result.raw_text))
     except (ValidationError, ValueError) as exc:
         raise LLMOutputError("invalid customer reply output") from exc
 
