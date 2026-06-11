@@ -62,6 +62,22 @@ def test_classifies_chinese_logistics_delay_compensation_intent() -> None:
     assert classify_intent(message) == LOGISTICS_INTENT
 
 
+def test_classifies_chinese_exact_logistics_delay_compensation_request() -> None:
+    message = "订单 CF202605200071 的物流七天没有更新，我想申请延误补偿"
+
+    assert classify_intent(message) == LOGISTICS_INTENT
+
+
+def test_classifies_chinese_courier_no_update_compensation_request() -> None:
+    message = "快递一直没更新，我想要补偿"
+
+    assert classify_intent(message) == LOGISTICS_INTENT
+
+
+def test_compensation_without_logistics_context_remains_unknown() -> None:
+    assert classify_intent("我想要补偿") == UNKNOWN_INTENT
+
+
 def test_refund_without_reason_remains_unknown() -> None:
     assert classify_intent("\u6211\u60f3\u9000\u6b3e") == UNKNOWN_INTENT
 

@@ -92,6 +92,21 @@ def test_chinese_logistics_delay_preview_is_grounded_and_preview_only(
     assert response.risk.level == "medium"
 
 
+def test_exact_chinese_logistics_delay_preview_hits_delay_policy(
+    seeded_session: Session,
+) -> None:
+    response = preview(
+        seeded_session,
+        f"订单 {FIXED_DELAYED_ORDER_NO} 的物流七天没有更新，我想申请延误补偿",
+    )
+
+    assert response.status == "completed"
+    assert response.intent == "logistics_delay_compensation"
+    assert response.policy_evidence[0].policy_id == "POL-LOGISTICS-DELAY-V1"
+    assert response.recommendation.action_type == "delay_compensation_review"
+    assert response.risk.level == "medium"
+
+
 def test_missing_order_number_returns_needs_more_info(seeded_session: Session) -> None:
     response = preview(seeded_session, "The earbuds have no sound and I want a refund.")
 

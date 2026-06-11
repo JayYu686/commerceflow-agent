@@ -25,13 +25,16 @@ from app.agent.llm import (
 from app.agent.workflow import run_after_sales_preview
 from app.core.config import Settings
 from app.schemas.agent import AgentPreviewRequest
-from scripts.seed_demo_data import FIXED_QUALITY_ORDER_NO
+from scripts.seed_demo_data import FIXED_DELAYED_ORDER_NO, FIXED_QUALITY_ORDER_NO
 
 AS_OF = datetime(2026, 6, 6, tzinfo=UTC)
 MODEL = "deepseek-v4-flash"
 BASE_URL = "https://api.deepseek.test"
 API_KEY = "test-api-key"
 CHINESE_QUALITY_REFUND_MESSAGE = f"我的耳机左耳没有声音，订单号 {FIXED_QUALITY_ORDER_NO}，我想退款"
+CHINESE_LOGISTICS_DELAY_MESSAGE = (
+    f"订单 {FIXED_DELAYED_ORDER_NO} 的物流七天没有更新，我想申请延误补偿"
+)
 ENGLISH_QUALITY_REFUND_MESSAGE = (
     f"The left speaker of my earbuds has no sound. Order {FIXED_QUALITY_ORDER_NO}. "
     "I want a refund for a quality issue."
@@ -135,6 +138,14 @@ def customer_reply_json(
             "cited_fact_fields": cited_fact_fields or ["order.order_no"],
         },
         ensure_ascii=False,
+    )
+
+
+def logistics_customer_reply_json() -> str:
+    return customer_reply_json(
+        reply="当前仅生成延误补偿审核预览，不会直接发放优惠券或修改业务状态。",
+        cited_policy_ids=["POL-LOGISTICS-DELAY-V1"],
+        cited_fact_fields=["logistics.status"],
     )
 
 
@@ -337,6 +348,18 @@ def test_disabled_provider_chinese_quality_refund_is_deterministic(
     assert response.policy_evidence
 
 
+def test_disabled_provider_chinese_logistics_delay_is_deterministic(
+    seeded_session: Session,
+) -> None:
+    response = preview(seeded_session, CHINESE_LOGISTICS_DELAY_MESSAGE)
+
+    assert response.status == "completed"
+    assert response.intent == "logistics_delay_compensation"
+    assert response.policy_evidence[0].policy_id == "POL-LOGISTICS-DELAY-V1"
+    assert response.recommendation.action_type == "delay_compensation_review"
+    assert response.risk.level == "medium"
+
+
 def test_fake_provider_chinese_quality_refund_keeps_quality_intent(
     seeded_session: Session,
 ) -> None:
@@ -351,6 +374,24 @@ def test_fake_provider_chinese_quality_refund_keeps_quality_intent(
     assert response.recommendation.action_type == "refund_review"
     assert response.risk.level == "high"
     assert response.policy_evidence
+
+
+def test_fake_provider_chinese_logistics_delay_keeps_delay_intent(
+    seeded_session: Session,
+) -> None:
+    response = preview(
+        seeded_session,
+        CHINESE_LOGISTICS_DELAY_MESSAGE,
+        FakeLLMProvider(),
+    )
+
+    assert response.status == "completed"
+    assert response.intent == "logistics_delay_compensation"
+    assert response.policy_evidence[0].policy_id == "POL-LOGISTICS-DELAY-V1"
+    assert response.recommendation.action_type == "delay_compensation_review"
+    assert response.risk.level == "medium"
+    assert response.llm.used_for == [INTENT_TASK, CUSTOMER_REPLY_TASK]
+    assert response.llm.fallback_used is False
 
 
 def test_openai_compatible_unknown_candidate_cannot_downgrade_chinese_quality_intent(
@@ -371,6 +412,27 @@ def test_openai_compatible_unknown_candidate_cannot_downgrade_chinese_quality_in
     assert response.risk.level == "high"
     assert response.risk.requires_approval is True
     assert response.policy_evidence
+    assert response.llm.fallback_used is False
+
+
+def test_openai_compatible_unknown_candidate_cannot_downgrade_chinese_logistics_intent(
+    seeded_session: Session,
+) -> None:
+    response = preview(
+        seeded_session,
+        CHINESE_LOGISTICS_DELAY_MESSAGE,
+        openai_provider_with_responses(
+            intent_json(intent="unknown", confidence=0.98),
+            logistics_customer_reply_json(),
+        ),
+    )
+
+    assert response.status == "completed"
+    assert response.intent == "logistics_delay_compensation"
+    assert response.policy_evidence[0].policy_id == "POL-LOGISTICS-DELAY-V1"
+    assert response.recommendation.action_type == "delay_compensation_review"
+    assert response.risk.level == "medium"
+    assert response.llm.used_for == [INTENT_TASK, CUSTOMER_REPLY_TASK]
     assert response.llm.fallback_used is False
 
 
