@@ -142,6 +142,8 @@ export type AgentPreviewResponse = {
   steps: WorkflowStep[];
 };
 
+export type ExecutionStatus = "not_executed" | "not_applicable" | "executed" | "execution_failed";
+
 export type ActionPlanCreateResponse = {
   action_plan_id: string;
   run_id: string;
@@ -150,7 +152,7 @@ export type ActionPlanCreateResponse = {
   planned_tool_name: string | null;
   action_type: string;
   status: string;
-  execution_status: "not_executed" | "not_applicable" | "executed" | "execution_failed";
+  execution_status: ExecutionStatus;
   risk_level: string;
   requires_approval: boolean;
   approval_id: string | null;
@@ -158,6 +160,174 @@ export type ActionPlanCreateResponse = {
   currency: string | null;
   summary: string;
   created_at: string;
+};
+
+export type ApprovalSummary = {
+  approval_id: string;
+  status: string;
+  risk_level: string;
+  requested_action_type: string;
+  proposed_amount: string | null;
+  currency: string | null;
+  requested_at: string;
+  decided_at: string | null;
+};
+
+export type ActionPlanResponse = {
+  action_plan_id: string;
+  run_id: string;
+  request_message: string;
+  order_no: string | null;
+  intent: string;
+  planned_tool_name: string | null;
+  action_type: string;
+  status: string;
+  execution_status: ExecutionStatus;
+  risk_level: string;
+  requires_approval: boolean;
+  proposed_amount: string | null;
+  currency: string | null;
+  summary: string;
+  reasons: string[];
+  next_steps: string[];
+  fact_evidence: FactEvidence[] | Record<string, unknown>[];
+  policy_evidence: PolicyEvidence[] | Record<string, unknown>[];
+  llm: Record<string, unknown>;
+  approval: ApprovalSummary | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ActionPlanListItem = ActionPlanCreateResponse & {
+  updated_at: string;
+};
+
+export type ActionPlanListResponse = {
+  action_plans: ActionPlanListItem[];
+};
+
+export type ApprovalRequestResponse = {
+  approval_id: string;
+  action_plan_id: string;
+  status: string;
+  risk_level: string;
+  requested_action_type: string;
+  proposed_amount: string | null;
+  currency: string | null;
+  policy_ids: string[];
+  requester: string;
+  reviewer: string | null;
+  decision_comment: string | null;
+  requested_at: string;
+  decided_at: string | null;
+  updated_at: string;
+  action_plan: ActionPlanCreateResponse;
+};
+
+export type ApprovalRequestListResponse = {
+  approvals: ApprovalRequestResponse[];
+};
+
+export type ApprovalDecisionRequest = {
+  decision: "approve" | "reject";
+  reviewer: string;
+  comment?: string | null;
+};
+
+export type ToolExecutionResponse = {
+  tool_name: "refund_apply" | "coupon_issue" | "ticket_create";
+  status: string;
+  record_id: string;
+  action_plan_id: string;
+  order_no: string;
+  execution_status: "executed";
+  idempotent_replay: boolean;
+  created_at: string;
+};
+
+export type RefundApplyRequest = {
+  action_plan_id: string;
+  approval_id: string;
+  order_no: string;
+  amount: string;
+  currency: string;
+  reason: string;
+};
+
+export type CouponIssueRequest = {
+  action_plan_id: string;
+  approval_id: string | null;
+  order_no: string;
+  amount: string;
+  currency: string;
+  reason: string;
+};
+
+export type TicketCreateRequest = {
+  action_plan_id: string;
+  order_no: string;
+  category: string;
+  summary: string;
+};
+
+export type RefundRecordResponse = {
+  refund_id: string;
+  action_plan_id: string;
+  approval_id: string;
+  order_no: string;
+  amount: string;
+  currency: string;
+  reason: string;
+  status: "succeeded";
+  tool_name: "refund_apply";
+  created_at: string;
+};
+
+export type CouponRecordResponse = {
+  coupon_id: string;
+  action_plan_id: string;
+  approval_id: string | null;
+  order_no: string;
+  amount: string;
+  currency: string;
+  reason: string;
+  status: "issued";
+  tool_name: "coupon_issue";
+  created_at: string;
+};
+
+export type TicketRecordResponse = {
+  ticket_id: string;
+  action_plan_id: string;
+  order_no: string;
+  category: string;
+  summary: string;
+  status: "created";
+  tool_name: "ticket_create";
+  created_at: string;
+};
+
+export type ActionPlanResultResponse = {
+  action_plan_id: string;
+  result_type: "refund" | "coupon" | "ticket" | null;
+  result: RefundRecordResponse | CouponRecordResponse | TicketRecordResponse | null;
+};
+
+export type AuditLogEvent = {
+  event_id: string;
+  event_type: string;
+  actor_type: string;
+  actor_id: string | null;
+  action_plan_id: string | null;
+  approval_id: string | null;
+  order_no: string | null;
+  idempotency_key: string | null;
+  payload: Record<string, unknown>;
+  created_at: string;
+};
+
+export type AuditLogListResponse = {
+  events: AuditLogEvent[];
 };
 
 export type ApiError = {

@@ -1,12 +1,30 @@
 import type {
   ActionPlanCreateResponse,
+  ActionPlanListResponse,
+  ActionPlanResponse,
+  ActionPlanResultResponse,
   AgentPreviewRequest,
   AgentPreviewResponse,
   ApiError,
+  ApprovalDecisionRequest,
+  ApprovalRequestListResponse,
+  ApprovalRequestResponse,
+  AuditLogListResponse,
+  CouponIssueRequest,
   HealthResponse,
+  RefundApplyRequest,
+  TicketCreateRequest,
+  ToolExecutionResponse,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+type ActionPlanFilters = {
+  status?: string;
+  execution_status?: string;
+  order_no?: string;
+  limit?: number;
+};
 
 export async function getHealth(): Promise<HealthResponse> {
   return apiRequest<HealthResponse>("/health");
@@ -25,8 +43,101 @@ export async function runPreview(
 export async function createActionPlan(
   request: AgentPreviewRequest,
   idempotencyKey: string,
-): Promise<ActionPlanCreateResponse> {
+) : Promise<ActionPlanCreateResponse> {
   return apiRequest<ActionPlanCreateResponse>("/api/agent/after-sales/action-plans", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify(request),
+  });
+}
+
+export async function listActionPlans(
+  filters: ActionPlanFilters = {},
+): Promise<ActionPlanListResponse> {
+  return apiRequest<ActionPlanListResponse>(`/api/action-plans${queryString(filters)}`);
+}
+
+export async function getActionPlan(actionPlanId: string): Promise<ActionPlanResponse> {
+  return apiRequest<ActionPlanResponse>(`/api/action-plans/${encodeURIComponent(actionPlanId)}`);
+}
+
+export async function getActionPlanAuditLogs(
+  actionPlanId: string,
+): Promise<AuditLogListResponse> {
+  return apiRequest<AuditLogListResponse>(
+    `/api/action-plans/${encodeURIComponent(actionPlanId)}/audit-logs`,
+  );
+}
+
+export async function getActionPlanResult(
+  actionPlanId: string,
+): Promise<ActionPlanResultResponse> {
+  return apiRequest<ActionPlanResultResponse>(
+    `/api/action-plans/${encodeURIComponent(actionPlanId)}/result`,
+  );
+}
+
+export async function listApprovals(
+  status: "pending" | "approved" | "rejected",
+  limit = 50,
+): Promise<ApprovalRequestListResponse> {
+  return apiRequest<ApprovalRequestListResponse>(
+    `/api/approvals${queryString({ status, limit })}`,
+  );
+}
+
+export async function getApproval(approvalId: string): Promise<ApprovalRequestResponse> {
+  return apiRequest<ApprovalRequestResponse>(`/api/approvals/${encodeURIComponent(approvalId)}`);
+}
+
+export async function decideApproval(
+  approvalId: string,
+  request: ApprovalDecisionRequest,
+  idempotencyKey: string,
+): Promise<ApprovalRequestResponse> {
+  return apiRequest<ApprovalRequestResponse>(
+    `/api/approvals/${encodeURIComponent(approvalId)}/decision`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+export async function executeRefundApply(
+  request: RefundApplyRequest,
+  idempotencyKey: string,
+): Promise<ToolExecutionResponse> {
+  return executeTool("/api/tools/refund-apply", request, idempotencyKey);
+}
+
+export async function executeCouponIssue(
+  request: CouponIssueRequest,
+  idempotencyKey: string,
+): Promise<ToolExecutionResponse> {
+  return executeTool("/api/tools/coupon-issue", request, idempotencyKey);
+}
+
+export async function executeTicketCreate(
+  request: TicketCreateRequest,
+  idempotencyKey: string,
+): Promise<ToolExecutionResponse> {
+  return executeTool("/api/tools/ticket-create", request, idempotencyKey);
+}
+
+async function executeTool<TRequest>(
+  path: string,
+  request: TRequest,
+  idempotencyKey: string,
+): Promise<ToolExecutionResponse> {
+  return apiRequest<ToolExecutionResponse>(path, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -87,6 +198,17 @@ async function normalizeApiError(response: Response): Promise<ApiError> {
     message: response.statusText || "Request failed",
     details: payload,
   };
+}
+
+function queryString(values: Record<string, string | number | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const rendered = params.toString();
+  return rendered ? `?${rendered}` : "";
 }
 
 function validationMessage(value: unknown): string {

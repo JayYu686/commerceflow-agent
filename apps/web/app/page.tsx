@@ -6,41 +6,41 @@ import { useEffect, useState } from "react";
 import { Badge } from "../components/console/Badge";
 import { ErrorNotice } from "../components/console/ErrorNotice";
 import { Panel } from "../components/console/Panel";
+import { SafeMockNotice } from "../components/console/SafeMockNotice";
 import { getHealth } from "../lib/api";
 import { DEMO_SCENARIOS } from "../lib/demo-scenarios";
 import type { ApiError, HealthResponse } from "../lib/types";
 
 const capabilityChain = [
   "接收自然语言售后诉求",
-  "确定性解析与受控 LLM 边界",
+  "确定性解析与受控 LLM 辅助理解",
   "查询订单与物流事实",
   "检索售后政策依据",
-  "生成处理建议与风险判断",
+  "生成处理建议与风险等级",
   "创建 Action Plan / 动作计划",
-  "人工审批与审计记录",
-  "受控 Mock 工具执行",
-  "本地 stdio MCP 包装器",
+  "人工审批 approve / reject",
+  "人工触发本地 Mock 工具执行",
+  "查看 Mock Result 与审计时间线",
 ];
 
 const implemented = [
   "只读订单与物流查询 API",
-  "基于确定性 embedding 的政策检索 API",
-  "LangGraph 预览工作流",
-  "受控 LLM adapter 边界",
+  "政策 RAG 检索 API",
+  "LangGraph Agent Preview 工作流",
+  "OpenAI-compatible 受控 LLM Provider",
   "Action Plan、审批与审计数据层",
   "Mock 退款、优惠券和工单工具 API",
   "本地 stdio MCP Server wrapper",
-  "Phase 5A 浏览器总览与 Agent 工作台",
+  "中文 Agent 工作台",
+  "审批中心、工具执行和审计时间线 UI",
 ];
 
 const notYetImplemented = [
-  "浏览器审批批准 / 拒绝操作",
-  "浏览器 Mock 工具执行操作",
-  "案例级审计时间线详情页",
-  "评测 Dashboard",
   "LangGraph interrupt / resume",
   "Agent 自动调用 MCP 工具",
-  "真实支付、优惠券或客服系统",
+  "真实支付、优惠券、客服或物流系统",
+  "真实 Evaluation Dashboard 和评测报告",
+  "生产级认证、权限和多租户",
 ];
 
 export default function Home() {
@@ -63,21 +63,29 @@ export default function Home() {
     <div className="mx-auto max-w-7xl space-y-6">
       <header className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5A</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
           <h2 className="mt-1 text-3xl font-semibold tracking-tight">
             CommerceFlow Agent 运营控制台
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            通过浏览器理解和测试受控售后 Agent：查看事实、政策依据、处理建议、风险等级、
-            面向用户回复，并在明确幂等键保护下创建 Action Plan。
+            通过浏览器完成从 Agent 预览、创建 Action Plan、人工审批、Mock 工具执行到审计复盘的完整演示链路。
+            所有执行结果都是本地模拟记录，不调用真实外部业务系统。
           </p>
         </div>
-        <Link
-          href="/workbench"
-          className="inline-flex w-fit rounded-md bg-signal px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-        >
-          进入 Agent 工作台
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/workbench"
+            className="rounded-md bg-signal px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            进入 Agent 工作台
+          </Link>
+          <Link
+            href="/cases"
+            className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            查看案例
+          </Link>
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
@@ -96,22 +104,10 @@ export default function Home() {
           </div>
         </Panel>
 
-        <Panel title="安全边界" eyebrow="仅本地模拟">
-          <div className="space-y-3 text-sm leading-6 text-slate-700">
-            <p>
-              控制台可以创建本地 Action Plan。后续 Phase 5B 页面才会提供审批和 Mock 工具执行入口。
-              当前不会触发真实退款、真实赔付、真实发券或真实工单。
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge tone="warning">仅预览，不执行</Badge>
-              <Badge tone="danger">退款需要人工审批</Badge>
-              <Badge tone="neutral">不调用真实外部系统</Badge>
-            </div>
-          </div>
-        </Panel>
+        <SafeMockNotice />
       </div>
 
-      <Panel title="能力链路" eyebrow="已实现后端路径">
+      <Panel title="能力链路" eyebrow="浏览器可演示">
         <div className="grid gap-3 md:grid-cols-3">
           {capabilityChain.map((item, index) => (
             <div key={item} className="rounded-lg border border-line bg-slate-50 p-4">
@@ -122,8 +118,8 @@ export default function Home() {
         </div>
       </Panel>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="一键 Demo" eyebrow="工作台快捷入口">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel title="一键 Demo" eyebrow="工作台入口">
           <div className="grid gap-3">
             {DEMO_SCENARIOS.map((scenario) => (
               <Link
@@ -145,29 +141,24 @@ export default function Home() {
           </div>
         </Panel>
 
-        <Panel title="已实现与后续范围" eyebrow="阶段边界">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <h3 className="text-sm font-semibold text-emerald-800">已实现</h3>
-              <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                {implemented.map((item) => (
-                  <li key={item} className="border-l-4 border-emerald-400 pl-3">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-amber-800">Phase 5A 暂未实现</h3>
-              <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                {notYetImplemented.map((item) => (
-                  <li key={item} className="border-l-4 border-amber-400 pl-3">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        <Panel title="已实现模块" eyebrow="当前可演示">
+          <ul className="space-y-2 text-sm text-slate-700">
+            {implemented.map((item) => (
+              <li key={item} className="border-l-4 border-emerald-400 pl-3">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        <Panel title="尚未实现" eyebrow="后续阶段">
+          <ul className="space-y-2 text-sm text-slate-700">
+            {notYetImplemented.map((item) => (
+              <li key={item} className="border-l-4 border-amber-400 pl-3">
+                {item}
+              </li>
+            ))}
+          </ul>
         </Panel>
       </div>
     </div>

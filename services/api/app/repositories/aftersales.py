@@ -42,6 +42,41 @@ def get_action_plan_by_external_id(
     return session.scalar(statement)
 
 
+def list_action_plans(
+    session: Session,
+    *,
+    status: str | None,
+    execution_status: str | None,
+    order_no: str | None,
+    limit: int,
+) -> list[ActionPlan]:
+    statement = select(ActionPlan).options(selectinload(ActionPlan.approval_request))
+    if status is not None:
+        statement = statement.where(ActionPlan.status == status)
+    if execution_status is not None:
+        statement = statement.where(ActionPlan.execution_status == execution_status)
+    if order_no is not None:
+        statement = statement.where(ActionPlan.order_no == order_no)
+    statement = statement.order_by(ActionPlan.created_at.desc(), ActionPlan.id.desc()).limit(limit)
+    return list(session.scalars(statement))
+
+
+def list_audit_logs_for_action_plan(
+    session: Session,
+    action_plan_id: int,
+) -> list[AuditLog]:
+    statement = (
+        select(AuditLog)
+        .where(AuditLog.action_plan_id == action_plan_id)
+        .order_by(AuditLog.created_at.asc(), AuditLog.id.asc())
+        .options(
+            selectinload(AuditLog.action_plan),
+            selectinload(AuditLog.approval_request),
+        )
+    )
+    return list(session.scalars(statement))
+
+
 def get_approval_request_by_external_id(
     session: Session,
     approval_id: str,
