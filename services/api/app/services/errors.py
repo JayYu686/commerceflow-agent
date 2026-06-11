@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass
 class NotFoundError(Exception):
     resource: str
     identifier: str
@@ -11,7 +11,7 @@ class NotFoundError(Exception):
         return f"{self.resource} not found"
 
 
-@dataclass(frozen=True)
+@dataclass
 class ConflictError(Exception):
     code: str
     message: str
