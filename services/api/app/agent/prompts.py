@@ -54,11 +54,17 @@ def build_customer_reply_prompt(
         {
             "task": "customer_reply",
             "instructions": [
-                "Return JSON only.",
+                "Return exactly one JSON object.",
+                "Do not wrap the JSON in markdown fences or add text before or after it.",
                 "Write a concise customer-facing reply in Chinese.",
                 "Use only the provided facts, policy IDs, recommendation, and risk.",
+                "cited_policy_ids must contain only exact values from allowed_policy_ids.",
+                "cited_fact_fields must contain only exact values from allowed_fact_fields.",
                 "Do not claim a refund, coupon, ticket, or compensation has been executed.",
+                "Do not claim approval has already passed.",
                 "Do not say approval can be skipped.",
+                "For refund_review, say the system can prepare review or recommend manual review.",
+                "Never say the refund has already been completed.",
                 "If evidence is missing, ask for more information or manual review.",
             ],
             "context": {
@@ -76,6 +82,7 @@ def build_customer_reply_prompt(
                 "cited_policy_ids": policy_ids[:2],
                 "cited_fact_fields": fact_fields[:3],
             },
+            "required_output_keys": ["reply", "cited_policy_ids", "cited_fact_fields"],
         },
         ensure_ascii=False,
         sort_keys=True,
