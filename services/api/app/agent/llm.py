@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
+import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from app.agent.parser import (
@@ -22,6 +24,7 @@ INTENT_TASK = "intent_extraction"
 CUSTOMER_REPLY_TASK = "customer_reply"
 FAKE_LLM_PROVIDER = "fake"
 DISABLED_LLM_PROVIDER = "disabled"
+OPENAI_COMPATIBLE_LLM_PROVIDER = "openai_compatible"
 
 VALID_LLM_INTENTS = {QUALITY_INTENT, LOGISTICS_INTENT, UNKNOWN_INTENT}
 MIN_LLM_INTENT_CONFIDENCE = 0.75
@@ -219,9 +222,127 @@ class FakeLLMProvider:
         )
 
 
+class OpenAICompatibleLLMProvider:
+    provider = OPENAI_COMPATIBLE_LLM_PROVIDER
+
+    def __init__(
+        self,
+        *,
+        model: str,
+        api_key: str,
+        base_url: str,
+        timeout_seconds: float,
+        max_tokens: int,
+        temperature: float,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
+        self.model = model
+        self._api_key = api_key
+        self._base_url = base_url.rstrip("/")
+        self._timeout_seconds = timeout_seconds
+        self._max_tokens = max_tokens
+        self._temperature = temperature
+        self._transport = transport
+
+    def generate_structured(
+        self,
+        *,
+        task: str,
+        prompt: str,
+        schema_name: str,
+    ) -> LLMResult:
+        request_body = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": openai_compatible_system_message(schema_name),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": self._temperature,
+            "max_tokens": self._max_tokens,
+            "stream": False,
+            "response_format": {"type": "json_object"},
+        }
+        started_at = time.perf_counter()
+        try:
+            with httpx.Client(
+                timeout=self._timeout_seconds,
+                transport=self._transport,
+            ) as client:
+                response = client.post(
+                    f"{self._base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self._api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=request_body,
+                )
+                response.raise_for_status()
+                payload = response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            raise LLMOutputError("openai-compatible provider failed") from exc
+
+        latency_ms = max(0, round((time.perf_counter() - started_at) * 1000))
+        try:
+            raw_text = extract_chat_completion_content(payload)
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise LLMOutputError("openai-compatible provider returned invalid output") from exc
+
+        usage = payload.get("usage", {})
+        return LLMResult(
+            provider=self.provider,
+            model=self.model,
+            raw_text=raw_text,
+            prompt_tokens=optional_usage_int(usage.get("prompt_tokens")),
+            completion_tokens=optional_usage_int(usage.get("completion_tokens")),
+            estimated_cost=None,
+            latency_ms=latency_ms,
+        )
+
+
 def create_llm_provider(settings: Settings) -> LLMProvider | None:
     if settings.llm_provider == FAKE_LLM_PROVIDER:
         return FakeLLMProvider(model=settings.llm_model or "fake-after-sales-v1")
+    if settings.llm_provider == OPENAI_COMPATIBLE_LLM_PROVIDER:
+        if not (
+            settings.llm_model and settings.openai_api_key and settings.openai_compatible_base_url
+        ):
+            return None
+        return OpenAICompatibleLLMProvider(
+            model=settings.llm_model,
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_compatible_base_url,
+            timeout_seconds=settings.llm_timeout_seconds,
+            max_tokens=settings.llm_max_tokens,
+            temperature=settings.llm_temperature,
+        )
+    return None
+
+
+def openai_compatible_system_message(schema_name: str) -> str:
+    return (
+        "You are a restricted auxiliary LLM for CommerceFlow Agent. "
+        f"Return JSON only matching {schema_name}. "
+        "Do not call tools, execute business actions, create approvals, "
+        "modify facts, invent policy evidence, or claim refunds/coupons/tickets "
+        "were executed."
+    )
+
+
+def extract_chat_completion_content(payload: dict[str, Any]) -> str:
+    content = payload["choices"][0]["message"]["content"]
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("empty chat completion content")
+    return content
+
+
+def optional_usage_int(value: Any) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
     return None
 
 
