@@ -3,10 +3,11 @@
 CommerceFlow Agent is a portfolio-grade, controlled business Agent for e-commerce after-sales workflows. The current baseline includes the Phase 0 engineering shell, the Phase 1A mock commerce data layer, the Phase 1B read-only order/logistics query API, the Phase 2B read-only policy retrieval API, the Phase 3A deterministic after-sales preview workflow, the Phase 3B controlled LLM adapter boundary, the Phase 4A action plan / approval / audit baseline, the Phase 4B-1 controlled mock tool execution service, and the Phase 4B-2 local stdio MCP server wrapper: FastAPI health check, Next.js console shell, PostgreSQL with pgvector, Redis, SQLAlchemy/Alembic, LangGraph, deterministic seed data, policy ingestion, dependency management, linting, and tests.
 
 Real external business actions are still intentionally out of scope. There is no real refund execution,
-real coupon system, real ticketing system, real LLM provider call, Agent-driven MCP tool execution,
-LangGraph interrupt/resume flow, or evaluation dataset in this baseline. Phase 4B-1 stores only local
-mock refund, coupon, and ticket result records through controlled demo tools. Phase 4B-2 exposes those
-same controlled tools through a local stdio MCP wrapper only.
+real coupon system, real ticketing system, Agent-driven MCP tool execution, LangGraph interrupt/resume
+flow, or evaluation dataset in this baseline. A real OpenAI-compatible LLM provider is optional and
+disabled by default; when enabled, it only assists intent extraction and customer-facing reply wording.
+Phase 4B-1 stores only local mock refund, coupon, and ticket result records through controlled demo
+tools. Phase 4B-2 exposes those same controlled tools through a local stdio MCP wrapper only.
 
 ## Project Layout
 
@@ -46,18 +47,39 @@ CORS_ORIGINS=http://localhost:3000
 
 Do not use wildcard CORS origins for this project.
 
-Phase 3B keeps real LLM access disabled by default:
+Real LLM access is disabled by default:
 
 ```env
 LLM_PROVIDER=disabled
 LLM_MODEL=
 OPENAI_API_KEY=
 OPENAI_COMPATIBLE_BASE_URL=
+LLM_TIMEOUT_SECONDS=20
+LLM_MAX_TOKENS=512
+LLM_TEMPERATURE=0.2
 ```
 
 `LLM_PROVIDER=fake` enables the deterministic local `FakeLLMProvider` for development and tests.
-It does not call any network service. OpenAI-compatible configuration is documented only as a
-future boundary; this phase does not implement a real provider and no API key is required.
+It does not call any network service.
+
+`LLM_PROVIDER=openai_compatible` enables the optional real OpenAI-compatible Chat Completions
+provider. DeepSeek can be configured through the generic provider:
+
+```env
+LLM_PROVIDER=openai_compatible
+LLM_MODEL=deepseek-v4-flash
+OPENAI_COMPATIBLE_BASE_URL=https://api.deepseek.com
+OPENAI_API_KEY=your_api_key_here
+LLM_TIMEOUT_SECONDS=20
+LLM_MAX_TOKENS=512
+LLM_TEMPERATURE=0.2
+```
+
+The API key must stay in the backend `.env`; the Next.js frontend never receives it. The provider
+uses bearer auth against `{OPENAI_COMPATIBLE_BASE_URL}/chat/completions`, sends non-streaming JSON
+Chat Completions, and does not send tools, function calling, MCP calls, or reasoning/thinking
+parameters by default. Tests use mocked HTTP transports and do not call DeepSeek or any real model
+provider.
 
 ## Start Dependencies
 
@@ -205,6 +227,14 @@ When `LLM_PROVIDER=fake` is configured, the API uses a deterministic local fake 
 provider may populate `used_for` with `intent_extraction` and `customer_reply`, but it still cannot
 override order facts, logistics facts, policy evidence, the final recommendation, risk level, or
 `preview_only` status.
+
+When `LLM_PROVIDER=openai_compatible` is configured with `LLM_MODEL`, `OPENAI_COMPATIBLE_BASE_URL`,
+and `OPENAI_API_KEY`, the API may call a real OpenAI-compatible Chat Completions endpoint such as
+DeepSeek. The real provider is still restricted to auxiliary intent candidates and customer-facing
+reply drafts. It cannot query or write the database, create action plans, approve requests, execute
+HTTP or MCP tools, override facts or policy evidence, change recommendations or risk, or fabricate
+policy citations. If the provider times out, returns invalid JSON, cites unavailable evidence, or is
+misconfigured, the preview workflow falls back to deterministic behaviour.
 
 `POST /api/agent/after-sales/preview` uses POST only to carry a structured natural-language request
 body. It does not create refunds, issue coupons, create tickets, create approval records, write audit
@@ -436,9 +466,10 @@ hydration mismatches. Until the key is ready, the Action Plan creation button re
 the UI shows `正在生成幂等键...`.
 
 Phase 5A still does not implement approval approve/reject UI, mock tool execution UI, audit timeline
-detail pages, evaluation dashboard, Agent automatic MCP calls, LangGraph interrupt/resume, real LLM
-provider calls, or real external business systems. Any refund, coupon, or ticket language in the UI
-must be treated as local mock-demo context only.
+detail pages, evaluation dashboard, Agent automatic MCP calls, LangGraph interrupt/resume, or real
+external business systems. If the optional real LLM provider is enabled, it affects only auxiliary
+understanding and reply wording, not facts, recommendations, approval, tools, or execution. Any
+refund, coupon, or ticket language in the UI must be treated as local mock-demo context only.
 
 ## Run The API
 

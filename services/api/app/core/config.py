@@ -13,6 +13,9 @@ class Settings:
     llm_model: str
     openai_api_key: str
     openai_compatible_base_url: str
+    llm_timeout_seconds: float
+    llm_max_tokens: int
+    llm_temperature: float
 
 
 @lru_cache
@@ -29,6 +32,9 @@ def get_settings() -> Settings:
         llm_model=os.getenv("LLM_MODEL", "").strip(),
         openai_api_key=os.getenv("OPENAI_API_KEY", "").strip(),
         openai_compatible_base_url=os.getenv("OPENAI_COMPATIBLE_BASE_URL", "").strip(),
+        llm_timeout_seconds=float(os.getenv("LLM_TIMEOUT_SECONDS", "20")),
+        llm_max_tokens=int(os.getenv("LLM_MAX_TOKENS", "512")),
+        llm_temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
     )
 
 
