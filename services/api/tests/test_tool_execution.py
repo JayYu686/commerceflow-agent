@@ -53,6 +53,12 @@ def test_approved_refund_tool_creates_record_and_read_api(
     assert refund["amount"] == "299.00"
     assert refund["status"] == "succeeded"
 
+    action_result = client.get(f"/api/action-plans/{plan['action_plan_id']}/result")
+    assert action_result.status_code == 200
+    result_payload = action_result.json()
+    assert result_payload["result_type"] == "refund"
+    assert result_payload["result"]["refund_id"] == payload["record_id"]
+
 
 def test_refund_without_approval_is_blocked_and_audited(
     client: TestClient,
@@ -208,6 +214,10 @@ def test_coupon_cny_10_planned_action_executes(
     assert read_response.status_code == 200
     assert read_response.json()["amount"] == "10.00"
 
+    action_result = client.get(f"/api/action-plans/{plan['action_plan_id']}/result")
+    assert action_result.status_code == 200
+    assert action_result.json()["result_type"] == "coupon"
+
 
 def test_coupon_above_threshold_requires_approval_then_executes(
     client: TestClient,
@@ -297,6 +307,10 @@ def test_ticket_planned_action_executes_and_read_api(
     read_response = client.get(f"/api/tickets/{payload['record_id']}")
     assert read_response.status_code == 200
     assert read_response.json()["category"] == "quality_issue"
+
+    action_result = client.get(f"/api/action-plans/{action_plan.action_plan_id}/result")
+    assert action_result.status_code == 200
+    assert action_result.json()["result_type"] == "ticket"
 
 
 def test_not_executable_action_plan_blocks_tool_execution(client: TestClient) -> None:

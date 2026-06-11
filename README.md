@@ -471,6 +471,41 @@ external business systems. If the optional real LLM provider is enabled, it affe
 understanding and reply wording, not facts, recommendations, approval, tools, or execution. Any
 refund, coupon, or ticket language in the UI must be treated as local mock-demo context only.
 
+## Phase 5B Approval, Mock Tools, and Audit Console
+
+Phase 5B adds the browser UI for the second half of the controlled after-sales workflow:
+
+```text
+Workbench preview
+-> create Action Plan
+-> Case Detail
+-> Approval Center approve / reject
+-> Mock Tool Execution
+-> Mock Result
+-> Audit Timeline
+```
+
+Start the API and web console with the Phase 5A commands, then use these pages:
+
+- `/cases`: list persisted Action Plans with status, execution status, risk, approval id, and amount.
+- `/cases/<action_plan_id>`: inspect one case, including the original request, evidence snapshots,
+  approval summary, mock result, and audit preview.
+- `/approvals`: approve or reject pending approval requests with an explicit `Idempotency-Key`.
+- `/tools`: manually execute approved or planned local mock tools with an explicit `Idempotency-Key`.
+- `/audit/<action_plan_id>`: inspect the append-only audit timeline for one Action Plan.
+- `/evaluation`: placeholder for the later Phase 5C evaluation dashboard.
+
+The Phase 5B UI calls only existing controlled backend write APIs for approval decisions and mock
+tool execution. It also uses read-only helper APIs for action plan lists, audit logs, and result
+lookup. It does not let the Agent automatically approve requests, does not let the Agent call tools
+or MCP, does not implement LangGraph interrupt/resume, and does not call any real payment, coupon,
+customer support, logistics, or external business system.
+
+Approving an approval request does **not** mean a refund or compensation was executed. It only allows
+a later manual mock tool execution. Mock tool execution writes local mock records only:
+`refund_records`, `coupon_records`, or `ticket_records`, plus Action Plan execution status and audit
+logs. Original order, shipment, and policy rows remain unchanged.
+
 ## Run The API
 
 ```powershell

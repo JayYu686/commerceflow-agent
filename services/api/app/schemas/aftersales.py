@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, field_validator
 
 DecisionValue = Literal["approve", "reject"]
 ExecutionStatus = Literal["not_executed", "not_applicable", "executed", "execution_failed"]
+ActionPlanStatus = Literal["not_executable", "planned", "pending_approval", "approved", "rejected"]
+ActionPlanResultType = Literal["refund", "coupon", "ticket"]
 
 
 class ApprovalSummary(BaseModel):
@@ -23,6 +25,7 @@ class ApprovalSummary(BaseModel):
 class ActionPlanResponse(BaseModel):
     action_plan_id: str
     run_id: str
+    request_message: str
     order_no: str | None
     intent: str
     planned_tool_name: str | None
@@ -60,6 +63,51 @@ class ActionPlanCreateResponse(BaseModel):
     currency: str | None
     summary: str
     created_at: datetime
+
+
+class ActionPlanListItem(BaseModel):
+    action_plan_id: str
+    order_no: str | None
+    intent: str
+    planned_tool_name: str | None
+    action_type: str
+    status: str
+    execution_status: ExecutionStatus
+    risk_level: str
+    requires_approval: bool
+    approval_id: str | None
+    proposed_amount: str | None
+    currency: str | None
+    summary: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ActionPlanListResponse(BaseModel):
+    action_plans: list[ActionPlanListItem]
+
+
+class AuditLogResponse(BaseModel):
+    event_id: str
+    event_type: str
+    actor_type: str
+    actor_id: str | None
+    action_plan_id: str | None
+    approval_id: str | None
+    order_no: str | None
+    idempotency_key: str | None
+    payload: dict
+    created_at: datetime
+
+
+class AuditLogListResponse(BaseModel):
+    events: list[AuditLogResponse]
+
+
+class ActionPlanResultResponse(BaseModel):
+    action_plan_id: str
+    result_type: ActionPlanResultType | None
+    result: dict | None
 
 
 class ApprovalRequestResponse(BaseModel):

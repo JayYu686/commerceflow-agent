@@ -51,6 +51,7 @@ def test_quality_refund_creates_pending_approval_action_plan(
     action_plan_response = client.get(f"/api/action-plans/{payload['action_plan_id']}")
     assert action_plan_response.status_code == 200
     action_plan = action_plan_response.json()
+    assert action_plan["request_message"] == QUALITY_MESSAGE
     assert action_plan["approval"]["approval_id"] == payload["approval_id"]
     assert action_plan["policy_evidence"][0]["policy_id"] == "POL-QUALITY-ELECTRONICS-V2"
 
@@ -63,6 +64,45 @@ def test_quality_refund_creates_pending_approval_action_plan(
     approval_response = client.get(f"/api/approvals/{payload['approval_id']}")
     assert approval_response.status_code == 200
     assert approval_response.json()["status"] == "pending"
+
+
+def test_action_plan_list_supports_filters_and_limits(client: TestClient) -> None:
+    quality = create_action_plan(client, "quality-list-plan", QUALITY_MESSAGE)
+    delay = create_action_plan(client, "delay-list-plan", DELAY_MESSAGE)
+    assert quality.status_code == 200
+    assert delay.status_code == 200
+
+    pending = client.get(
+        "/api/action-plans",
+        params={"status": "pending_approval", "execution_status": "not_executed", "limit": 10},
+    )
+    assert pending.status_code == 200
+    pending_items = pending.json()["action_plans"]
+    assert [item["action_plan_id"] for item in pending_items] == [quality.json()["action_plan_id"]]
+    assert pending_items[0]["approval_id"] == quality.json()["approval_id"]
+    assert pending_items[0]["updated_at"] is not None
+
+    delayed = client.get(
+        "/api/action-plans",
+        params={"order_no": FIXED_DELAYED_ORDER_NO, "limit": 1},
+    )
+    assert delayed.status_code == 200
+    delayed_items = delayed.json()["action_plans"]
+    assert len(delayed_items) == 1
+    assert delayed_items[0]["action_plan_id"] == delay.json()["action_plan_id"]
+
+
+def test_action_plan_result_is_null_before_tool_execution(client: TestClient) -> None:
+    response = create_action_plan(client, "quality-result-empty-plan", QUALITY_MESSAGE)
+    assert response.status_code == 200
+
+    result = client.get(f"/api/action-plans/{response.json()['action_plan_id']}/result")
+
+    assert result.status_code == 200
+    payload = result.json()
+    assert payload["action_plan_id"] == response.json()["action_plan_id"]
+    assert payload["result_type"] is None
+    assert payload["result"] is None
 
 
 def test_chinese_quality_refund_creates_pending_approval_action_plan(
@@ -199,6 +239,21 @@ def test_pending_approval_can_be_approved_and_writes_audit_log(
     assert payload["action_plan"]["execution_status"] == "not_executed"
     assert "llm" not in payload
     assert count_rows(seeded_session, AuditLog) == before_audits + 1
+
+    audit_response = client.get(
+        f"/api/action-plans/{payload['action_plan']['action_plan_id']}/audit-logs"
+    )
+    assert audit_response.status_code == 200
+    events = audit_response.json()["events"]
+    assert [event["event_type"] for event in events] == [
+        "action_plan_created",
+        "approval_requested",
+        "approval_approved",
+    ]
+    assert events[-1]["approval_id"] == approval_id
+    assert "traceback" not in events[-1]["payload"]
+    assert "api_key" not in events[-1]["payload"]
+    assert "prompt" not in events[-1]["payload"]
 
 
 def test_pending_approval_can_be_rejected(client: TestClient) -> None:

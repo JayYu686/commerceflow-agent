@@ -15,15 +15,27 @@ from app.repositories.aftersales import (
     get_action_plan_by_external_id,
     get_action_plan_by_idempotency_key,
     get_approval_request_by_external_id,
+    list_action_plans,
     list_approval_requests,
+    list_audit_logs_for_action_plan,
+)
+from app.repositories.tools import (
+    get_coupon_by_action_plan_id,
+    get_refund_by_action_plan_id,
+    get_ticket_by_action_plan_id,
 )
 from app.schemas.aftersales import (
     ActionPlanCreateResponse,
+    ActionPlanListItem,
+    ActionPlanListResponse,
     ActionPlanResponse,
+    ActionPlanResultResponse,
     ApprovalDecisionRequest,
     ApprovalRequestListResponse,
     ApprovalRequestResponse,
     ApprovalSummary,
+    AuditLogListResponse,
+    AuditLogResponse,
 )
 from app.schemas.agent import AgentPreviewRequest, AgentPreviewResponse
 from app.services.errors import ConflictError, NotFoundError
@@ -33,9 +45,24 @@ ACTION_STATUS_PLANNED = "planned"
 ACTION_STATUS_PENDING_APPROVAL = "pending_approval"
 ACTION_STATUS_APPROVED = "approved"
 ACTION_STATUS_REJECTED = "rejected"
+ACTION_PLAN_STATUSES = {
+    ACTION_STATUS_NOT_EXECUTABLE,
+    ACTION_STATUS_PLANNED,
+    ACTION_STATUS_PENDING_APPROVAL,
+    ACTION_STATUS_APPROVED,
+    ACTION_STATUS_REJECTED,
+}
 
 EXECUTION_NOT_EXECUTED = "not_executed"
 EXECUTION_NOT_APPLICABLE = "not_applicable"
+EXECUTION_EXECUTED = "executed"
+EXECUTION_FAILED = "execution_failed"
+EXECUTION_STATUSES = {
+    EXECUTION_NOT_EXECUTED,
+    EXECUTION_NOT_APPLICABLE,
+    EXECUTION_EXECUTED,
+    EXECUTION_FAILED,
+}
 
 APPROVAL_PENDING = "pending"
 APPROVAL_APPROVED = "approved"
@@ -185,6 +212,129 @@ def get_action_plan_response(session: Session, action_plan_id: str) -> ActionPla
     if action_plan is None:
         raise NotFoundError("action_plan", action_plan_id)
     return action_plan_to_response(action_plan)
+
+
+def list_action_plan_responses(
+    session: Session,
+    *,
+    status: str | None,
+    execution_status: str | None,
+    order_no: str | None,
+    limit: int,
+) -> ActionPlanListResponse:
+    if status is not None and status not in ACTION_PLAN_STATUSES:
+        raise ConflictError(
+            code="invalid_action_plan_status",
+            message="Action plan status filter is invalid.",
+        )
+    if execution_status is not None and execution_status not in EXECUTION_STATUSES:
+        raise ConflictError(
+            code="invalid_execution_status",
+            message="Action plan execution status filter is invalid.",
+        )
+    if limit < 1 or limit > 100:
+        raise ConflictError(
+            code="invalid_limit",
+            message="Action plan limit must be between 1 and 100.",
+        )
+    normalized_order_no = order_no.strip() if order_no is not None else None
+    if normalized_order_no == "":
+        normalized_order_no = None
+    action_plans = list_action_plans(
+        session,
+        status=status,
+        execution_status=execution_status,
+        order_no=normalized_order_no,
+        limit=limit,
+    )
+    return ActionPlanListResponse(
+        action_plans=[action_plan_to_list_item(action_plan) for action_plan in action_plans]
+    )
+
+
+def list_action_plan_audit_log_responses(
+    session: Session,
+    action_plan_id: str,
+) -> AuditLogListResponse:
+    action_plan = get_action_plan_by_external_id(session, action_plan_id)
+    if action_plan is None:
+        raise NotFoundError("action_plan", action_plan_id)
+    audit_logs = list_audit_logs_for_action_plan(session, action_plan.id)
+    return AuditLogListResponse(
+        events=[audit_log_to_response(audit_log) for audit_log in audit_logs]
+    )
+
+
+def get_action_plan_result_response(
+    session: Session,
+    action_plan_id: str,
+) -> ActionPlanResultResponse:
+    action_plan = get_action_plan_by_external_id(session, action_plan_id)
+    if action_plan is None:
+        raise NotFoundError("action_plan", action_plan_id)
+
+    refund = get_refund_by_action_plan_id(session, action_plan.id)
+    if refund is not None:
+        return ActionPlanResultResponse(
+            action_plan_id=action_plan.action_plan_id,
+            result_type="refund",
+            result={
+                "refund_id": refund.refund_id,
+                "action_plan_id": action_plan.action_plan_id,
+                "approval_id": refund.approval_request.approval_id,
+                "order_no": refund.order_no,
+                "amount": amount_to_string(refund.amount) or "0.00",
+                "currency": refund.currency,
+                "reason": refund.reason,
+                "status": refund.status,
+                "tool_name": refund.tool_name,
+                "created_at": refund.created_at,
+            },
+        )
+
+    coupon = get_coupon_by_action_plan_id(session, action_plan.id)
+    if coupon is not None:
+        return ActionPlanResultResponse(
+            action_plan_id=action_plan.action_plan_id,
+            result_type="coupon",
+            result={
+                "coupon_id": coupon.coupon_id,
+                "action_plan_id": action_plan.action_plan_id,
+                "approval_id": coupon.approval_request.approval_id
+                if coupon.approval_request is not None
+                else None,
+                "order_no": coupon.order_no,
+                "amount": amount_to_string(coupon.amount) or "0.00",
+                "currency": coupon.currency,
+                "reason": coupon.reason,
+                "status": coupon.status,
+                "tool_name": coupon.tool_name,
+                "created_at": coupon.created_at,
+            },
+        )
+
+    ticket = get_ticket_by_action_plan_id(session, action_plan.id)
+    if ticket is not None:
+        return ActionPlanResultResponse(
+            action_plan_id=action_plan.action_plan_id,
+            result_type="ticket",
+            result={
+                "ticket_id": ticket.ticket_id,
+                "action_plan_id": action_plan.action_plan_id,
+                "order_no": ticket.order_no,
+                "category": ticket.category,
+                "summary": ticket.summary,
+                "status": ticket.status,
+                "tool_name": ticket.tool_name,
+                "created_at": ticket.created_at,
+            },
+        )
+
+    return ActionPlanResultResponse(
+        action_plan_id=action_plan.action_plan_id,
+        result_type=None,
+        result=None,
+    )
 
 
 def list_approval_request_responses(
@@ -430,10 +580,32 @@ def action_plan_to_create_response(action_plan: ActionPlan) -> ActionPlanCreateR
     )
 
 
+def action_plan_to_list_item(action_plan: ActionPlan) -> ActionPlanListItem:
+    approval = action_plan.approval_request
+    return ActionPlanListItem(
+        action_plan_id=action_plan.action_plan_id,
+        order_no=action_plan.order_no,
+        intent=action_plan.intent,
+        planned_tool_name=action_plan.planned_tool_name,
+        action_type=action_plan.action_type,
+        status=action_plan.status,
+        execution_status=action_plan.execution_status,
+        risk_level=action_plan.risk_level,
+        requires_approval=action_plan.requires_approval,
+        approval_id=approval.approval_id if approval is not None else None,
+        proposed_amount=amount_to_string(action_plan.proposed_amount),
+        currency=action_plan.currency,
+        summary=action_plan.summary,
+        created_at=action_plan.created_at,
+        updated_at=action_plan.updated_at,
+    )
+
+
 def action_plan_to_response(action_plan: ActionPlan) -> ActionPlanResponse:
     return ActionPlanResponse(
         action_plan_id=action_plan.action_plan_id,
         run_id=action_plan.run_id,
+        request_message=action_plan.request_message,
         order_no=action_plan.order_no,
         intent=action_plan.intent,
         planned_tool_name=action_plan.planned_tool_name,
@@ -454,6 +626,51 @@ def action_plan_to_response(action_plan: ActionPlan) -> ActionPlanResponse:
         created_at=action_plan.created_at,
         updated_at=action_plan.updated_at,
     )
+
+
+def audit_log_to_response(audit_log: AuditLog) -> AuditLogResponse:
+    action_plan = audit_log.action_plan
+    approval = audit_log.approval_request
+    return AuditLogResponse(
+        event_id=audit_log.event_id,
+        event_type=audit_log.event_type,
+        actor_type=audit_log.actor_type,
+        actor_id=audit_log.actor_id,
+        action_plan_id=action_plan.action_plan_id if action_plan is not None else None,
+        approval_id=approval.approval_id if approval is not None else None,
+        order_no=audit_log.order_no,
+        idempotency_key=audit_log.idempotency_key,
+        payload=sanitize_audit_payload(dict(audit_log.payload_json)),
+        created_at=audit_log.created_at,
+    )
+
+
+def sanitize_audit_payload(payload: dict) -> dict:
+    forbidden_fragments = (
+        "api_key",
+        "authorization",
+        "connection",
+        "connection_string",
+        "database_url",
+        "password",
+        "prompt",
+        "secret",
+        "traceback",
+        "token",
+    )
+    return {
+        key: value
+        for key, value in payload.items()
+        if not any(fragment in key.lower() for fragment in forbidden_fragments)
+        and not looks_like_absolute_path(value)
+    }
+
+
+def looks_like_absolute_path(value) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalized = value.replace("\\", "/")
+    return normalized.startswith("/") or (len(normalized) > 2 and normalized[1:3] == ":/")
 
 
 def approval_request_to_response(approval: ApprovalRequest) -> ApprovalRequestResponse:
