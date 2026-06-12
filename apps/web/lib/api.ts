@@ -11,6 +11,8 @@ import type {
   ApprovalRequestResponse,
   AuditLogListResponse,
   CouponIssueRequest,
+  EvaluationReport,
+  EvaluationReportListResponse,
   HealthResponse,
   RefundApplyRequest,
   TicketCreateRequest,
@@ -28,6 +30,18 @@ type ActionPlanFilters = {
 
 export async function getHealth(): Promise<HealthResponse> {
   return apiRequest<HealthResponse>("/health");
+}
+
+export async function getLatestEvaluationReport(): Promise<EvaluationReport> {
+  return apiRequest<EvaluationReport>("/api/evaluations/latest");
+}
+
+export async function listEvaluationReports(): Promise<EvaluationReportListResponse> {
+  return apiRequest<EvaluationReportListResponse>("/api/evaluations/reports");
+}
+
+export async function getEvaluationReport(reportId: string): Promise<EvaluationReport> {
+  return apiRequest<EvaluationReport>(`/api/evaluations/reports/${encodeURIComponent(reportId)}`);
 }
 
 export async function runPreview(

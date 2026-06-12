@@ -37,4 +37,6 @@ Thumbs.db
 eval/reports/*.json
 eval/reports/*.md
 !eval/reports/.gitkeep
+!eval/reports/mvp_run_deterministic.json
+!eval/reports/MVP_REPORT.md
 data/local/

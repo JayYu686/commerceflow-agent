@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.api.agent import router as agent_router
 from app.api.approvals import router as approvals_router
 from app.api.commerce import router as commerce_router
+from app.api.evaluations import router as evaluations_router
 from app.api.policies import router as policies_router
 from app.api.tools import router as tools_router
 from app.core.config import get_settings
@@ -75,6 +76,7 @@ def create_app() -> FastAPI:
     api.include_router(agent_router)
     api.include_router(approvals_router)
     api.include_router(tools_router)
+    api.include_router(evaluations_router)
     return api
 
 

@@ -358,3 +358,72 @@ export type DemoScenario = {
     policyId?: string;
   };
 };
+
+export type EvaluationMetric = {
+  value: number | null;
+  passed: number;
+  total: number;
+};
+
+export type EvaluationCaseResult = {
+  case_id: string;
+  category: string;
+  kind: string;
+  adversarial: boolean;
+  success: boolean;
+  latency_ms: number;
+  expected: Record<string, unknown>;
+  actual: Record<string, unknown>;
+  checks: Record<string, boolean>;
+  failure_reasons: string[];
+};
+
+export type EvaluationBreakdownItem = {
+  category: string;
+  count: number;
+  successes: number;
+  task_success_rate: number;
+  main_failure: string | null;
+};
+
+export type EvaluationReport = {
+  report_id: string;
+  environment: {
+    git_commit: string;
+    dataset_version: string;
+    seed_data_version: string;
+    model_provider: string;
+    model_name: string | null;
+    embedding_provider: string;
+    risk_policy_version: string;
+    run_date: string;
+    sampling_parameters: Record<string, unknown>;
+    retry_policy: string;
+  };
+  summary: {
+    total_cases: number;
+    passed_cases: number;
+    failed_cases: number;
+    task_success_rate: number;
+    average_latency_ms: number;
+    p95_latency_ms: number;
+  };
+  metrics: Record<string, EvaluationMetric>;
+  breakdown: EvaluationBreakdownItem[];
+  cases: EvaluationCaseResult[];
+  representative_successes: EvaluationCaseResult[];
+  representative_failures: EvaluationCaseResult[];
+  limitations: string[];
+};
+
+export type EvaluationReportListItem = {
+  report_id: string;
+  run_date: string;
+  total_cases: number;
+  task_success_rate: number;
+  model_provider: string;
+};
+
+export type EvaluationReportListResponse = {
+  reports: EvaluationReportListItem[];
+};
