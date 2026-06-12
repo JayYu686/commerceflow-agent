@@ -35,7 +35,8 @@ CommerceFlow Agent 是一个面向电商售后场景的企业级可控业务 Age
 - **Action Plan / 审批 / 审计**：将 Agent 预览固化为动作计划，高风险退款进入人工审批，并记录审计日志。
 - **Mock 工具执行**：本地模拟 `refund_apply`、`coupon_issue`、`ticket_create`，带审批校验、幂等校验、结果表和审计日志。
 - **stdio MCP Server**：把同一组受控工具通过本地 stdio MCP 暴露，供本地 MCP Client 或 Inspector 调试。
-- **中文浏览器控制台**：总览、Agent 工作台、案例详情、审批中心、工具执行、审计时间线、评测占位页面。
+- **中文浏览器控制台**：总览、Agent 工作台、案例详情、审批中心、工具执行、审计时间线、评测看板。
+- **可复现评测**：固定 JSONL 数据集、本地 runner、保存的 JSON/Markdown 报告，以及浏览器评测看板。
 
 ## 安全边界
 
@@ -174,6 +175,32 @@ npm.cmd run dev
 ```text
 http://localhost:3000
 ```
+
+### 7. 运行确定性评测
+
+默认 MVP 评测基线使用确定性配置：`LLM_PROVIDER=disabled`，不会调用 DeepSeek 或其他真实外部模型。
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m scripts.run_evaluation `
+  --dataset ..\..\data\eval\mvp_eval_v1.jsonl `
+  --output ..\..\eval\reports\mvp_run_deterministic.json `
+  --markdown ..\..\eval\reports\MVP_REPORT.md `
+  --provider disabled
+```
+
+已保存报告：
+
+- JSON：`eval/reports/mvp_run_deterministic.json`
+- Markdown：[`eval/reports/MVP_REPORT.md`](eval/reports/MVP_REPORT.md)
+
+当前确定性基线来自这份报告：
+
+- 固定案例数：100
+- Task Success Rate：94.00%（94/100）
+- Unsafe Action Block Rate：100.00%（18/18）
+- Approval Enforcement Rate：100.00%（11/11）
+- Idempotency Protection Rate：100.00%（5/5）
 
 ## 浏览器演示路径
 
@@ -316,7 +343,7 @@ http://localhost:3000
 
 审计日志是 append-only，不提供编辑、删除或重放审计事件的能力。
 
-### 评测页面
+### 评测看板
 
 路径：
 
@@ -324,7 +351,19 @@ http://localhost:3000
 /evaluation
 ```
 
-当前是 Phase 5C 占位页面。自动评测数据集、runner 和真实指标报告会在后续阶段实现。当前 README 不声称任何未测量的准确率或成功率。
+展示 `eval/reports/*.json` 中保存的最新评测报告。如果还没有报告，页面会显示空状态和本地确定性评测命令，不会展示任何假指标。
+
+当前已保存的 MVP 基线报告：
+
+- Markdown：[`eval/reports/MVP_REPORT.md`](eval/reports/MVP_REPORT.md)
+- JSON：`eval/reports/mvp_run_deterministic.json`
+- 固定案例数：100
+- Task Success Rate：94.00%（94/100）
+- Unsafe Action Block Rate：100.00%（18/18）
+- Approval Enforcement Rate：100.00%（11/11）
+- Idempotency Protection Rate：100.00%（5/5）
+
+失败案例保留在报告中，用于说明当前 deterministic baseline 的真实边界和后续修复方向。
 
 ## API 使用示例
 
@@ -501,6 +540,13 @@ Set-Location services/api
 npx @modelcontextprotocol/inspector ..\..\.venv\Scripts\python.exe -m app.mcp_server.server
 ```
 
+## 求职交付材料
+
+- [3 分钟中文演示脚本](docs/demo/DEMO_SCRIPT.zh-CN.md)
+- [中文简历项目总结](docs/resume/PROJECT_SUMMARY.zh-CN.md)
+- [架构总览](docs/architecture/commerceflow-agent-overview.md)
+- [MVP 评测报告](eval/reports/MVP_REPORT.md)
+
 ## 验证命令
 
 后端：
@@ -518,6 +564,17 @@ Set-Location services/api
 Set-Location apps/web
 npm.cmd run lint
 npm.cmd run build
+```
+
+评测：
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m scripts.run_evaluation `
+  --dataset ..\..\data\eval\mvp_eval_v1.jsonl `
+  --output ..\..\eval\reports\mvp_run_deterministic.json `
+  --markdown ..\..\eval\reports\MVP_REPORT.md `
+  --provider disabled
 ```
 
 依赖检查：
@@ -552,8 +609,9 @@ git diff --check
 | Phase 5A | 已完成 | 中文总览和 Agent 工作台 |
 | Phase 5A.5 | 已完成 | 可选 OpenAI-compatible LLM Provider |
 | Phase 5B | 已完成 | 审批、Mock 工具执行和审计控制台 |
-| Phase 5C | 规划中 | Evaluation Dashboard |
-| Phase 6 | 规划中 | 可复现评测 runner 和真实指标报告 |
+| Phase 5C | 已完成 | 读取保存报告的 Evaluation Dashboard |
+| Phase 6A | 已完成 | 可复现评测数据集、runner 和真实 MVP 报告 |
+| Phase 6B | 已完成 | 求职交付文档、演示脚本和项目总结 |
 
 ## 尚未实现
 
@@ -561,8 +619,6 @@ git diff --check
 - Agent 自动调用 MCP 工具。
 - 真实支付、优惠券、工单、物流或电商系统集成。
 - 生产级认证、RBAC、SSO、多租户。
-- 自动评测数据集和 runner。
-- 可写入简历的真实评测指标报告。
 - 生产部署加固。
 
 ## 常见问题

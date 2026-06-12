@@ -34,7 +34,8 @@ Core capabilities:
 - **Action Plan and approval**: previews can be persisted as action plans; high-risk refund actions require human approval.
 - **Mock tool execution**: controlled local `refund_apply`, `coupon_issue`, and `ticket_create` tools with idempotency, approval checks, result records, and audit logs.
 - **MCP wrapper**: local stdio MCP server exposing the same controlled mock tools as thin wrappers around the internal service.
-- **Chinese Operations Console**: Next.js console for overview, workbench, case details, approvals, tool execution, audit timeline, and evaluation placeholder.
+- **Chinese Operations Console**: Next.js console for overview, workbench, case details, approvals, tool execution, audit timeline, and evaluation dashboard.
+- **Reproducible evaluation**: deterministic JSONL dataset, local runner, saved JSON/Markdown reports, and browser dashboard for measured MVP metrics.
 
 ## Safety Boundaries
 
@@ -166,6 +167,32 @@ Open:
 http://localhost:3000
 ```
 
+### 7. Run deterministic evaluation
+
+The default MVP evaluation baseline is deterministic. It uses `LLM_PROVIDER=disabled` and does not call DeepSeek or any other external model.
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m scripts.run_evaluation `
+  --dataset ..\..\data\eval\mvp_eval_v1.jsonl `
+  --output ..\..\eval\reports\mvp_run_deterministic.json `
+  --markdown ..\..\eval\reports\MVP_REPORT.md `
+  --provider disabled
+```
+
+Saved reports:
+
+- JSON: `eval/reports/mvp_run_deterministic.json`
+- Markdown: [`eval/reports/MVP_REPORT.md`](eval/reports/MVP_REPORT.md)
+
+Current deterministic baseline from the saved report:
+
+- Cases: 100
+- Task Success Rate: 94.00% (94/100)
+- Unsafe Action Block Rate: 100.00% (18/18)
+- Approval Enforcement Rate: 100.00% (11/11)
+- Idempotency Protection Rate: 100.00% (5/5)
+
 ## Browser Demo Flow
 
 Use the Chinese Operations Console for the main demo.
@@ -264,7 +291,7 @@ Shows append-only audit events such as:
 - `tool_execution_blocked`
 - `tool_execution_idempotent_replay`
 
-### Evaluation Placeholder
+### Evaluation Dashboard
 
 Path:
 
@@ -272,7 +299,9 @@ Path:
 /evaluation
 ```
 
-The evaluation dashboard is intentionally a placeholder for a later phase. No production metrics are claimed until a reproducible evaluation runner and dataset are implemented.
+Shows the latest saved evaluation report from `eval/reports/*.json`. If no report exists, the page shows an empty state and the deterministic command to generate one. It never displays fabricated metrics.
+
+The first MVP report is checked in as [`eval/reports/MVP_REPORT.md`](eval/reports/MVP_REPORT.md). It reports 100 fixed cases and a 94.00% deterministic Task Success Rate. Failure cases are intentionally kept in the report instead of being removed.
 
 ## API Examples
 
@@ -430,6 +459,13 @@ Set-Location services/api
 npx @modelcontextprotocol/inspector ..\..\.venv\Scripts\python.exe -m app.mcp_server.server
 ```
 
+## Portfolio Delivery Docs
+
+- [Chinese 3-minute demo script](docs/demo/DEMO_SCRIPT.zh-CN.md)
+- [Chinese resume project summary](docs/resume/PROJECT_SUMMARY.zh-CN.md)
+- [Architecture overview](docs/architecture/commerceflow-agent-overview.md)
+- [MVP evaluation report](eval/reports/MVP_REPORT.md)
+
 ## Validation
 
 Backend:
@@ -447,6 +483,17 @@ Frontend:
 Set-Location apps/web
 npm.cmd run lint
 npm.cmd run build
+```
+
+Evaluation:
+
+```powershell
+Set-Location services/api
+..\..\.venv\Scripts\python.exe -m scripts.run_evaluation `
+  --dataset ..\..\data\eval\mvp_eval_v1.jsonl `
+  --output ..\..\eval\reports\mvp_run_deterministic.json `
+  --markdown ..\..\eval\reports\MVP_REPORT.md `
+  --provider disabled
 ```
 
 Dependency check:
@@ -481,8 +528,9 @@ git diff --check
 | Phase 5A | Done | Chinese Overview and Agent Workbench |
 | Phase 5A.5 | Done | Optional OpenAI-compatible LLM provider |
 | Phase 5B | Done | Approval, mock tool execution, and audit console |
-| Phase 5C | Planned | Evaluation dashboard |
-| Phase 6 | Planned | Reproducible evaluation runner and measured report |
+| Phase 5C | Done | Evaluation dashboard backed by saved reports |
+| Phase 6A | Done | Reproducible evaluation dataset, runner, and measured MVP report |
+| Phase 6B | Done | Portfolio delivery docs and demo materials |
 
 ## Not Implemented Yet
 
@@ -490,7 +538,6 @@ git diff --check
 - Agent automatic MCP tool execution.
 - Real external payment, coupon, ticketing, logistics, or e-commerce integrations.
 - Production authentication, RBAC, SSO, or multi-tenancy.
-- Evaluation dataset and runner with measured metrics.
 - Production deployment hardening.
 
 ## Troubleshooting
