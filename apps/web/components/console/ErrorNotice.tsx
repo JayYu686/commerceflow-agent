@@ -1,25 +1,26 @@
 "use client";
 
 import type { ApiError } from "../../lib/types";
+import { displayLabel } from "../../lib/display";
 
 type ErrorNoticeProps = {
   error: ApiError | Error | string | null;
 };
 
 const conflictMessages: Record<string, string> = {
-  action_plan_already_executed: "该 Action Plan 已经执行，不能重复执行工具。",
+  action_plan_already_executed: "该动作计划已经执行，不能重复执行工具。",
   approval_already_decided: "该审批已经完成决策，不能重复批准或拒绝。",
-  approval_mismatch: "请求中的审批记录与 Action Plan 不匹配。",
+  approval_mismatch: "请求中的审批记录与动作计划不匹配。",
   approval_not_approved: "审批尚未批准，不能执行该工具。",
   approval_required: "该动作需要先完成人工审批。",
-  amount_mismatch: "请求金额与 Action Plan 中的金额不一致。",
-  currency_mismatch: "请求币种与 Action Plan 中的币种不一致。",
-  duplicate_action_plan: "相同业务请求已存在 Action Plan。",
-  duplicate_execution: "该 Action Plan 已经生成过 Mock Result。",
+  amount_mismatch: "请求金额与动作计划中的金额不一致。",
+  currency_mismatch: "请求币种与动作计划中的币种不一致。",
+  duplicate_action_plan: "相同业务请求已存在动作计划。",
+  duplicate_execution: "该动作计划已经生成过本地模拟结果。",
   idempotency_key_reused: "该幂等键已被不同请求使用。",
   missing_policy_evidence: "缺少可引用的政策依据，不能执行该工具。",
-  order_mismatch: "请求订单号与 Action Plan 不一致。",
-  tool_action_mismatch: "请求工具与 Action Plan 的 planned tool 不一致。",
+  order_mismatch: "请求订单号与动作计划不一致。",
+  tool_action_mismatch: "请求工具与动作计划的计划工具不一致。",
 };
 
 export function ErrorNotice({ error }: ErrorNoticeProps) {
@@ -43,7 +44,7 @@ export function ErrorNotice({ error }: ErrorNoticeProps) {
       {normalized.existingIdentifier ? (
         <div className="mt-3 rounded-md border border-red-200 bg-white p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-red-700">
-            existing_identifier
+            已存在的记录 ID
           </div>
           <code className="mt-1 block break-all text-sm text-red-950">
             {normalized.existingIdentifier}
@@ -53,7 +54,7 @@ export function ErrorNotice({ error }: ErrorNoticeProps) {
             onClick={copyExistingIdentifier}
             className="mt-2 rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-100"
           >
-            复制 existing_identifier
+            复制 ID
           </button>
         </div>
       ) : null}
@@ -79,22 +80,22 @@ function normalizeError(error: ApiError | Error | string): {
   if (error.status === 422) {
     return {
       message: "请求参数不完整或格式不正确。",
-      detail: error.message,
+      detail: "请检查必填字段、时间格式、金额、状态筛选和数量限制等参数。",
       existingIdentifier,
     };
   }
 
   if (error.status === 404) {
-    return { message: "资源不存在。", detail: error.message, existingIdentifier };
+    return { message: "资源不存在。", detail: "请确认 ID 或订单号是否正确。", existingIdentifier };
   }
 
   if (error.status === 409) {
     return {
-      message: conflictMessages[error.code] ?? "请求被后端安全规则拦截。",
+      message: conflictMessages[error.code] ?? `请求被后端安全规则拦截：${displayLabel(error.code)}`,
       detail:
         error.code === "duplicate_action_plan"
-          ? "这是业务防重复保护，不是系统错误。请复用现有 Action Plan，或修改请求后刷新幂等键。"
-          : error.message,
+          ? "这是业务防重复保护，不是系统错误。请复用现有动作计划，或修改请求后刷新幂等键。"
+          : "这是后端安全规则拦截，不是前端错误。请检查审批状态、金额、订单号、政策依据和幂等键。",
       existingIdentifier,
     };
   }
@@ -102,7 +103,6 @@ function normalizeError(error: ApiError | Error | string): {
   if (error.status >= 500) {
     return {
       message: "服务暂时不可用，请查看后端日志。",
-      detail: error.message,
       existingIdentifier,
     };
   }

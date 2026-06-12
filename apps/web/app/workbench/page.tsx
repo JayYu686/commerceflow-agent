@@ -7,18 +7,25 @@ import { DebugJson } from "../../components/console/DebugJson";
 import { ErrorNotice } from "../../components/console/ErrorNotice";
 import { IdempotencyKeyBox } from "../../components/console/IdempotencyKeyBox";
 import { Panel } from "../../components/console/Panel";
-import { createActionPlan, getHealth, runPreview } from "../../lib/api";
+import { createActionPlan, getActionPlan, getHealth, runPreview } from "../../lib/api";
 import { DEFAULT_AS_OF_LOCAL, DEMO_SCENARIOS } from "../../lib/demo-scenarios";
 import {
   displayLabel,
   displayWithRaw,
+  fieldLabel,
   toneForRiskValue,
   toneForStatusValue,
+  localizeText,
+  policyExcerpt,
+  policySection,
+  policyTitle,
+  sourceLabel,
   yesNo,
 } from "../../lib/display";
 import { newIdempotencyKey } from "../../lib/idempotency";
 import type {
   ActionPlanCreateResponse,
+  ActionPlanResponse,
   AgentPreviewRequest,
   AgentPreviewResponse,
   ApiError,
@@ -28,6 +35,8 @@ import type {
   PolicyEvidence,
   WorkflowStep,
 } from "../../lib/types";
+
+type ActionPlanSource = "created" | "reused";
 
 export default function WorkbenchPage() {
   const [selectedScenarioId, setSelectedScenarioId] = useState<DemoScenario["id"]>("quality_refund");
@@ -39,6 +48,7 @@ export default function WorkbenchPage() {
   const [asOfLocal, setAsOfLocal] = useState(DEFAULT_AS_OF_LOCAL);
   const [preview, setPreview] = useState<AgentPreviewResponse | null>(null);
   const [actionPlan, setActionPlan] = useState<ActionPlanCreateResponse | null>(null);
+  const [actionPlanSource, setActionPlanSource] = useState<ActionPlanSource | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<ApiError | Error | null>(null);
@@ -67,6 +77,7 @@ export default function WorkbenchPage() {
     setMessage(scenario.message);
     setPreview(null);
     setActionPlan(null);
+    setActionPlanSource(null);
     setError(null);
     setIdempotencyKey(newIdempotencyKey("web-action-plan"));
   }
@@ -76,6 +87,7 @@ export default function WorkbenchPage() {
     setAsOfLocal(DEFAULT_AS_OF_LOCAL);
     setPreview(null);
     setActionPlan(null);
+    setActionPlanSource(null);
     setError(null);
     setIdempotencyKey(newIdempotencyKey("web-action-plan"));
   }
@@ -84,6 +96,7 @@ export default function WorkbenchPage() {
     setLoadingPreview(true);
     setError(null);
     setActionPlan(null);
+    setActionPlanSource(null);
     try {
       const response = await runPreview(buildRequest(message, asOfLocal));
       setPreview(response);
@@ -106,16 +119,28 @@ export default function WorkbenchPage() {
     try {
       const response = await createActionPlan(buildRequest(message, asOfLocal), idempotencyKey);
       setActionPlan(response);
+      setActionPlanSource("created");
     } catch (caught: unknown) {
-      setError(normalizeThrown(caught));
+      const normalized = normalizeThrown(caught);
+      if (isDuplicateActionPlanError(normalized)) {
+        try {
+          const existing = await getActionPlan(normalized.existing_identifier);
+          setActionPlan(actionPlanResponseToCreateResponse(existing));
+          setActionPlanSource("reused");
+        } catch {
+          setActionPlan(null);
+          setActionPlanSource(null);
+        }
+      }
+      setError(normalized);
     } finally {
       setCreatingActionPlan(false);
     }
   }
 
   const mismatches = useMemo(
-    () => evaluateScenario(selectedScenario, preview, actionPlan),
-    [selectedScenario, preview, actionPlan],
+    () => evaluateScenario(selectedScenario, preview, actionPlan, actionPlanSource),
+    [selectedScenario, preview, actionPlan, actionPlanSource],
   );
 
   return (
@@ -124,10 +149,10 @@ export default function WorkbenchPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-signal">Agent 工作台</p>
           <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-            预览、证据、风险与 Action Plan
+            预览、证据、风险与动作计划
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            从浏览器输入售后诉求并运行 Agent 预览。此页面可以创建 Action Plan，但不能审批、
+            从浏览器输入售后诉求并运行 Agent 预览。此页面可以创建动作计划，但不能审批、
             执行工具、调用 MCP，或修改订单、物流和政策记录。
           </p>
         </div>
@@ -135,14 +160,14 @@ export default function WorkbenchPage() {
           <Badge tone={health?.status === "ok" ? "success" : "warning"}>
             API {health?.status ?? "未知"}
           </Badge>
-          <Badge tone="warning">创建 Action Plan 前仅预览</Badge>
+          <Badge tone="warning">创建动作计划前仅预览</Badge>
           <Badge tone="neutral">不调用真实外部系统</Badge>
         </div>
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <div className="space-y-6">
-          <Panel title="场景选择" eyebrow="Demo 输入">
+          <Panel title="场景选择" eyebrow="演示输入">
             <div className="grid gap-3">
               {DEMO_SCENARIOS.map((scenario) => (
                 <button
@@ -187,7 +212,7 @@ export default function WorkbenchPage() {
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">as_of 时间</span>
+                <span className="text-sm font-medium text-slate-700">业务时间 as_of</span>
                 <input
                   type="datetime-local"
                   value={asOfLocal}
@@ -222,7 +247,12 @@ export default function WorkbenchPage() {
 
         <div className="space-y-6">
           <SummaryPanel preview={preview} />
-          <ScenarioCheck mismatches={mismatches} preview={preview} actionPlan={actionPlan} />
+          <ScenarioCheck
+            mismatches={mismatches}
+            preview={preview}
+            actionPlan={actionPlan}
+            actionPlanSource={actionPlanSource}
+          />
           <StepTimeline steps={preview?.steps ?? []} />
           <FactsPanel preview={preview} />
           <PolicyPanel evidence={preview?.policy_evidence ?? []} />
@@ -238,12 +268,14 @@ export default function WorkbenchPage() {
             onRefreshKey={() => {
               setIdempotencyKey(newIdempotencyKey("web-action-plan"));
               setActionPlan(null);
+              setActionPlanSource(null);
             }}
+            actionPlanSource={actionPlanSource}
           />
           <DebugJson title="预览调试 JSON" data={preview ?? { message: "还没有运行预览。" }} />
           <DebugJson
-            title="Action Plan 调试 JSON"
-            data={actionPlan ?? { message: "还没有创建 Action Plan。" }}
+            title="动作计划调试 JSON"
+            data={actionPlan ?? { message: "还没有创建动作计划。" }}
           />
         </div>
       </div>
@@ -289,16 +321,25 @@ function ScenarioCheck({
   mismatches,
   preview,
   actionPlan,
+  actionPlanSource,
 }: {
   mismatches: string[];
   preview: AgentPreviewResponse | null;
   actionPlan: ActionPlanCreateResponse | null;
+  actionPlanSource: ActionPlanSource | null;
 }) {
   if (!preview && !actionPlan) {
     return null;
   }
   return (
     <Panel title="Demo 预期校验" eyebrow="场景验证">
+      {actionPlanSource === "reused" && actionPlan ? (
+        <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-900">
+          已复用历史动作计划，当前状态为
+          <span className="mx-1 font-semibold">{displayLabel(actionPlan.status)}</span>。
+          Demo 中“待审批”的预期只适用于首次新建动作计划；复用历史计划时，以后端返回的真实状态为准。
+        </div>
+      ) : null}
       {mismatches.length === 0 ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           当前结果与该 Demo 在当前步骤的预期一致。
@@ -342,7 +383,7 @@ function StepTimeline({ steps }: { steps: WorkflowStep[] }) {
                   {stepName.raw ? (
                     <div className="mt-1 text-xs text-slate-500">原始步骤：{stepName.raw}</div>
                   ) : null}
-                  <p className="mt-2 text-sm text-slate-600">{step.detail}</p>
+                  <p className="mt-2 text-sm text-slate-600">{localizeText(step.detail)}</p>
                 </div>
               </li>
             );
@@ -417,9 +458,11 @@ function FactsPanel({ preview }: { preview: AgentPreviewResponse | null }) {
                           #{event.sequence} {displayLabel(event.event_type)}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {event.occurred_at} · {event.location}
+                          {event.occurred_at} · {localizeText(event.location)}
                         </div>
-                        <p className="mt-1 text-sm text-slate-600">{event.description}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {localizeText(event.description)}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -448,13 +491,18 @@ function PolicyPanel({ evidence }: { evidence: PolicyEvidence[] }) {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{policy.policy_id}</span>
                 <Badge tone="info">{policy.section}</Badge>
-                <Badge tone="neutral">score {policy.score.toFixed(3)}</Badge>
+                <Badge tone="neutral">相关度 {policy.score.toFixed(3)}</Badge>
               </div>
               <div className="mt-2 text-sm text-slate-600">
-                {policy.title} · {policy.version} · {displayLabel(policy.category)} /{" "}
+                {policyTitle(policy.title)} · {policy.version} · {displayLabel(policy.category)} /{" "}
                 {displayLabel(policy.aftersales_type)}
               </div>
-              <p className="mt-3 text-sm leading-6 text-slate-700">{policy.content_excerpt}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                {policyExcerpt(policy.content_excerpt)}
+              </p>
+              <div className="mt-2 text-xs text-slate-500">
+                政策章节：{policySection(policy.section)} · 原始章节：{policy.section}
+              </div>
             </article>
           ))}
         </div>
@@ -483,7 +531,9 @@ function RecommendationPanel({ preview }: { preview: AgentPreviewResponse | null
                 人工审批：{yesNo(risk.requires_approval)}
               </Badge>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-700">{recommendation.summary}</p>
+            <p className="mt-4 text-sm leading-6 text-slate-700">
+              {localizeText(recommendation.summary)}
+            </p>
             {recommendation.proposed_amount ? (
               <div className="mt-3 text-sm font-semibold">
                 预估金额：{recommendation.currency} {recommendation.proposed_amount}
@@ -497,12 +547,12 @@ function RecommendationPanel({ preview }: { preview: AgentPreviewResponse | null
             <h3 className="text-sm font-semibold">风险原因</h3>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
               {risk.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
+                <li key={reason}>{localizeText(reason)}</li>
               ))}
             </ul>
           </div>
-          <ListBlock title="建议原因" items={recommendation.reasons} />
-          <ListBlock title="后续步骤" items={recommendation.next_steps} />
+          <ListBlock title="建议原因" items={recommendation.reasons.map(localizeText)} />
+          <ListBlock title="后续步骤" items={recommendation.next_steps.map(localizeText)} />
         </div>
       )}
     </Panel>
@@ -526,19 +576,24 @@ function CustomerReplyPanel({ preview }: { preview: AgentPreviewResponse | null 
 function LLMPanel({ preview }: { preview: AgentPreviewResponse | null }) {
   const llm = preview?.llm;
   return (
-    <Panel title="LLM 元信息" eyebrow="受控 adapter">
+    <Panel title="LLM 元信息" eyebrow="受控模型适配器">
       {!llm ? (
-        <EmptyState message="运行预览后，这里会展示 provider、fallback、token 和延迟元信息。" />
+        <EmptyState message="运行预览后，这里会展示模型供应方、是否回退、token 和延迟元信息。" />
       ) : (
         <div className="grid gap-3 md:grid-cols-4">
-          <SummaryMetric label="Provider" value={llm.provider} tone="info" />
+          <SummaryMetric label="模型供应方" value={displayLabel(llm.provider)} raw={llm.provider} tone="info" />
           <SummaryMetric
-            label="Fallback"
+            label="是否回退"
             value={llm.fallback_used ? "已回退" : "未回退"}
             raw={String(llm.fallback_used)}
             tone={llm.fallback_used ? "warning" : "success"}
           />
-          <SummaryMetric label="原因" value={llm.fallback_reason ?? "无"} tone="neutral" />
+          <SummaryMetric
+            label="回退原因"
+            value={displayLabel(llm.fallback_reason, "无")}
+            raw={llm.fallback_reason}
+            tone="neutral"
+          />
           <SummaryMetric
             label="延迟"
             value={llm.latency_ms === null ? "n/a" : `${llm.latency_ms} ms`}
@@ -557,6 +612,7 @@ function ActionPlanPanel({
   creating,
   onCreate,
   onRefreshKey,
+  actionPlanSource,
 }: {
   preview: AgentPreviewResponse | null;
   actionPlan: ActionPlanCreateResponse | null;
@@ -564,13 +620,14 @@ function ActionPlanPanel({
   creating: boolean;
   onCreate: () => void;
   onRefreshKey: () => void;
+  actionPlanSource: ActionPlanSource | null;
 }) {
   const canCreate = Boolean(preview && idempotencyKey && !creating);
   return (
-    <Panel title="创建 Action Plan / 动作计划" eyebrow="持久化计划">
+    <Panel title="创建动作计划（Action Plan）" eyebrow="持久化计划">
       <div className="space-y-4">
         <p className="text-sm leading-6 text-slate-600">
-          创建 Action Plan 会复用当前预览的 message 和 as_of。它只保存动作计划，不会批准、
+          创建动作计划会复用当前预览的用户请求和 as_of 业务时间。它只保存动作计划，不会批准、
           执行退款、发放优惠券、创建真实工单或调用 MCP 工具。
         </p>
         <IdempotencyKeyBox value={idempotencyKey} onRefresh={onRefreshKey} />
@@ -581,43 +638,55 @@ function ActionPlanPanel({
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {creating
-            ? "正在创建 Action Plan..."
+            ? "正在创建动作计划..."
             : actionPlan
               ? "使用相同幂等键重试"
-              : "创建 Action Plan"}
+              : "创建动作计划"}
         </button>
         {!idempotencyKey ? (
-          <div className="text-xs text-amber-700">正在生成幂等键，生成前不能创建 Action Plan。</div>
+          <div className="text-xs text-amber-700">正在生成幂等键，生成前不能创建动作计划。</div>
         ) : null}
         {actionPlan ? (
-          <div className="grid gap-3 rounded-lg border border-line bg-slate-50 p-4 text-sm md:grid-cols-2">
-            <KeyValue label="Action Plan ID" value={actionPlan.action_plan_id} />
-            <KeyValue label="Approval ID" value={actionPlan.approval_id ?? "无"} />
-            <KeyValue
-              label="动作类型"
-              value={displayLabel(actionPlan.action_type)}
-              raw={actionPlan.action_type}
-            />
-            <KeyValue label="计划工具" value={actionPlan.planned_tool_name ?? "无"} />
-            <KeyValue label="状态" value={displayLabel(actionPlan.status)} raw={actionPlan.status} />
-            <KeyValue
-              label="执行状态"
-              value={displayLabel(actionPlan.execution_status)}
-              raw={actionPlan.execution_status}
-            />
-            <KeyValue
-              label="风险等级"
-              value={displayLabel(actionPlan.risk_level)}
-              raw={actionPlan.risk_level}
-            />
-            <KeyValue
-              label="金额"
-              value={
-                actionPlan.proposed_amount
-                  ? `${actionPlan.currency ?? ""} ${actionPlan.proposed_amount}`.trim()
-                  : "无"
-              }
-            />
+          <div className="space-y-3">
+            {actionPlanSource === "reused" ? (
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm leading-6 text-sky-900">
+                后端检测到相同业务请求已存在动作计划，本次展示的是已复用的历史计划。这是业务防重复保护，
+                不是系统错误。
+              </div>
+            ) : null}
+            <div className="grid gap-3 rounded-lg border border-line bg-slate-50 p-4 text-sm md:grid-cols-2">
+              <KeyValue label="动作计划 ID" value={actionPlan.action_plan_id} />
+              <KeyValue label="审批 ID" value={actionPlan.approval_id ?? "无"} />
+              <KeyValue
+                label="来源"
+                value={actionPlanSource === "reused" ? "复用历史动作计划" : "本次新建动作计划"}
+              />
+              <KeyValue
+                label="动作类型"
+                value={displayLabel(actionPlan.action_type)}
+                raw={actionPlan.action_type}
+              />
+              <KeyValue label="计划工具" value={actionPlan.planned_tool_name ?? "无"} />
+              <KeyValue label="状态" value={displayLabel(actionPlan.status)} raw={actionPlan.status} />
+              <KeyValue
+                label="执行状态"
+                value={displayLabel(actionPlan.execution_status)}
+                raw={actionPlan.execution_status}
+              />
+              <KeyValue
+                label="风险等级"
+                value={displayLabel(actionPlan.risk_level)}
+                raw={actionPlan.risk_level}
+              />
+              <KeyValue
+                label="金额"
+                value={
+                  actionPlan.proposed_amount
+                    ? `${actionPlan.currency ?? ""} ${actionPlan.proposed_amount}`.trim()
+                    : "无"
+                }
+              />
+            </div>
           </div>
         ) : null}
       </div>
@@ -632,7 +701,7 @@ function FactEvidenceList({ evidence }: { evidence: FactEvidence[] }) {
       <div className="mt-3 flex flex-wrap gap-2">
         {evidence.map((item) => (
           <Badge key={`${item.source}-${item.field}-${item.value}`} tone="neutral">
-            {item.source}.{item.field}: {item.value}
+            {sourceLabel(item.source)} · {fieldLabel(item.field)}：{displayLabel(item.value)}
           </Badge>
         ))}
       </div>
@@ -709,10 +778,45 @@ function localDateTimeToIso(value: string): string | undefined {
   return date.toISOString();
 }
 
+function isDuplicateActionPlanError(error: ApiError | Error): error is ApiError & {
+  existing_identifier: string;
+} {
+  return (
+    "status" in error &&
+    error.status === 409 &&
+    error.code === "duplicate_action_plan" &&
+    typeof error.existing_identifier === "string" &&
+    error.existing_identifier.length > 0
+  );
+}
+
+function actionPlanResponseToCreateResponse(
+  response: ActionPlanResponse,
+): ActionPlanCreateResponse {
+  return {
+    action_plan_id: response.action_plan_id,
+    run_id: response.run_id,
+    order_no: response.order_no,
+    intent: response.intent,
+    planned_tool_name: response.planned_tool_name,
+    action_type: response.action_type,
+    status: response.status,
+    execution_status: response.execution_status,
+    risk_level: response.risk_level,
+    requires_approval: response.requires_approval,
+    approval_id: response.approval?.approval_id ?? null,
+    proposed_amount: response.proposed_amount,
+    currency: response.currency,
+    summary: response.summary,
+    created_at: response.created_at,
+  };
+}
+
 function evaluateScenario(
   scenario: DemoScenario,
   preview: AgentPreviewResponse | null,
   actionPlan: ActionPlanCreateResponse | null,
+  actionPlanSource: ActionPlanSource | null,
 ): string[] {
   const mismatches: string[] = [];
   const expected = scenario.expectedPreview;
@@ -749,11 +853,19 @@ function evaluateScenario(
         )}。`,
       );
     }
-    if (scenario.id === "logistics_delay" && preview.policy_evidence.length === 0) {
-      mismatches.push("预期命中物流延迟政策依据，但实际政策依据为空。");
+    if (
+      expected.policyId &&
+      !preview.policy_evidence.some((policy) => policy.policy_id === expected.policyId)
+    ) {
+      mismatches.push(`预期命中 ${policyIdTitleForScenario(expected.policyId)}，但实际未命中。`);
     }
   }
-  if (actionPlan && expected.actionPlanStatus && actionPlan.status !== expected.actionPlanStatus) {
+  if (
+    actionPlan &&
+    actionPlanSource !== "reused" &&
+    expected.actionPlanStatus &&
+    actionPlan.status !== expected.actionPlanStatus
+  ) {
     mismatches.push(
       `预期 Action Plan 状态为 ${displayLabel(expected.actionPlanStatus)}，实际为 ${displayLabel(
         actionPlan.status,
@@ -761,6 +873,16 @@ function evaluateScenario(
     );
   }
   return mismatches;
+}
+
+function policyIdTitleForScenario(policyId: string): string {
+  if (policyId === "POL-LOGISTICS-DELAY-V1") {
+    return "物流延迟补偿政策";
+  }
+  if (policyId === "POL-QUALITY-ELECTRONICS-V2") {
+    return "电子产品质量问题退款政策";
+  }
+  return policyId;
 }
 
 function normalizeThrown(caught: unknown): ApiError | Error {

@@ -3,9 +3,10 @@
 type IdempotencyKeyBoxProps = {
   value: string;
   onRefresh: () => void;
+  description?: string;
 };
 
-export function IdempotencyKeyBox({ value, onRefresh }: IdempotencyKeyBoxProps) {
+export function IdempotencyKeyBox({ value, onRefresh, description }: IdempotencyKeyBoxProps) {
   const hasValue = value.trim().length > 0;
 
   async function copyKey() {
@@ -43,8 +44,9 @@ export function IdempotencyKeyBox({ value, onRefresh }: IdempotencyKeyBoxProps) 
           </button>
         </div>
       </div>
-      <p className="mt-3 text-xs text-amber-900">
-        使用相同幂等键重试应返回同一个 Action Plan。只有要发起新的创建尝试时才刷新幂等键。
+      <p className="mt-3 text-xs leading-5 text-amber-900">
+        {description ??
+          "使用相同幂等键重试，应返回同一个结果；只有发起新的创建或执行尝试时才刷新幂等键。"}
       </p>
     </div>
   );

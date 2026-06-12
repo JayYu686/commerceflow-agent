@@ -12,34 +12,34 @@ import { DEMO_SCENARIOS } from "../lib/demo-scenarios";
 import type { ApiError, HealthResponse } from "../lib/types";
 
 const capabilityChain = [
-  "接收自然语言售后诉求",
+  "接收中文售后诉求",
   "确定性解析与受控 LLM 辅助理解",
   "查询订单与物流事实",
   "检索售后政策依据",
   "生成处理建议与风险等级",
-  "创建 Action Plan / 动作计划",
-  "人工审批 approve / reject",
-  "人工触发本地 Mock 工具执行",
-  "查看 Mock Result 与审计时间线",
+  "创建动作计划",
+  "人工审批批准或拒绝",
+  "人工触发本地模拟工具执行",
+  "查看本地模拟结果与审计时间线",
 ];
 
 const implemented = [
   "只读订单与物流查询 API",
-  "政策 RAG 检索 API",
-  "LangGraph Agent Preview 工作流",
-  "OpenAI-compatible 受控 LLM Provider",
-  "Action Plan、审批与审计数据层",
-  "Mock 退款、优惠券和工单工具 API",
-  "本地 stdio MCP Server wrapper",
+  "政策知识库与 RAG 检索 API",
+  "LangGraph Agent 预览工作流",
+  "OpenAI 兼容真实模型接入（默认受控关闭）",
+  "动作计划、审批与审计数据层",
+  "本地模拟退款、优惠券和工单工具 API",
+  "本地 stdio MCP 工具服务封装",
   "中文 Agent 工作台",
   "审批中心、工具执行和审计时间线 UI",
 ];
 
 const notYetImplemented = [
-  "LangGraph interrupt / resume",
+  "LangGraph 人工中断与恢复执行",
   "Agent 自动调用 MCP 工具",
   "真实支付、优惠券、客服或物流系统",
-  "真实 Evaluation Dashboard 和评测报告",
+  "真实评测看板与评测报告",
   "生产级认证、权限和多租户",
 ];
 
@@ -68,7 +68,7 @@ export default function Home() {
             CommerceFlow Agent 运营控制台
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            通过浏览器完成从 Agent 预览、创建 Action Plan、人工审批、Mock 工具执行到审计复盘的完整演示链路。
+            通过浏览器完成从 Agent 预览、创建动作计划、人工审批、本地模拟工具执行到审计复盘的完整演示链路。
             所有执行结果都是本地模拟记录，不调用真实外部业务系统。
           </p>
         </div>
