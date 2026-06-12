@@ -25,7 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
               <h1 className="mt-1 text-2xl font-semibold">Agent 控制台</h1>
             </div>
-            <Badge tone="warning">仅本地 Mock</Badge>
+            <Badge tone="warning">仅本地模拟</Badge>
           </div>
           <nav className="mt-6 grid gap-2 text-sm">
             {navigation.map((item) => (
@@ -42,7 +42,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
             <div className="font-semibold">安全边界</div>
             <p className="mt-1 leading-6">
-              本演示中的退款、优惠券和工单均为本地 Mock 记录，不会调用真实支付、优惠券、客服或物流系统。
+              本演示中的退款、优惠券和工单均为本地模拟记录，不会调用真实支付、优惠券、客服或物流系统。
               Agent 不会自动审批，也不会自动调用 MCP 或工具。
             </p>
           </div>

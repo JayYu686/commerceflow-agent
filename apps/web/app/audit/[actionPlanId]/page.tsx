@@ -12,7 +12,14 @@ import { KeyValue } from "../../../components/console/KeyValue";
 import { Panel } from "../../../components/console/Panel";
 import { SafeMockNotice } from "../../../components/console/SafeMockNotice";
 import { getActionPlan, getActionPlanAuditLogs } from "../../../lib/api";
-import { displayLabel, formatDateTime, toneForStatusValue } from "../../../lib/display";
+import {
+  actorLabel,
+  displayLabel,
+  formatDateTime,
+  payloadKeyLabel,
+  payloadValueLabel,
+  toneForStatusValue,
+} from "../../../lib/display";
 import type { ActionPlanResponse, ApiError, AuditLogEvent } from "../../../lib/types";
 
 export default function AuditTimelinePage() {
@@ -58,11 +65,9 @@ export default function AuditTimelinePage() {
       <header className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-signal">审计时间线</p>
-          <h2 className="mt-1 break-all text-3xl font-semibold tracking-tight">
-            {actionPlanId}
-          </h2>
+          <h2 className="mt-1 break-all text-3xl font-semibold tracking-tight">{actionPlanId}</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            只读展示 Action Plan、审批和 Mock Tool 执行相关事件。审计日志不提供修改或删除入口。
+            只读展示动作计划、审批和本地模拟工具执行相关事件。审计日志不提供修改或删除入口。
           </p>
         </div>
         <Link
@@ -77,7 +82,7 @@ export default function AuditTimelinePage() {
       <ErrorNotice error={error} />
 
       {actionPlan ? (
-        <Panel title="Action Plan 摘要" eyebrow="审计对象">
+        <Panel title="动作计划摘要" eyebrow="审计对象">
           <div className="grid gap-3 md:grid-cols-4">
             <KeyValue label="订单号" value={actionPlan.order_no ?? "无"} />
             <KeyValue label="动作" value={displayLabel(actionPlan.action_type)} raw={actionPlan.action_type} />
@@ -95,7 +100,7 @@ export default function AuditTimelinePage() {
         {loading ? (
           <EmptyState message="正在加载审计事件..." />
         ) : events.length === 0 ? (
-          <EmptyState message="当前 Action Plan 没有审计事件。" />
+          <EmptyState message="当前动作计划没有审计事件。" />
         ) : (
           <ol className="space-y-4">
             {events.map((event, index) => (
@@ -114,12 +119,12 @@ export default function AuditTimelinePage() {
                     <span className="text-xs text-slate-500">{formatDateTime(event.created_at)}</span>
                   </div>
                   <dl className="mt-4 grid gap-3 md:grid-cols-3">
-                    <KeyValue label="Event ID" value={event.event_id} />
-                    <KeyValue label="Actor" value={`${event.actor_type}${event.actor_id ? ` / ${event.actor_id}` : ""}`} />
+                    <KeyValue label="事件 ID" value={event.event_id} />
+                    <KeyValue label="操作者" value={actorLabel(event.actor_type, event.actor_id)} />
                     <KeyValue label="幂等键" value={event.idempotency_key ?? "无"} />
                     <KeyValue label="订单号" value={event.order_no ?? "无"} />
-                    <KeyValue label="Approval ID" value={event.approval_id ?? "无"} />
-                    <KeyValue label="Action Plan ID" value={event.action_plan_id ?? "无"} />
+                    <KeyValue label="审批 ID" value={event.approval_id ?? "无"} />
+                    <KeyValue label="动作计划 ID" value={event.action_plan_id ?? "无"} />
                   </dl>
                   <PayloadTable payload={event.payload} />
                   <div className="mt-4">
@@ -143,23 +148,13 @@ function PayloadTable({ payload }: { payload: Record<string, unknown> }) {
   return (
     <div className="mt-4 rounded-lg border border-line bg-slate-50 p-3">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        安全筛选后的 Payload
+        安全筛选后的事件载荷
       </div>
       <dl className="mt-3 grid gap-2 md:grid-cols-2">
         {entries.map(([key, value]) => (
-          <KeyValue key={key} label={key} value={payloadValue(value)} />
+          <KeyValue key={key} label={payloadKeyLabel(key)} value={payloadValueLabel(key, value)} />
         ))}
       </dl>
     </div>
   );
-}
-
-function payloadValue(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "无";
-  }
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return JSON.stringify(value);
 }

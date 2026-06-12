@@ -195,7 +195,7 @@ async function normalizeApiError(response: Response): Promise<ApiError> {
   return {
     status: response.status,
     code: `http_${response.status}`,
-    message: response.statusText || "Request failed",
+    message: response.statusText || "请求失败",
     details: payload,
   };
 }
@@ -213,10 +213,10 @@ function queryString(values: Record<string, string | number | undefined>): strin
 
 function validationMessage(value: unknown): string {
   if (!isRecord(value)) {
-    return "Validation error";
+    return "参数校验失败";
   }
-  const location = Array.isArray(value.loc) ? value.loc.join(".") : "request";
-  return `${location}: ${stringField(value.msg, "Invalid value")}`;
+  const location = Array.isArray(value.loc) ? value.loc.join(".") : "请求";
+  return `${location}: ${stringField(value.msg, "无效值")}`;
 }
 
 function stringField(value: unknown, fallback: string): string {

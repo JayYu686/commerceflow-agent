@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "../../components/console/Badge";
@@ -21,6 +20,7 @@ import {
 import {
   displayLabel,
   formatDateTime,
+  localizeText,
   money,
   recordIdLabel,
   toneForRiskValue,
@@ -83,7 +83,7 @@ export default function ToolsPage() {
   function initializeForm(plan: ActionPlanListItem | null) {
     setReason(defaultReason(plan));
     setTicketCategory(plan?.intent ?? "manual_review");
-    setTicketSummary(plan?.summary ?? "Create follow-up ticket for manual review.");
+    setTicketSummary(plan ? localizeText(plan.summary) : "创建人工复核工单，用于补充证据或跟进处理。");
   }
 
   async function executeSelected() {
@@ -116,9 +116,9 @@ export default function ToolsPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <header className="border-b border-line pb-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">Mock 工具执行</h2>
+        <h2 className="mt-1 text-3xl font-semibold tracking-tight">本地模拟工具执行</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          手动执行已计划或已批准的本地 Mock Tool。Agent 不会自动调用这些接口，LLM 也不能决定工具执行。
+          手动执行已计划或已批准的本地模拟工具。Agent 不会自动调用这些接口，LLM 也不能决定工具执行。
         </p>
       </header>
 
@@ -126,11 +126,11 @@ export default function ToolsPage() {
       <ErrorNotice error={error} />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-        <Panel title="可执行 Action Plan" eyebrow={loading ? "加载中" : `${plans.length} 条`}>
+        <Panel title="可执行动作计划" eyebrow={loading ? "加载中" : `${plans.length} 条`}>
           {loading ? (
             <EmptyState message="正在加载可执行动作计划..." />
           ) : plans.length === 0 ? (
-            <EmptyState message="当前没有 not_executed 且带 planned tool 的 Action Plan。可以先从工作台创建计划，或在审批中心批准高风险计划。" />
+            <EmptyState message="当前没有未执行且带计划工具的动作计划。可以先从工作台创建计划，或在审批中心批准高风险计划。" />
           ) : (
             <div className="grid gap-3">
               {plans.map((plan) => (
@@ -164,23 +164,27 @@ export default function ToolsPage() {
           )}
         </Panel>
 
-        <Panel title="执行面板" eyebrow="人工触发 Mock Tool">
+        <Panel title="执行面板" eyebrow="人工触发本地模拟工具">
           {!selected ? (
-            <EmptyState message="请选择一个可执行 Action Plan。" />
+            <EmptyState message="请选择一个可执行动作计划。" />
           ) : (
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <KeyValue label="Action Plan ID" value={selected.action_plan_id} />
-                <KeyValue label="Approval ID" value={selected.approval_id ?? "无"} />
-                <KeyValue label="计划工具" value={displayLabel(selected.planned_tool_name)} raw={selected.planned_tool_name} />
+                <KeyValue label="动作计划 ID" value={selected.action_plan_id} />
+                <KeyValue label="审批 ID" value={selected.approval_id ?? "无"} />
+                <KeyValue
+                  label="计划工具"
+                  value={displayLabel(selected.planned_tool_name)}
+                  raw={selected.planned_tool_name}
+                />
                 <KeyValue label="状态" value={displayLabel(selected.status)} raw={selected.status} />
                 <KeyValue label="订单号" value={selected.order_no ?? "无"} />
                 <KeyValue label="金额" value={money(selected.proposed_amount, selected.currency)} />
               </div>
 
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                前端只提供人工触发入口。refund 和高额 coupon 是否可执行，仍由后端工具服务检查审批、金额、订单、
-                policy evidence、幂等键和重复执行状态。
+                前端只提供人工触发入口。退款和高额优惠券是否可执行，仍由后端工具服务检查审批、金额、订单、
+                政策依据、幂等键和重复执行状态。
               </div>
 
               <IdempotencyKeyBox
@@ -230,7 +234,7 @@ export default function ToolsPage() {
                 onClick={() => void executeSelected()}
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                {executing ? "正在执行 Mock Tool..." : execution ? "使用相同幂等键重试" : "执行 Mock Tool"}
+                {executing ? "正在执行本地模拟工具..." : execution ? "使用相同幂等键重试" : "执行本地模拟工具"}
               </button>
 
               {!canExecuteClientSide(selected) ? (
@@ -331,12 +335,12 @@ function defaultReason(plan: ActionPlanListItem | null): string {
     return "";
   }
   if (plan.planned_tool_name === "refund_apply") {
-    return "Quality issue refund approved for local mock execution.";
+    return "质量问题退款已通过审批，用于本地模拟执行。";
   }
   if (plan.planned_tool_name === "coupon_issue") {
-    return "Delay compensation for local mock execution.";
+    return "物流延迟补偿，用于本地模拟执行。";
   }
-  return plan.summary;
+  return localizeText(plan.summary);
 }
 
 function ExecutionResult({
@@ -356,8 +360,8 @@ function ExecutionResult({
         </Badge>
       </div>
       <dl className="mt-4 grid gap-3 md:grid-cols-2">
-        <KeyValue label="Record ID" value={execution.record_id} />
-        <KeyValue label="Action Plan ID" value={execution.action_plan_id} />
+        <KeyValue label="记录 ID" value={execution.record_id} />
+        <KeyValue label="动作计划 ID" value={execution.action_plan_id} />
         <KeyValue label="订单号" value={execution.order_no} />
         <KeyValue label="执行状态" value={displayLabel(execution.execution_status)} />
         <KeyValue label="创建时间" value={formatDateTime(execution.created_at)} />
@@ -366,7 +370,7 @@ function ExecutionResult({
           value={result?.result ? recordId(result.result as unknown as Record<string, unknown>) : "正在等待结果查询"}
         />
       </dl>
-      <DebugJson title="Mock Result 调试 JSON" data={result ?? execution} />
+      <DebugJson title="本地模拟结果调试 JSON" data={result ?? execution} />
     </div>
   );
 }

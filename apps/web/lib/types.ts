@@ -339,7 +339,12 @@ export type ApiError = {
 };
 
 export type DemoScenario = {
-  id: "quality_refund" | "logistics_delay" | "bypass_attack";
+  id:
+    | "quality_refund"
+    | "logistics_delay"
+    | "bypass_attack"
+    | "logistics_delay_short"
+    | "missing_order_no_quality";
   title: string;
   message: string;
   expected: string[];
@@ -350,5 +355,6 @@ export type DemoScenario = {
     risk?: string;
     requiresApproval?: boolean;
     actionPlanStatus?: string;
+    policyId?: string;
   };
 };

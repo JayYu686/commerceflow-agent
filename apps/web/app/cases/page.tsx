@@ -13,6 +13,7 @@ import { listActionPlans } from "../../lib/api";
 import {
   displayLabel,
   formatDateTime,
+  localizeText,
   money,
   toneForRiskValue,
   toneForStatusValue,
@@ -61,9 +62,9 @@ export default function CasesPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       <header className="border-b border-line pb-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
-        <h2 className="mt-1 text-3xl font-semibold tracking-tight">案例 / Action Plan 列表</h2>
+        <h2 className="mt-1 text-3xl font-semibold tracking-tight">案例 / 动作计划列表</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          查找已经持久化的动作计划，进入案例详情后可以查看审批状态、Mock Result 和审计时间线。
+          查找已经持久化的动作计划。进入案例详情后，可以查看审批状态、本地模拟结果和审计时间线。
         </p>
       </header>
 
@@ -78,7 +79,7 @@ export default function CasesPage() {
           }}
         >
           <label className="block text-sm">
-            <span className="font-medium text-slate-700">Action Plan 状态</span>
+            <span className="font-medium text-slate-700">动作计划状态</span>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value)}
@@ -127,11 +128,11 @@ export default function CasesPage() {
 
       <ErrorNotice error={error} />
 
-      <Panel title="Action Plans" eyebrow={loading ? "加载中" : `${items.length} 条记录`}>
+      <Panel title="动作计划" eyebrow={loading ? "加载中" : `${items.length} 条记录`}>
         {loading ? (
-          <EmptyState message="正在加载 Action Plan 列表..." />
+          <EmptyState message="正在加载动作计划列表..." />
         ) : items.length === 0 ? (
-          <EmptyState message="当前筛选条件下没有 Action Plan。可以先到 Agent 工作台创建一个动作计划。" />
+          <EmptyState message="当前筛选条件下没有动作计划。可以先到 Agent 工作台创建一个动作计划。" />
         ) : (
           <div className="grid gap-3">
             {items.map((item) => (
@@ -152,14 +153,20 @@ export default function CasesPage() {
                         风险：{displayLabel(item.risk_level)}
                       </Badge>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.summary}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {localizeText(item.summary)}
+                    </p>
                   </div>
                   <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[360px]">
                     <KeyValue label="订单号" value={item.order_no ?? "无"} />
-                    <KeyValue label="计划工具" value={displayLabel(item.planned_tool_name)} raw={item.planned_tool_name} />
+                    <KeyValue
+                      label="计划工具"
+                      value={displayLabel(item.planned_tool_name)}
+                      raw={item.planned_tool_name}
+                    />
                     <KeyValue label="金额" value={money(item.proposed_amount, item.currency)} />
                     <KeyValue label="需要审批" value={yesNo(item.requires_approval)} />
-                    <KeyValue label="Approval ID" value={item.approval_id ?? "无"} />
+                    <KeyValue label="审批 ID" value={item.approval_id ?? "无"} />
                     <KeyValue label="创建时间" value={formatDateTime(item.created_at)} />
                   </div>
                 </div>

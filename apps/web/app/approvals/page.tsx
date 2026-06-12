@@ -36,7 +36,7 @@ export default function ApprovalsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<ApprovalRequestResponse | null>(null);
   const [reviewer, setReviewer] = useState("demo_reviewer");
-  const [comment, setComment] = useState("Evidence and policy match the proposed action.");
+  const [comment, setComment] = useState("证据与政策匹配，同意进入后续本地模拟工具执行。");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [deciding, setDeciding] = useState(false);
@@ -111,7 +111,7 @@ export default function ApprovalsPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">审批中心</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          审批高风险退款或高额补偿动作。批准只代表允许后续执行本地 Mock Tool，不代表已经真实退款或赔付。
+          审批高风险退款或高额补偿动作。批准只代表允许后续执行本地模拟工具，不代表已经真实退款、真实赔付或真实发券。
         </p>
       </header>
 
@@ -183,8 +183,8 @@ export default function ApprovalsPage() {
           ) : (
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <KeyValue label="Approval ID" value={selected.approval_id} />
-                <KeyValue label="Action Plan ID" value={selected.action_plan_id} />
+                <KeyValue label="审批 ID" value={selected.approval_id} />
+                <KeyValue label="动作计划 ID" value={selected.action_plan_id} />
                 <KeyValue label="状态" value={displayLabel(selected.status)} raw={selected.status} />
                 <KeyValue
                   label="请求动作"
@@ -232,10 +232,7 @@ export default function ApprovalsPage() {
                     event.preventDefault();
                   }}
                 >
-                  <IdempotencyKeyBox
-                    value={idempotencyKey}
-                    onRefresh={() => setIdempotencyKey(newIdempotencyKey("web-approval-decision"))}
-                  />
+                  <IdempotencyKeyBox value={idempotencyKey} onRefresh={() => setIdempotencyKey(newIdempotencyKey("web-approval-decision"))} />
                   <label className="block text-sm">
                     <span className="font-medium text-slate-700">审核人</span>
                     <input
@@ -274,7 +271,7 @@ export default function ApprovalsPage() {
                 </form>
               ) : (
                 <div className="rounded-lg border border-line bg-slate-50 p-4 text-sm text-slate-700">
-                  该审批已经决策。审批通过不等于已退款；如需执行 Mock Tool，请前往工具执行页。
+                  该审批已经决策。审批通过不等于已退款；如需执行本地模拟工具，请前往工具执行页。
                 </div>
               )}
 
