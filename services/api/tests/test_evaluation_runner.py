@@ -1,13 +1,29 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.evaluation.runner import load_cases, run_evaluation, write_report
+from app.evaluation.runner import current_git_commit, load_cases, run_evaluation, write_report
 
 DATASET_PATH = Path(__file__).resolve().parents[3] / "data" / "eval" / "mvp_eval_v1.jsonl"
+DATASET_V2_PATH = Path(__file__).resolve().parents[3] / "data" / "eval" / "mvp_eval_v2.jsonl"
+
+
+def test_current_git_commit_marks_dirty_worktree(monkeypatch) -> None:
+    results = iter(
+        [
+            SimpleNamespace(stdout="abc123\n"),
+            SimpleNamespace(stdout=" M app/example.py\n"),
+        ]
+    )
+    monkeypatch.setattr(
+        "app.evaluation.runner.subprocess.run", lambda *args, **kwargs: next(results)
+    )
+
+    assert current_git_commit() == "abc123-dirty"
 
 
 def test_eval_dataset_contains_reproducible_mvp_cases() -> None:
@@ -61,5 +77,37 @@ def test_evaluation_runner_generates_json_and_markdown_reports(
     assert "tool_argument_accuracy" in report.metrics
     assert report.representative_successes
     assert "CommerceFlow Agent MVP Evaluation Report" in markdown.read_text(encoding="utf-8")
+
+    get_settings.cache_clear()
+
+
+def test_v2_dataset_and_durable_metrics(
+    seeded_session: Session,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("LLM_PROVIDER", "disabled")
+    get_settings.cache_clear()
+    cases = load_cases(DATASET_V2_PATH)
+    durable_cases = [case for case in cases if case.kind == "durable"]
+
+    assert len(cases) >= 120
+    assert len({case.case_id for case in cases}) == len(cases)
+    assert len(durable_cases) >= 4
+
+    report = run_evaluation(
+        seeded_session,
+        durable_cases,
+        report_id="test_mvp_v2_durable",
+        provider="disabled",
+        dataset_version="mvp_eval_v2",
+    )
+
+    assert report.environment.dataset_version == "mvp_eval_v2"
+    assert report.metrics["checkpoint_recovery_rate"].total == len(durable_cases)
+    assert report.metrics["workflow_resume_success_rate"].total >= 3
+    assert report.metrics["mcp_execution_accuracy"].total == len(durable_cases)
+    assert report.metrics["trace_correlation_rate"].total == len(durable_cases)
+    assert report.metrics["idempotency_protection_rate"].total == 1
+    assert report.summary.failed_cases == 0
 
     get_settings.cache_clear()

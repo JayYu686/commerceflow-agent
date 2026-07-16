@@ -11,6 +11,8 @@ from app.api.evaluations import router as evaluations_router
 from app.api.policies import router as policies_router
 from app.api.tools import router as tools_router
 from app.core.config import get_settings
+from app.db.session import engine
+from app.observability import configure_telemetry
 from app.schemas.health import HealthResponse
 from app.services.errors import ConflictError, NotFoundError
 
@@ -19,8 +21,11 @@ def create_app() -> FastAPI:
     settings = get_settings()
     api = FastAPI(
         title="CommerceFlow Agent API",
-        version="0.1.0",
-        description="CommerceFlow Agent API with read-only facts, policy retrieval, and previews.",
+        version="1.1.0",
+        description=(
+            "Controlled after-sales Agent API with grounded evidence, durable approvals, "
+            "MCP execution and audit traces."
+        ),
     )
     api.add_middleware(
         CORSMiddleware,
@@ -77,6 +82,7 @@ def create_app() -> FastAPI:
     api.include_router(approvals_router)
     api.include_router(tools_router)
     api.include_router(evaluations_router)
+    configure_telemetry(api, engine, settings)
     return api
 
 

@@ -33,6 +33,7 @@ def search_policy_chunks(
     session: Session,
     *,
     query_embedding: list[float],
+    embedding_model: str,
     intent: str | None,
     category: str | None,
     aftersales_type: str | None,
@@ -44,6 +45,7 @@ def search_policy_chunks(
         return search_policy_chunks_with_pgvector(
             session,
             query_embedding=query_embedding,
+            embedding_model=embedding_model,
             intent=intent,
             category=category,
             aftersales_type=aftersales_type,
@@ -53,6 +55,7 @@ def search_policy_chunks(
     return search_policy_chunks_in_python(
         session,
         query_embedding=query_embedding,
+        embedding_model=embedding_model,
         intent=intent,
         category=category,
         aftersales_type=aftersales_type,
@@ -65,6 +68,7 @@ def search_policy_chunks_with_pgvector(
     session: Session,
     *,
     query_embedding: list[float],
+    embedding_model: str,
     intent: str | None,
     category: str | None,
     aftersales_type: str | None,
@@ -76,12 +80,13 @@ def search_policy_chunks_with_pgvector(
         select(PolicyChunk, distance.label("distance"))
         .join(PolicyChunk.document)
         .where(
+            PolicyChunk.embedding_model == embedding_model,
             *build_active_policy_filters(
                 intent=intent,
                 category=category,
                 aftersales_type=aftersales_type,
                 as_of=as_of,
-            )
+            ),
         )
         .options(selectinload(PolicyChunk.document))
         .order_by(distance.asc(), PolicyChunk.sequence.asc())
@@ -95,6 +100,7 @@ def search_policy_chunks_in_python(
     session: Session,
     *,
     query_embedding: list[float],
+    embedding_model: str,
     intent: str | None,
     category: str | None,
     aftersales_type: str | None,
@@ -105,12 +111,13 @@ def search_policy_chunks_in_python(
         select(PolicyChunk)
         .join(PolicyChunk.document)
         .where(
+            PolicyChunk.embedding_model == embedding_model,
             *build_active_policy_filters(
                 intent=intent,
                 category=category,
                 aftersales_type=aftersales_type,
                 as_of=as_of,
-            )
+            ),
         )
         .options(selectinload(PolicyChunk.document))
     )

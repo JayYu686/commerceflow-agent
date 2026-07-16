@@ -83,7 +83,7 @@ export default function AuditTimelinePage() {
 
       {actionPlan ? (
         <Panel title="动作计划摘要" eyebrow="审计对象">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             <KeyValue label="订单号" value={actionPlan.order_no ?? "无"} />
             <KeyValue label="动作" value={displayLabel(actionPlan.action_type)} raw={actionPlan.action_type} />
             <KeyValue label="状态" value={displayLabel(actionPlan.status)} raw={actionPlan.status} />
@@ -92,6 +92,12 @@ export default function AuditTimelinePage() {
               value={displayLabel(actionPlan.execution_status)}
               raw={actionPlan.execution_status}
             />
+            <KeyValue
+              label="工作流状态"
+              value={displayLabel(actionPlan.workflow_status)}
+              raw={actionPlan.workflow_status}
+            />
+            <KeyValue label="Trace ID" value={actionPlan.trace_id ?? "未启用 Trace"} />
           </div>
         </Panel>
       ) : null}
@@ -125,6 +131,7 @@ export default function AuditTimelinePage() {
                     <KeyValue label="订单号" value={event.order_no ?? "无"} />
                     <KeyValue label="审批 ID" value={event.approval_id ?? "无"} />
                     <KeyValue label="动作计划 ID" value={event.action_plan_id ?? "无"} />
+                    <KeyValue label="Trace ID" value={event.trace_id ?? "未启用 Trace"} />
                   </dl>
                   <PayloadTable payload={event.payload} />
                   <div className="mt-4">

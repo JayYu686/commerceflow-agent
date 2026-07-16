@@ -39,6 +39,7 @@ def search_policies(
     scored_chunks = search_policy_chunks(
         session,
         query_embedding=query_embedding,
+        embedding_model=provider.model_name,
         intent=intent,
         category=category,
         aftersales_type=aftersales_type,

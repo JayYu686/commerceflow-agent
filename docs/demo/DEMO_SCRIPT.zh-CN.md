@@ -48,6 +48,7 @@
    - `action_plan_id`；
    - `approval_id`；
    - 状态：待审批；
+   - 工作流状态：等待审批；
    - 执行状态：未执行。
 4. 说明：Action Plan 是可审批的动作计划，不等于已退款。
 
@@ -57,13 +58,13 @@
 2. 打开待审批记录。
 3. 输入 reviewer 和 comment。
 4. 点击批准。
-5. 说明：审批通过只代表允许后续 Mock Tool 执行，不代表真实退款已发生。
+5. 说明：审批通过只会恢复 LangGraph 到“等待执行确认”，不代表真实退款已发生。
 
 ## 2:10 - 2:35 工具执行与结果
 
 1. 进入 `/tools`。
-2. 选择刚批准的 refund action plan。
-3. 点击执行 `refund_apply`。
+2. 选择刚批准且处于“等待执行确认”的 refund action plan。
+3. 点击“确认执行本地模拟工具”。LangGraph 恢复后通过 stdio MCP 调用 `refund_apply`。
 4. 展示：
    - 本地 mock refund record；
    - `execution_status=executed`；
@@ -74,11 +75,12 @@
 
 1. 进入 `/audit/<action_plan_id>`。
 2. 展示事件：
-   - `action_plan_created`；
+   - `workflow_started` / `action_plan_created`；
+   - `workflow_interrupted` / `workflow_resumed`；
    - `approval_requested`；
    - `approval_approved`；
    - `tool_execution_succeeded`；
-   - `tool_execution_idempotent_replay`。
+   - `tool_execution_idempotent_replay` / `workflow_completed`。
 3. 强调 audit log 是 append-only，不提供编辑或删除能力。
 
 ## 2:50 - 3:00 评测看板
@@ -92,6 +94,7 @@
    - Approval Enforcement Rate：100.00%；
    - Idempotency Protection Rate：100.00%。
 4. 说明失败案例保留在报告中，用于后续改进，不为了演示美化指标。
+5. 展示 v2 的 120 条实际报告：112 条通过；Checkpoint Recovery、Workflow Resume、MCP Execution 和 Trace Correlation 均为 100%。
 
 ## 备用演示
 

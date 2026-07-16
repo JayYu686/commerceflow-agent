@@ -8,7 +8,6 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from app.agent.workflow import run_after_sales_preview
 from app.models import ActionPlan, ApprovalRequest, AuditLog
 from app.repositories.aftersales import (
     get_action_plan_by_business_dedupe_key,
@@ -82,12 +81,24 @@ PREVIEW_ACTION_ESCALATE_TO_HUMAN = "escalate_to_human"
 
 SMALL_COMPENSATION_APPROVAL_THRESHOLD = Decimal("10.00")
 
+WORKFLOW_LEGACY_MANUAL = "legacy_manual"
+WORKFLOW_RUNNING = "running"
+WORKFLOW_AWAITING_APPROVAL = "awaiting_approval"
+WORKFLOW_AWAITING_EXECUTION = "awaiting_execution"
+WORKFLOW_COMPLETED = "completed"
+WORKFLOW_BLOCKED = "blocked"
+WORKFLOW_FAILED = "failed"
+
 
 def create_action_plan_from_preview(
     session: Session,
     request: AgentPreviewRequest,
     *,
     idempotency_key: str,
+    preview: AgentPreviewResponse | None = None,
+    run_id: str | None = None,
+    workflow_status: str = WORKFLOW_LEGACY_MANUAL,
+    trace_id: str | None = None,
 ) -> ActionPlanCreateResponse:
     normalized_key = normalize_idempotency_key(idempotency_key)
     request_hash = hash_json(request.model_dump(mode="json"))
@@ -101,7 +112,10 @@ def create_action_plan_from_preview(
             existing_identifier=existing_by_key.action_plan_id,
         )
 
-    preview = run_after_sales_preview(session, request)
+    if preview is None:
+        from app.agent.workflow import run_after_sales_preview
+
+        preview = run_after_sales_preview(session, request)
     mapped = map_preview_to_action(preview)
     policy_ids = [hit.policy_id for hit in preview.policy_evidence]
     business_dedupe_key = build_business_dedupe_key(
@@ -126,7 +140,7 @@ def create_action_plan_from_preview(
     now = datetime.now(UTC)
     action_plan = ActionPlan(
         action_plan_id=str(uuid4()),
-        run_id=str(uuid4()),
+        run_id=run_id or str(uuid4()),
         idempotency_key=normalized_key,
         business_dedupe_key=business_dedupe_key,
         order_no=preview.order_no,
@@ -147,6 +161,8 @@ def create_action_plan_from_preview(
         llm_json=preview.llm.model_dump(mode="json"),
         request_message=request.message,
         request_hash=request_hash,
+        workflow_status=workflow_status,
+        trace_id=trace_id,
         created_at=now,
         updated_at=now,
     )
@@ -450,11 +466,43 @@ def append_audit_log(
         approval_request=approval_request,
         order_no=order_no,
         idempotency_key=idempotency_key,
+        trace_id=action_plan.trace_id if action_plan is not None else None,
         payload_json=payload,
         created_at=datetime.now(UTC),
     )
     session.add(audit_log)
     return audit_log
+
+
+def record_workflow_status(
+    session: Session,
+    action_plan: ActionPlan,
+    *,
+    workflow_status: str,
+    event_type: str,
+    error_code: str | None = None,
+    phase: str | None = None,
+) -> None:
+    action_plan.workflow_status = workflow_status
+    action_plan.workflow_error_code = error_code
+    action_plan.updated_at = datetime.now(UTC)
+    append_audit_log(
+        session,
+        event_type=event_type,
+        actor_type="agent",
+        actor_id="durable_workflow",
+        action_plan=action_plan,
+        approval_request=action_plan.approval_request,
+        order_no=action_plan.order_no,
+        idempotency_key=action_plan.idempotency_key,
+        payload={
+            "action_plan_id": action_plan.action_plan_id,
+            "run_id": action_plan.run_id,
+            "workflow_status": workflow_status,
+            "phase": phase,
+            "error_code": error_code,
+        },
+    )
 
 
 def map_preview_to_action(preview: AgentPreviewResponse) -> dict:
@@ -576,6 +624,8 @@ def action_plan_to_create_response(action_plan: ActionPlan) -> ActionPlanCreateR
         proposed_amount=amount_to_string(action_plan.proposed_amount),
         currency=action_plan.currency,
         summary=action_plan.summary,
+        workflow_status=action_plan.workflow_status,
+        trace_id=action_plan.trace_id,
         created_at=action_plan.created_at,
     )
 
@@ -584,6 +634,7 @@ def action_plan_to_list_item(action_plan: ActionPlan) -> ActionPlanListItem:
     approval = action_plan.approval_request
     return ActionPlanListItem(
         action_plan_id=action_plan.action_plan_id,
+        run_id=action_plan.run_id,
         order_no=action_plan.order_no,
         intent=action_plan.intent,
         planned_tool_name=action_plan.planned_tool_name,
@@ -596,6 +647,8 @@ def action_plan_to_list_item(action_plan: ActionPlan) -> ActionPlanListItem:
         proposed_amount=amount_to_string(action_plan.proposed_amount),
         currency=action_plan.currency,
         summary=action_plan.summary,
+        workflow_status=action_plan.workflow_status,
+        trace_id=action_plan.trace_id,
         created_at=action_plan.created_at,
         updated_at=action_plan.updated_at,
     )
@@ -622,6 +675,9 @@ def action_plan_to_response(action_plan: ActionPlan) -> ActionPlanResponse:
         fact_evidence=list(action_plan.fact_evidence_json),
         policy_evidence=list(action_plan.policy_evidence_json),
         llm=dict(action_plan.llm_json),
+        workflow_status=action_plan.workflow_status,
+        workflow_error_code=action_plan.workflow_error_code,
+        trace_id=action_plan.trace_id,
         approval=approval_to_summary(action_plan.approval_request),
         created_at=action_plan.created_at,
         updated_at=action_plan.updated_at,
@@ -640,6 +696,7 @@ def audit_log_to_response(audit_log: AuditLog) -> AuditLogResponse:
         approval_id=approval.approval_id if approval is not None else None,
         order_no=audit_log.order_no,
         idempotency_key=audit_log.idempotency_key,
+        trace_id=audit_log.trace_id,
         payload=sanitize_audit_payload(dict(audit_log.payload_json)),
         created_at=audit_log.created_at,
     )

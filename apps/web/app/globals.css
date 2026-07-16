@@ -1,6 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #172026;
+  --color-panel: #f6f7f9;
+  --color-line: #d8dde4;
+  --color-signal: #0f766e;
+  --color-warning: #b45309;
+}
 
 :root {
   color-scheme: light;
@@ -17,4 +23,3 @@ body {
   margin: 0;
   background: #f6f7f9;
 }
-

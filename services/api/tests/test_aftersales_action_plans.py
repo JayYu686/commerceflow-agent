@@ -46,7 +46,7 @@ def test_quality_refund_creates_pending_approval_action_plan(
 
     assert count_rows(seeded_session, ActionPlan) == 1
     assert count_rows(seeded_session, ApprovalRequest) == 1
-    assert count_rows(seeded_session, AuditLog) == 2
+    assert count_rows(seeded_session, AuditLog) == 4
 
     action_plan_response = client.get(f"/api/action-plans/{payload['action_plan_id']}")
     assert action_plan_response.status_code == 200
@@ -79,6 +79,7 @@ def test_action_plan_list_supports_filters_and_limits(client: TestClient) -> Non
     assert pending.status_code == 200
     pending_items = pending.json()["action_plans"]
     assert [item["action_plan_id"] for item in pending_items] == [quality.json()["action_plan_id"]]
+    assert pending_items[0]["run_id"] == quality.json()["run_id"]
     assert pending_items[0]["approval_id"] == quality.json()["approval_id"]
     assert pending_items[0]["updated_at"] is not None
 
@@ -140,7 +141,7 @@ def test_delay_compensation_creates_planned_coupon_action_without_execution(
 
     assert count_rows(seeded_session, ActionPlan) == 1
     assert count_rows(seeded_session, ApprovalRequest) == 0
-    assert count_rows(seeded_session, AuditLog) == 1
+    assert count_rows(seeded_session, AuditLog) == 3
 
 
 def test_no_policy_evidence_creates_not_executable_action_plan(client: TestClient) -> None:
@@ -200,7 +201,7 @@ def test_action_plan_creation_is_idempotent_for_same_key_and_body(
     assert second.json()["approval_id"] == first.json()["approval_id"]
     assert count_rows(seeded_session, ActionPlan) == 1
     assert count_rows(seeded_session, ApprovalRequest) == 1
-    assert count_rows(seeded_session, AuditLog) == 2
+    assert count_rows(seeded_session, AuditLog) == 4
 
 
 def test_action_plan_creation_rejects_same_key_different_body(client: TestClient) -> None:
@@ -238,7 +239,7 @@ def test_pending_approval_can_be_approved_and_writes_audit_log(
     assert payload["action_plan"]["status"] == "approved"
     assert payload["action_plan"]["execution_status"] == "not_executed"
     assert "llm" not in payload
-    assert count_rows(seeded_session, AuditLog) == before_audits + 1
+    assert count_rows(seeded_session, AuditLog) == before_audits + 3
 
     audit_response = client.get(
         f"/api/action-plans/{payload['action_plan']['action_plan_id']}/audit-logs"
@@ -248,7 +249,11 @@ def test_pending_approval_can_be_approved_and_writes_audit_log(
     assert [event["event_type"] for event in events] == [
         "action_plan_created",
         "approval_requested",
+        "workflow_started",
+        "workflow_interrupted",
         "approval_approved",
+        "workflow_resumed",
+        "workflow_interrupted",
     ]
     assert events[-1]["approval_id"] == approval_id
     assert "traceback" not in events[-1]["payload"]
@@ -341,7 +346,8 @@ def test_approval_decision_does_not_mutate_existing_business_tables(
 
 
 def test_phase_4b_routes_do_not_expose_mcp_or_sql_apis(client: TestClient) -> None:
-    paths = {getattr(route, "path", "") for route in client.app.routes}
+    openapi_paths = client.app.openapi()["paths"]
+    paths = set(openapi_paths)
     forbidden_fragments = ("mcp", "sql")
 
     forbidden_paths = [
@@ -350,9 +356,8 @@ def test_phase_4b_routes_do_not_expose_mcp_or_sql_apis(client: TestClient) -> No
     assert forbidden_paths == []
     assert not any(path.startswith("/api/agent") and "/tools/" in path for path in paths)
 
-    for route in client.app.routes:
-        path = getattr(route, "path", "")
-        methods = getattr(route, "methods", set())
+    for path, operations in openapi_paths.items():
+        methods = {method.upper() for method in operations}
         if path.startswith("/api/approvals") or path.startswith("/api/action-plans"):
             assert methods <= {"GET", "POST"}
 

@@ -82,6 +82,10 @@ const labels: Record<string, string> = {
   required: "需要审批",
   reviewer: "审批人",
   running: "运行中",
+  legacy_manual: "v1.0 手工流程",
+  awaiting_approval: "等待人工审批",
+  awaiting_execution: "等待执行确认",
+  failed: "运行失败",
   shipped: "已发货",
   special: "特殊售后",
   standard: "标准售后",
@@ -93,6 +97,12 @@ const labels: Record<string, string> = {
   tool_execution_failed: "工具执行失败",
   tool_execution_idempotent_replay: "工具幂等重放",
   tool_execution_succeeded: "工具执行成功",
+  workflow_started: "工作流已启动",
+  workflow_interrupted: "工作流已暂停",
+  workflow_resumed: "工作流已恢复",
+  workflow_completed: "工作流已完成",
+  workflow_blocked: "工作流已拦截",
+  workflow_failed: "工作流失败",
   unknown: "未识别",
   used: "已启用",
   verify_order: "核验订单",
@@ -106,6 +116,11 @@ const labels: Record<string, string> = {
   recommend_action: "生成处理建议",
   classify_risk: "风险分级",
   build_response: "构建预览响应",
+  persist_action_plan: "持久化动作计划",
+  await_approval: "等待人工审批",
+  await_execution_confirmation: "等待执行确认",
+  execute_mcp_tool: "通过 MCP 执行工具",
+  finalize_workflow: "完成工作流",
 
   system: "系统",
   user: "用户",
@@ -117,11 +132,13 @@ const labels: Record<string, string> = {
 const evaluationLabels: Record<string, string> = {
   action_proposal_accuracy: "动作建议准确率",
   approval_enforcement_rate: "审批执行约束率",
+  checkpoint_recovery_rate: "Checkpoint 恢复率",
   citation_grounded_rate: "引用依据覆盖率",
   duplicate_refund_execution_blocked: "重复退款执行拦截",
   high_coupon_without_approval_blocked: "高额优惠券无审批拦截",
   human_escalation_accuracy: "人工升级判断准确率",
   idempotency_protection_rate: "幂等保护率",
+  mcp_execution_accuracy: "MCP 执行准确率",
   intent_accuracy: "意图识别准确率",
   logistics_delay: "物流延迟补偿",
   missing_or_ambiguous_context: "缺少或含混上下文",
@@ -136,6 +153,8 @@ const evaluationLabels: Record<string, string> = {
   risk_classification_accuracy: "风险分级准确率",
   status_accuracy: "状态准确率",
   task_success_rate: "任务成功率",
+  trace_correlation_rate: "Trace 关联完整率",
+  workflow_resume_success_rate: "工作流恢复成功率",
   tool_argument_accuracy: "工具参数准确率",
   tool_safety: "工具执行安全",
   trace_completeness: "审计轨迹完整率",
@@ -561,7 +580,8 @@ export function toneForStatusValue(status?: string | null): Tone {
     status === "succeeded" ||
     status === "issued" ||
     status === "created" ||
-    status === "tool_execution_succeeded"
+    status === "tool_execution_succeeded" ||
+    status === "workflow_completed"
   ) {
     return "success";
   }
@@ -570,7 +590,11 @@ export function toneForStatusValue(status?: string | null): Tone {
     status === "pending_approval" ||
     status === "preview_only" ||
     status === "not_executed" ||
-    status === "tool_execution_idempotent_replay"
+    status === "tool_execution_idempotent_replay" ||
+    status === "awaiting_approval" ||
+    status === "awaiting_execution" ||
+    status === "workflow_interrupted" ||
+    status === "workflow_resumed"
   ) {
     return "warning";
   }
@@ -578,11 +602,18 @@ export function toneForStatusValue(status?: string | null): Tone {
     status === "blocked" ||
     status === "critical" ||
     status === "not_executable" ||
-    status === "tool_execution_blocked"
+    status === "tool_execution_blocked" ||
+    status === "workflow_blocked"
   ) {
     return "critical";
   }
-  if (status === "not_found" || status === "no_policy_evidence" || status === "execution_failed") {
+  if (
+    status === "not_found" ||
+    status === "no_policy_evidence" ||
+    status === "execution_failed" ||
+    status === "failed" ||
+    status === "workflow_failed"
+  ) {
     return "danger";
   }
   return "neutral";

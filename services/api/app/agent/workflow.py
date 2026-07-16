@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import inspect
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from langgraph.graph import END, StateGraph
+from langgraph.runtime import Runtime
+from langgraph.types import Command, interrupt
 from sqlalchemy.orm import Session
 
+from app.agent.checkpoint import checkpointer_for_session
 from app.agent.llm import (
     CUSTOMER_REPLY_TASK,
     DISABLED_LLM_PROVIDER,
@@ -17,6 +22,7 @@ from app.agent.llm import (
     parse_customer_reply,
     parse_intent_candidate,
 )
+from app.agent.mcp_client import MCPToolCallError, StdioMCPToolClient
 from app.agent.parser import (
     LOGISTICS_INTENT,
     QUALITY_INTENT,
@@ -26,8 +32,11 @@ from app.agent.parser import (
     has_unsafe_instruction,
 )
 from app.agent.prompts import build_customer_reply_prompt, build_intent_prompt
+from app.agent.runtime import AgentRuntimeContext, existing_session_factory
 from app.agent.state import AgentState
 from app.core.config import get_settings
+from app.observability import current_trace_id, workflow_span
+from app.schemas.aftersales import ActionPlanCreateResponse, ActionPlanExecuteResponse
 from app.schemas.agent import (
     AgentError,
     AgentFacts,
@@ -40,7 +49,9 @@ from app.schemas.agent import (
     WorkflowStep,
 )
 from app.schemas.commerce import LogisticsResponse, OrderResponse
+from app.schemas.policy import PolicySearchHit
 from app.services.commerce import get_logistics_snapshot, get_order_snapshot
+from app.services.embeddings import create_embedding_provider
 from app.services.errors import NotFoundError
 from app.services.policy_retrieval import search_policies
 
@@ -73,35 +84,60 @@ def run_after_sales_preview(
     settings = get_settings()
     provider = llm_provider if llm_provider is not None else create_llm_provider(settings)
     graph = build_workflow()
-    result = graph.invoke(
-        {
-            "message": request.message,
-            "as_of": request.as_of or datetime.now(UTC),
-            "session": session,
-            "llm_provider": provider,
-            "llm": default_llm_metadata(provider, settings.llm_provider),
-            "status": STATUS_RUNNING,
-            "errors": [],
-            "steps": [],
-            "fact_evidence": [],
-            "policy_hits": [],
-        }
+    context = AgentRuntimeContext(
+        session_factory=existing_session_factory(session),
+        llm_provider=provider,
+        embedding_provider=create_embedding_provider(settings),
     )
-    return result["response"]
+    with workflow_span("agent.preview", {"workflow.mode": "preview"}):
+        result = graph.invoke(
+            {
+                "message": request.message,
+                "as_of": (request.as_of or datetime.now(UTC)).isoformat(),
+                "mode": "preview",
+                "llm": default_llm_metadata(provider, settings.llm_provider),
+                "status": STATUS_RUNNING,
+                "errors": [],
+                "steps": [],
+                "fact_evidence": [],
+                "policy_hits": [],
+            },
+            context=context,
+        )
+    return AgentPreviewResponse.model_validate(result["response"])
 
 
-def build_workflow():
-    workflow = StateGraph(AgentState)
-    workflow.add_node("parse_request", parse_request)
-    workflow.add_node("llm_understand_request", llm_understand_request)
-    workflow.add_node("validate_context", validate_context)
-    workflow.add_node("query_order_facts", query_order_facts)
-    workflow.add_node("query_logistics_facts", query_logistics_facts)
-    workflow.add_node("retrieve_policy", retrieve_policy)
-    workflow.add_node("recommend_action", recommend_action)
-    workflow.add_node("classify_risk", classify_risk)
-    workflow.add_node("generate_customer_reply", generate_customer_reply)
-    workflow.add_node("build_response", build_response)
+def build_workflow(checkpointer=None):
+    workflow = StateGraph(AgentState, context_schema=AgentRuntimeContext)
+    workflow.add_node("parse_request", traced_node("parse_request", parse_request))
+    workflow.add_node(
+        "llm_understand_request",
+        traced_node("llm_understand_request", llm_understand_request),
+    )
+    workflow.add_node("validate_context", traced_node("validate_context", validate_context))
+    workflow.add_node("query_order_facts", traced_node("query_order_facts", query_order_facts))
+    workflow.add_node(
+        "query_logistics_facts",
+        traced_node("query_logistics_facts", query_logistics_facts),
+    )
+    workflow.add_node("retrieve_policy", traced_node("retrieve_policy", retrieve_policy))
+    workflow.add_node("recommend_action", traced_node("recommend_action", recommend_action))
+    workflow.add_node("classify_risk", traced_node("classify_risk", classify_risk))
+    workflow.add_node(
+        "generate_customer_reply",
+        traced_node("generate_customer_reply", generate_customer_reply),
+    )
+    workflow.add_node("build_response", traced_node("build_response", build_response))
+    workflow.add_node(
+        "persist_action_plan", traced_node("persist_action_plan", persist_action_plan)
+    )
+    workflow.add_node("await_approval", traced_node("await_approval", await_approval))
+    workflow.add_node(
+        "await_execution_confirmation",
+        traced_node("await_execution_confirmation", await_execution_confirmation),
+    )
+    workflow.add_node("execute_mcp_tool", traced_node("execute_mcp_tool", execute_mcp_tool))
+    workflow.add_node("finalize_workflow", traced_node("finalize_workflow", finalize_workflow))
 
     workflow.set_entry_point("parse_request")
     workflow.add_edge("parse_request", "llm_understand_request")
@@ -134,8 +170,33 @@ def build_workflow():
     workflow.add_edge("recommend_action", "classify_risk")
     workflow.add_edge("classify_risk", "generate_customer_reply")
     workflow.add_edge("generate_customer_reply", "build_response")
-    workflow.add_edge("build_response", END)
-    return workflow.compile()
+    workflow.add_conditional_edges(
+        "build_response",
+        route_after_response,
+        {"preview": END, "durable": "persist_action_plan"},
+    )
+    workflow.add_conditional_edges(
+        "persist_action_plan",
+        route_after_persist,
+        {
+            "approval": "await_approval",
+            "execution": "await_execution_confirmation",
+            "stop": "finalize_workflow",
+        },
+    )
+    workflow.add_conditional_edges(
+        "await_approval",
+        route_after_approval,
+        {"execution": "await_execution_confirmation", "stop": "finalize_workflow"},
+    )
+    workflow.add_edge("await_execution_confirmation", "execute_mcp_tool")
+    workflow.add_conditional_edges(
+        "execute_mcp_tool",
+        route_after_tool_execution,
+        {"retry": "await_execution_confirmation", "complete": "finalize_workflow"},
+    )
+    workflow.add_edge("finalize_workflow", END)
+    return workflow.compile(checkpointer=checkpointer)
 
 
 def parse_request(state: AgentState) -> AgentState:
@@ -150,8 +211,11 @@ def parse_request(state: AgentState) -> AgentState:
     }
 
 
-def llm_understand_request(state: AgentState) -> AgentState:
-    provider = state.get("llm_provider")
+def llm_understand_request(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    provider = runtime.context.llm_provider
     if provider is None:
         return {
             "steps": add_step(
@@ -316,10 +380,14 @@ def validate_context(state: AgentState) -> AgentState:
     }
 
 
-def query_order_facts(state: AgentState) -> AgentState:
+def query_order_facts(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
     order_no = require_order_no(state)
     try:
-        order = get_order_snapshot(state["session"], order_no)
+        with runtime.context.session_factory() as session:
+            order = get_order_snapshot(session, order_no)
     except NotFoundError:
         return {
             "status": STATUS_NOT_FOUND,
@@ -342,16 +410,20 @@ def query_order_facts(state: AgentState) -> AgentState:
         }
 
     return {
-        "order_snapshot": order,
+        "order_snapshot": order.model_dump(mode="json"),
         "fact_evidence": build_order_evidence(order),
         "steps": add_step(state, "query_order_facts", "completed", "Order facts loaded."),
     }
 
 
-def query_logistics_facts(state: AgentState) -> AgentState:
+def query_logistics_facts(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
     order_no = require_order_no(state)
     try:
-        logistics = get_logistics_snapshot(state["session"], order_no)
+        with runtime.context.session_factory() as session:
+            logistics = get_logistics_snapshot(session, order_no)
     except NotFoundError:
         return {
             "errors": add_error(
@@ -367,23 +439,28 @@ def query_logistics_facts(state: AgentState) -> AgentState:
 
     evidence = state.get("fact_evidence", []) + build_logistics_evidence(logistics)
     return {
-        "logistics_snapshot": logistics,
+        "logistics_snapshot": logistics.model_dump(mode="json"),
         "fact_evidence": evidence,
         "steps": add_step(state, "query_logistics_facts", "completed", "Logistics facts loaded."),
     }
 
 
-def retrieve_policy(state: AgentState) -> AgentState:
-    order: OrderResponse = state["order_snapshot"]
+def retrieve_policy(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    order = OrderResponse.model_validate(state["order_snapshot"])
     category, aftersales_type = first_product_filters(order)
-    response = search_policies(
-        state["session"],
-        query=state["message"],
-        intent=state["intent"],
-        category=category,
-        aftersales_type=aftersales_type,
-        as_of=state["as_of"],
-    )
+    with runtime.context.session_factory() as session:
+        response = search_policies(
+            session,
+            query=state["message"],
+            intent=state["intent"],
+            category=category,
+            aftersales_type=aftersales_type,
+            as_of=datetime.fromisoformat(state["as_of"]),
+            embedding_provider=runtime.context.embedding_provider,
+        )
     if not response.hits:
         return {
             "status": STATUS_NO_POLICY_EVIDENCE,
@@ -408,15 +485,15 @@ def retrieve_policy(state: AgentState) -> AgentState:
         }
 
     return {
-        "policy_hits": response.hits,
+        "policy_hits": [hit.model_dump(mode="json") for hit in response.hits],
         "steps": add_step(state, "retrieve_policy", "completed", "Policy evidence loaded."),
     }
 
 
 def recommend_action(state: AgentState) -> AgentState:
     intent = state["intent"]
-    order: OrderResponse = state["order_snapshot"]
-    policy_ids = ", ".join(hit.policy_id for hit in state.get("policy_hits", [])[:3])
+    order = OrderResponse.model_validate(state["order_snapshot"])
+    policy_ids = ", ".join(str(hit["policy_id"]) for hit in state.get("policy_hits", [])[:3])
 
     if intent == QUALITY_INTENT:
         return {
@@ -443,8 +520,11 @@ def recommend_action(state: AgentState) -> AgentState:
             ),
         }
 
-    logistics = state.get("logistics_snapshot")
-    if intent == LOGISTICS_INTENT and isinstance(logistics, LogisticsResponse):
+    logistics_data = state.get("logistics_snapshot")
+    logistics = (
+        LogisticsResponse.model_validate(logistics_data) if logistics_data is not None else None
+    )
+    if intent == LOGISTICS_INTENT and logistics is not None:
         if logistics.status != "delayed":
             return {
                 "status": STATUS_NO_POLICY_EVIDENCE,
@@ -547,8 +627,11 @@ def classify_risk(state: AgentState) -> AgentState:
     }
 
 
-def generate_customer_reply(state: AgentState) -> AgentState:
-    provider = state.get("llm_provider")
+def generate_customer_reply(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    provider = runtime.context.llm_provider
     if provider is None or state.get("unsafe_request"):
         fallback_reason = (
             "unsafe_request_blocked" if state.get("unsafe_request") else "provider_disabled"
@@ -565,7 +648,7 @@ def generate_customer_reply(state: AgentState) -> AgentState:
         }
 
     fact_fields = fact_field_ids(state)
-    policy_ids = [hit.policy_id for hit in state.get("policy_hits", [])]
+    policy_ids = [str(hit["policy_id"]) for hit in state.get("policy_hits", [])]
     prompt = build_customer_reply_prompt(
         status=state.get("status", STATUS_COMPLETED),
         order_no=state.get("order_no"),
@@ -621,7 +704,9 @@ def build_response(state: AgentState) -> AgentState:
             logistics=state.get("logistics_snapshot"),
         ),
         fact_evidence=[FactEvidence(**item) for item in state.get("fact_evidence", [])],
-        policy_evidence=state.get("policy_hits", []),
+        policy_evidence=[
+            PolicySearchHit.model_validate(item) for item in state.get("policy_hits", [])
+        ],
         recommendation=PreviewRecommendation(
             **state.get("recommendation", default_recommendation())
         ),
@@ -636,7 +721,415 @@ def build_response(state: AgentState) -> AgentState:
             )
         ],
     )
-    return {"response": response}
+    return {"response": response.model_dump(mode="json")}
+
+
+def start_after_sales_workflow(
+    session: Session,
+    request: AgentPreviewRequest,
+    *,
+    idempotency_key: str,
+    llm_provider: LLMProvider | None = None,
+    mcp_client=None,
+) -> ActionPlanCreateResponse:
+    from app.repositories.aftersales import get_action_plan_by_idempotency_key
+    from app.services.aftersales import (
+        action_plan_to_create_response,
+        hash_json,
+        normalize_idempotency_key,
+    )
+    from app.services.errors import ConflictError
+
+    normalized_key = normalize_idempotency_key(idempotency_key)
+    request_hash = hash_json(request.model_dump(mode="json"))
+    existing = get_action_plan_by_idempotency_key(session, normalized_key)
+    if existing is not None:
+        if existing.request_hash == request_hash:
+            return action_plan_to_create_response(existing)
+        raise ConflictError(
+            code="idempotency_key_reused",
+            message="Idempotency-Key was already used for a different action plan request.",
+            existing_identifier=existing.action_plan_id,
+        )
+
+    settings = get_settings()
+    provider = llm_provider if llm_provider is not None else create_llm_provider(settings)
+    run_id = str(uuid4())
+    with workflow_span("agent.workflow", {"workflow.run_id": run_id}) as _:
+        context = AgentRuntimeContext(
+            session_factory=existing_session_factory(session),
+            llm_provider=provider,
+            embedding_provider=create_embedding_provider(settings),
+            mcp_client=mcp_client or StdioMCPToolClient(),
+            trace_id=current_trace_id(),
+        )
+        with checkpointer_for_session(session) as checkpointer:
+            graph = build_workflow(checkpointer)
+            graph.invoke(
+                {
+                    "message": request.message,
+                    "as_of": (request.as_of or datetime.now(UTC)).isoformat(),
+                    "mode": "durable",
+                    "run_id": run_id,
+                    "idempotency_key": normalized_key,
+                    "llm": default_llm_metadata(provider, settings.llm_provider),
+                    "status": STATUS_RUNNING,
+                    "workflow_status": "running",
+                    "workflow_error_code": None,
+                    "trace_id": context.trace_id,
+                    "errors": [],
+                    "steps": [],
+                    "fact_evidence": [],
+                    "policy_hits": [],
+                },
+                config=workflow_config(run_id),
+                context=context,
+            )
+
+    session.expire_all()
+    action_plan = get_action_plan_by_idempotency_key(session, normalized_key)
+    if action_plan is None:
+        raise RuntimeError("durable workflow did not persist an action plan")
+    return action_plan_to_create_response(action_plan)
+
+
+def resume_after_approval(
+    session: Session,
+    action_plan_id: str,
+    *,
+    mcp_client=None,
+) -> None:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+
+    action_plan = get_action_plan_by_external_id(session, action_plan_id)
+    if action_plan is None or action_plan.workflow_status == "legacy_manual":
+        return
+
+    context = durable_runtime_context(session, mcp_client=mcp_client)
+    with checkpointer_for_session(session) as checkpointer:
+        graph = build_workflow(checkpointer)
+        graph.invoke(
+            Command(resume={"approval_id": action_plan.approval_request.approval_id}),
+            config=workflow_config(action_plan.run_id),
+            context=context,
+        )
+    session.expire_all()
+
+
+def execute_action_plan_workflow(
+    session: Session,
+    action_plan_id: str,
+    *,
+    idempotency_key: str,
+    mcp_client=None,
+) -> ActionPlanExecuteResponse:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+    from app.services.aftersales import normalize_idempotency_key
+    from app.services.errors import ConflictError, NotFoundError
+
+    normalized_key = normalize_idempotency_key(idempotency_key)
+    action_plan = get_action_plan_by_external_id(session, action_plan_id)
+    if action_plan is None:
+        raise NotFoundError("action_plan", action_plan_id)
+    if action_plan.workflow_status == "legacy_manual":
+        raise ConflictError(
+            code="legacy_workflow_not_resumable",
+            message="Legacy action plans must use the existing manual tool API.",
+            existing_identifier=action_plan_id,
+        )
+
+    replay = existing_execution_response(session, action_plan, normalized_key)
+    if replay is not None:
+        return replay
+    if action_plan.workflow_status != "awaiting_execution":
+        raise ConflictError(
+            code="workflow_not_awaiting_execution",
+            message="Action plan is not waiting for execution confirmation.",
+            existing_identifier=action_plan_id,
+        )
+
+    context = durable_runtime_context(session, mcp_client=mcp_client)
+    with checkpointer_for_session(session) as checkpointer:
+        graph = build_workflow(checkpointer)
+        result = graph.invoke(
+            Command(resume={"confirm": True, "idempotency_key": normalized_key}),
+            config=workflow_config(action_plan.run_id),
+            context=context,
+        )
+
+    session.expire_all()
+    action_plan = get_action_plan_by_external_id(session, action_plan_id)
+    if action_plan is None:
+        raise NotFoundError("action_plan", action_plan_id)
+    tool_result = result.get("tool_result")
+    if not isinstance(tool_result, dict) or action_plan.workflow_status != "completed":
+        raise ConflictError(
+            code=action_plan.workflow_error_code or "workflow_execution_failed",
+            message="MCP tool execution did not complete; the workflow remains retryable.",
+            existing_identifier=action_plan_id,
+        )
+    return tool_result_to_execute_response(action_plan, tool_result, idempotent_replay=False)
+
+
+def persist_action_plan(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+    from app.services.aftersales import (
+        ACTION_STATUS_NOT_EXECUTABLE,
+        ACTION_STATUS_PENDING_APPROVAL,
+        WORKFLOW_AWAITING_APPROVAL,
+        WORKFLOW_AWAITING_EXECUTION,
+        WORKFLOW_BLOCKED,
+        append_audit_log,
+        create_action_plan_from_preview,
+        map_preview_to_action,
+    )
+
+    preview = AgentPreviewResponse.model_validate(state["response"])
+    request = AgentPreviewRequest(
+        message=state["message"],
+        as_of=datetime.fromisoformat(state["as_of"]),
+    )
+    mapped_action = map_preview_to_action(preview)
+    mapped_status = (
+        WORKFLOW_AWAITING_APPROVAL
+        if mapped_action["status"] == ACTION_STATUS_PENDING_APPROVAL
+        else WORKFLOW_BLOCKED
+        if mapped_action["status"] == ACTION_STATUS_NOT_EXECUTABLE
+        else WORKFLOW_AWAITING_EXECUTION
+    )
+    with runtime.context.session_factory() as session:
+        created = create_action_plan_from_preview(
+            session,
+            request,
+            idempotency_key=state["idempotency_key"],
+            preview=preview,
+            run_id=state["run_id"],
+            workflow_status=mapped_status,
+            trace_id=state.get("trace_id"),
+        )
+        action_plan = get_action_plan_by_external_id(session, created.action_plan_id)
+        if action_plan is None:
+            raise RuntimeError("persisted action plan was not found")
+        append_audit_log(
+            session,
+            event_type="workflow_started",
+            actor_type="agent",
+            actor_id="durable_workflow",
+            action_plan=action_plan,
+            approval_request=action_plan.approval_request,
+            order_no=action_plan.order_no,
+            idempotency_key=action_plan.idempotency_key,
+            payload={
+                "action_plan_id": action_plan.action_plan_id,
+                "run_id": action_plan.run_id,
+                "workflow_status": mapped_status,
+            },
+        )
+        if action_plan.status == ACTION_STATUS_NOT_EXECUTABLE:
+            event_type = "workflow_blocked"
+            phase = "recommendation"
+        else:
+            event_type = "workflow_interrupted"
+            phase = (
+                "approval" if action_plan.status == ACTION_STATUS_PENDING_APPROVAL else "execution"
+            )
+        append_audit_log(
+            session,
+            event_type=event_type,
+            actor_type="agent",
+            actor_id="durable_workflow",
+            action_plan=action_plan,
+            approval_request=action_plan.approval_request,
+            order_no=action_plan.order_no,
+            idempotency_key=action_plan.idempotency_key,
+            payload={
+                "action_plan_id": action_plan.action_plan_id,
+                "run_id": action_plan.run_id,
+                "workflow_status": mapped_status,
+                "phase": phase,
+            },
+        )
+        session.commit()
+    return {
+        "action_plan_id": created.action_plan_id,
+        "approval_id": created.approval_id,
+        "workflow_status": mapped_status,
+    }
+
+
+def await_approval(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+    from app.services.aftersales import (
+        APPROVAL_APPROVED,
+        APPROVAL_REJECTED,
+        WORKFLOW_AWAITING_EXECUTION,
+        WORKFLOW_BLOCKED,
+        append_audit_log,
+        record_workflow_status,
+    )
+
+    interrupt(
+        {
+            "type": "approval_required",
+            "action_plan_id": state["action_plan_id"],
+            "approval_id": state.get("approval_id"),
+        }
+    )
+    with runtime.context.session_factory() as session:
+        action_plan = get_action_plan_by_external_id(session, state["action_plan_id"])
+        if action_plan is None or action_plan.approval_request is None:
+            raise RuntimeError("approval workflow lost its persisted approval request")
+        approval = action_plan.approval_request
+        append_audit_log(
+            session,
+            event_type="workflow_resumed",
+            actor_type="agent",
+            actor_id="durable_workflow",
+            action_plan=action_plan,
+            approval_request=approval,
+            order_no=action_plan.order_no,
+            idempotency_key=approval.decision_idempotency_key,
+            payload={
+                "action_plan_id": action_plan.action_plan_id,
+                "run_id": action_plan.run_id,
+                "phase": "approval",
+                "approval_status": approval.status,
+            },
+        )
+        if approval.status == APPROVAL_APPROVED:
+            record_workflow_status(
+                session,
+                action_plan,
+                workflow_status=WORKFLOW_AWAITING_EXECUTION,
+                event_type="workflow_interrupted",
+                phase="execution",
+            )
+            session.commit()
+            return {"workflow_status": WORKFLOW_AWAITING_EXECUTION}
+        if approval.status == APPROVAL_REJECTED:
+            record_workflow_status(
+                session,
+                action_plan,
+                workflow_status=WORKFLOW_BLOCKED,
+                event_type="workflow_blocked",
+                error_code="approval_rejected",
+                phase="approval",
+            )
+            session.commit()
+            return {
+                "workflow_status": WORKFLOW_BLOCKED,
+                "workflow_error_code": "approval_rejected",
+            }
+        raise RuntimeError("approval workflow resumed without a persisted decision")
+
+
+def await_execution_confirmation(state: AgentState) -> AgentState:
+    confirmation = interrupt(
+        {
+            "type": "execution_confirmation_required",
+            "action_plan_id": state["action_plan_id"],
+            "tool_name": state.get("recommendation", {}).get("action_type"),
+        }
+    )
+    if not isinstance(confirmation, dict) or confirmation.get("confirm") is not True:
+        raise ValueError("explicit execution confirmation is required")
+    idempotency_key = confirmation.get("idempotency_key")
+    if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+        raise ValueError("execution idempotency key is required")
+    return {
+        "execution_confirmed": True,
+        "execution_idempotency_key": idempotency_key.strip(),
+        "workflow_error_code": None,
+    }
+
+
+def execute_mcp_tool(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+
+    client = runtime.context.mcp_client
+    if client is None:
+        return record_retryable_mcp_failure(
+            state,
+            runtime,
+            error_code="mcp_client_unavailable",
+        )
+
+    with runtime.context.session_factory() as session:
+        action_plan = get_action_plan_by_external_id(session, state["action_plan_id"])
+        if action_plan is None:
+            raise RuntimeError("action plan not found during MCP execution")
+        tool_name, arguments = persisted_tool_arguments(
+            action_plan,
+            state["execution_idempotency_key"],
+        )
+
+    try:
+        result = client.call_tool(tool_name, arguments)
+    except MCPToolCallError as error:
+        return record_retryable_mcp_failure(state, runtime, error_code=error.code)
+    except Exception:
+        return record_retryable_mcp_failure(
+            state,
+            runtime,
+            error_code="mcp_transport_failed",
+        )
+
+    if result.get("execution_status") != "executed":
+        return record_retryable_mcp_failure(
+            state,
+            runtime,
+            error_code="invalid_mcp_result",
+        )
+    return {
+        "tool_result": result,
+        "workflow_status": "completed",
+        "workflow_error_code": None,
+        "steps": add_step(state, "execute_mcp_tool", "completed", "MCP tool executed."),
+    }
+
+
+def finalize_workflow(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+) -> AgentState:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+    from app.services.aftersales import record_workflow_status
+
+    final_status = (
+        "completed" if state.get("tool_result") else state.get("workflow_status", "blocked")
+    )
+    with runtime.context.session_factory() as session:
+        action_plan = get_action_plan_by_external_id(session, state["action_plan_id"])
+        if action_plan is None:
+            raise RuntimeError("action plan not found while finalizing workflow")
+        if final_status == "completed":
+            record_workflow_status(
+                session,
+                action_plan,
+                workflow_status="completed",
+                event_type="workflow_completed",
+                phase="execution",
+            )
+        elif action_plan.workflow_status != "blocked":
+            record_workflow_status(
+                session,
+                action_plan,
+                workflow_status="blocked",
+                event_type="workflow_blocked",
+                error_code=state.get("workflow_error_code"),
+                phase="finalize",
+            )
+        session.commit()
+    return {"workflow_status": final_status}
 
 
 def route_after_validate_context(state: AgentState) -> str:
@@ -655,6 +1148,209 @@ def route_after_policy(state: AgentState) -> str:
     if state.get("status") == STATUS_NO_POLICY_EVIDENCE:
         return "stop"
     return "continue"
+
+
+def traced_node(name: str, operation):
+    accepts_runtime = len(inspect.signature(operation).parameters) > 1
+
+    def invoke(
+        state: AgentState,
+        runtime: Runtime[AgentRuntimeContext],
+    ) -> AgentState:
+        risk_data = state.get("risk", {})
+        attributes = {
+            "workflow.run_id": state.get("run_id"),
+            "workflow.action_plan_id": state.get("action_plan_id"),
+            "workflow.node": name,
+            "agent.intent": state.get("intent"),
+            "agent.risk_level": risk_data.get("level") if isinstance(risk_data, dict) else None,
+        }
+        with workflow_span(f"agent.node.{name}", attributes):
+            if accepts_runtime:
+                return operation(state, runtime)
+            return operation(state)
+
+    return invoke
+
+
+def route_after_response(state: AgentState) -> str:
+    return "durable" if state.get("mode") == "durable" else "preview"
+
+
+def route_after_persist(state: AgentState) -> str:
+    if state.get("workflow_status") == "awaiting_approval":
+        return "approval"
+    if state.get("workflow_status") == "awaiting_execution":
+        return "execution"
+    return "stop"
+
+
+def route_after_approval(state: AgentState) -> str:
+    return "execution" if state.get("workflow_status") == "awaiting_execution" else "stop"
+
+
+def route_after_tool_execution(state: AgentState) -> str:
+    return "complete" if state.get("tool_result") else "retry"
+
+
+def workflow_config(run_id: str) -> dict[str, dict[str, str]]:
+    return {"configurable": {"thread_id": run_id}}
+
+
+def durable_runtime_context(session: Session, *, mcp_client=None) -> AgentRuntimeContext:
+    settings = get_settings()
+    return AgentRuntimeContext(
+        session_factory=existing_session_factory(session),
+        llm_provider=None,
+        embedding_provider=create_embedding_provider(settings),
+        mcp_client=mcp_client or StdioMCPToolClient(),
+    )
+
+
+def persisted_tool_arguments(action_plan, idempotency_key: str) -> tuple[str, dict[str, object]]:
+    if action_plan.planned_tool_name == "refund_apply":
+        approval = action_plan.approval_request
+        if approval is None:
+            raise ValueError("persisted refund action is missing approval")
+        return "refund_apply", {
+            "action_plan_id": action_plan.action_plan_id,
+            "approval_id": approval.approval_id,
+            "order_no": action_plan.order_no,
+            "amount": str(action_plan.proposed_amount),
+            "currency": action_plan.currency,
+            "reason": action_plan.summary,
+            "idempotency_key": idempotency_key,
+        }
+    if action_plan.planned_tool_name == "coupon_issue":
+        approval = action_plan.approval_request
+        return "coupon_issue", {
+            "action_plan_id": action_plan.action_plan_id,
+            "approval_id": approval.approval_id if approval is not None else None,
+            "order_no": action_plan.order_no,
+            "amount": str(action_plan.proposed_amount),
+            "currency": action_plan.currency,
+            "reason": action_plan.summary,
+            "idempotency_key": idempotency_key,
+        }
+    if action_plan.planned_tool_name == "ticket_create":
+        return "ticket_create", {
+            "action_plan_id": action_plan.action_plan_id,
+            "order_no": action_plan.order_no,
+            "category": action_plan.intent,
+            "summary": action_plan.summary,
+            "idempotency_key": idempotency_key,
+        }
+    raise ValueError("action plan has no supported persisted tool")
+
+
+def record_retryable_mcp_failure(
+    state: AgentState,
+    runtime: Runtime[AgentRuntimeContext],
+    *,
+    error_code: str,
+) -> AgentState:
+    from app.repositories.aftersales import get_action_plan_by_external_id
+    from app.services.aftersales import record_workflow_status
+
+    with runtime.context.session_factory() as session:
+        action_plan = get_action_plan_by_external_id(session, state["action_plan_id"])
+        if action_plan is None:
+            raise RuntimeError("action plan not found after MCP failure")
+        record_workflow_status(
+            session,
+            action_plan,
+            workflow_status="awaiting_execution",
+            event_type="workflow_failed",
+            error_code=error_code,
+            phase="mcp_execution",
+        )
+        session.commit()
+    return {
+        "workflow_status": "awaiting_execution",
+        "workflow_error_code": error_code,
+        "execution_confirmed": False,
+        "errors": add_error(
+            state, error_code, "MCP execution failed safely and remains retryable."
+        ),
+        "steps": add_step(
+            state,
+            "execute_mcp_tool",
+            "failed",
+            "MCP execution failed; no business fact was modified.",
+        ),
+    }
+
+
+def existing_execution_response(
+    session: Session,
+    action_plan,
+    idempotency_key: str,
+) -> ActionPlanExecuteResponse | None:
+    from app.repositories.tools import (
+        get_coupon_by_action_plan_id,
+        get_refund_by_action_plan_id,
+        get_ticket_by_action_plan_id,
+    )
+    from app.services.errors import ConflictError
+
+    if action_plan.execution_status != "executed":
+        return None
+    if action_plan.planned_tool_name == "refund_apply":
+        record = get_refund_by_action_plan_id(session, action_plan.id)
+        result_type = "refund"
+        record_id = record.refund_id if record is not None else None
+    elif action_plan.planned_tool_name == "coupon_issue":
+        record = get_coupon_by_action_plan_id(session, action_plan.id)
+        result_type = "coupon"
+        record_id = record.coupon_id if record is not None else None
+    else:
+        record = get_ticket_by_action_plan_id(session, action_plan.id)
+        result_type = "ticket"
+        record_id = record.ticket_id if record is not None else None
+    if record is None or record_id is None:
+        raise RuntimeError("executed action plan has no persisted result")
+    if record.idempotency_key != idempotency_key:
+        raise ConflictError(
+            code="action_plan_already_executed",
+            message="Action plan was already executed with a different idempotency key.",
+            existing_identifier=record_id,
+        )
+    return ActionPlanExecuteResponse(
+        action_plan_id=action_plan.action_plan_id,
+        run_id=action_plan.run_id,
+        workflow_status="completed",
+        tool_name=action_plan.planned_tool_name,
+        execution_status="executed",
+        result_type=result_type,
+        record_id=record_id,
+        idempotent_replay=True,
+        trace_id=action_plan.trace_id,
+    )
+
+
+def tool_result_to_execute_response(
+    action_plan,
+    result: dict[str, object],
+    *,
+    idempotent_replay: bool,
+) -> ActionPlanExecuteResponse:
+    result_type_by_tool = {
+        "refund_apply": "refund",
+        "coupon_issue": "coupon",
+        "ticket_create": "ticket",
+    }
+    tool_name = str(result["tool_name"])
+    return ActionPlanExecuteResponse(
+        action_plan_id=action_plan.action_plan_id,
+        run_id=action_plan.run_id,
+        workflow_status="completed",
+        tool_name=tool_name,
+        execution_status="executed",
+        result_type=result_type_by_tool[tool_name],
+        record_id=str(result["record_id"]),
+        idempotent_replay=idempotent_replay or bool(result.get("idempotent_replay")),
+        trace_id=action_plan.trace_id,
+    )
 
 
 def add_step(state: AgentState, name: str, status: str, detail: str) -> list[dict[str, str]]:

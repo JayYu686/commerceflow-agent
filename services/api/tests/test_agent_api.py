@@ -69,7 +69,7 @@ def test_agent_preview_routes_do_not_expose_mcp_or_sql_capabilities(
     client: TestClient,
 ) -> None:
     forbidden_fragments = ("mcp", "sql")
-    paths = {getattr(route, "path", "") for route in client.app.routes}
+    paths = set(client.app.openapi()["paths"])
 
     forbidden_paths = [
         path for path in paths if any(fragment in path.lower() for fragment in forbidden_fragments)

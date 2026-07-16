@@ -1,10 +1,19 @@
+from __future__ import annotations
+
 import hashlib
 import math
 import re
-from typing import Protocol
+from typing import Any, Protocol
+
+import httpx
+
+from app.core.config import Settings
+from app.observability import workflow_span
 
 EMBEDDING_DIMENSION = 1536
-EMBEDDING_MODEL = "deterministic-keyword-v1"
+EMBEDDING_MODEL = "deterministic-keyword-v2"
+DETERMINISTIC_PROVIDER = "deterministic"
+OPENAI_COMPATIBLE_PROVIDER = "openai_compatible"
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+|[\u4e00-\u9fff]+")
 
@@ -20,7 +29,7 @@ KEYWORD_ALIASES = {
         "瑕疵",
         "质量",
         "故障",
-        "坏",
+        "坏了",
     ],
     "electronics": [
         "electronics",
@@ -74,9 +83,14 @@ KEYWORD_ALIASES = {
 }
 
 
+class EmbeddingProviderError(ValueError):
+    pass
+
+
 class EmbeddingProvider(Protocol):
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        pass
+    model_name: str
+
+    def embed(self, texts: list[str]) -> list[list[float]]: ...
 
 
 class DeterministicEmbeddingProvider:
@@ -108,3 +122,101 @@ class DeterministicEmbeddingProvider:
         digest = hashlib.sha256(token.encode("utf-8")).digest()
         index = int.from_bytes(digest[:4], "big") % EMBEDDING_DIMENSION
         vector[index] += weight
+
+
+class OpenAICompatibleEmbeddingProvider:
+    def __init__(
+        self,
+        *,
+        model: str,
+        api_key: str,
+        base_url: str,
+        timeout_seconds: float,
+        batch_size: int,
+        dimensions: int = EMBEDDING_DIMENSION,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
+        self.model_name = model
+        self._api_key = api_key
+        self._base_url = base_url.rstrip("/")
+        self._timeout_seconds = timeout_seconds
+        self._batch_size = batch_size
+        self._dimensions = dimensions
+        self._transport = transport
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        embeddings: list[list[float]] = []
+        for offset in range(0, len(texts), self._batch_size):
+            embeddings.extend(self._embed_batch(texts[offset : offset + self._batch_size]))
+        return embeddings
+
+    def _embed_batch(self, texts: list[str]) -> list[list[float]]:
+        body = {"model": self.model_name, "input": texts}
+        try:
+            with workflow_span(
+                "embedding.request",
+                {
+                    "embedding.provider": OPENAI_COMPATIBLE_PROVIDER,
+                    "embedding.model": self.model_name,
+                    "embedding.batch_size": len(texts),
+                },
+            ):
+                with httpx.Client(
+                    timeout=self._timeout_seconds,
+                    transport=self._transport,
+                ) as client:
+                    response = client.post(
+                        f"{self._base_url}/embeddings",
+                        headers={"Authorization": f"Bearer {self._api_key}"},
+                        json=body,
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            raise EmbeddingProviderError("openai-compatible embedding request failed") from exc
+        return validate_embedding_response(payload, len(texts), self._dimensions)
+
+
+def validate_embedding_response(
+    payload: dict[str, Any],
+    expected_count: int,
+    expected_dimensions: int,
+) -> list[list[float]]:
+    data = payload.get("data")
+    if not isinstance(data, list) or len(data) != expected_count:
+        raise EmbeddingProviderError("embedding response count mismatch")
+    ordered = sorted(data, key=lambda item: item.get("index", -1))
+    embeddings: list[list[float]] = []
+    for expected_index, item in enumerate(ordered):
+        if not isinstance(item, dict) or item.get("index") != expected_index:
+            raise EmbeddingProviderError("embedding response index mismatch")
+        vector = item.get("embedding")
+        if not isinstance(vector, list) or len(vector) != expected_dimensions:
+            raise EmbeddingProviderError("embedding dimension mismatch")
+        if not all(
+            isinstance(value, int | float) and not isinstance(value, bool) for value in vector
+        ):
+            raise EmbeddingProviderError("embedding contains a non-numeric value")
+        embeddings.append([float(value) for value in vector])
+    return embeddings
+
+
+def create_embedding_provider(settings: Settings) -> EmbeddingProvider:
+    if settings.embedding_provider == DETERMINISTIC_PROVIDER:
+        return DeterministicEmbeddingProvider()
+    if settings.embedding_provider != OPENAI_COMPATIBLE_PROVIDER:
+        raise EmbeddingProviderError("unsupported embedding provider")
+
+    api_key = settings.embedding_api_key.get_secret_value()
+    if not settings.embedding_model or not settings.embedding_base_url or not api_key:
+        raise EmbeddingProviderError("openai-compatible embedding configuration is incomplete")
+    if settings.embedding_dimensions != EMBEDDING_DIMENSION:
+        raise EmbeddingProviderError("configured embedding dimension must be 1536")
+    return OpenAICompatibleEmbeddingProvider(
+        model=settings.embedding_model,
+        api_key=api_key,
+        base_url=settings.embedding_base_url,
+        timeout_seconds=settings.embedding_timeout_seconds,
+        batch_size=settings.embedding_batch_size,
+        dimensions=settings.embedding_dimensions,
+    )

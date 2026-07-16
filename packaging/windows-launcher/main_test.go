@@ -13,7 +13,7 @@ func testLauncher(t *testing.T, runner commandRunner) *launcher {
 	return &launcher{
 		run:         runner,
 		dataDir:     t.TempDir(),
-		version:     "v1.0.0",
+		version:     "v1.1.0",
 		projectName: "commerceflow-agent-demo",
 		healthURL:   "http://127.0.0.1:1/health",
 		consoleURL:  "http://localhost:3000",
@@ -21,6 +21,16 @@ func testLauncher(t *testing.T, runner commandRunner) *launcher {
 		portFree:    func(int) bool { return true },
 		waitDelay:   time.Millisecond,
 		waitLimit:   time.Millisecond,
+	}
+}
+
+func TestObservabilityAddsComposeProfile(t *testing.T) {
+	app := testLauncher(t, func(string, ...string) (string, error) { return "", nil })
+	app.observability = true
+	args := strings.Join(app.composeArgs("up", "-d"), " ")
+
+	if !strings.Contains(args, "--profile observability") {
+		t.Fatalf("observability profile missing from compose args: %s", args)
 	}
 }
 

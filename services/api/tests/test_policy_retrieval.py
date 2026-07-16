@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
+from app.services.embeddings import EMBEDDING_DIMENSION
 from app.services.policy_ingestion import ingest_policies
 from app.services.policy_retrieval import search_policies
 
@@ -125,3 +126,25 @@ def test_retrieval_rejects_invalid_inputs(policy_session: Session) -> None:
             as_of=AS_OF,
             limit=11,
         )
+
+
+def test_retrieval_does_not_mix_vectors_from_different_models(
+    policy_session: Session,
+) -> None:
+    class DifferentModelProvider:
+        model_name = "different-model-v1"
+
+        def embed(self, texts: list[str]) -> list[list[float]]:
+            return [[1.0] + [0.0] * (EMBEDDING_DIMENSION - 1) for _ in texts]
+
+    response = search_policies(
+        policy_session,
+        query="electronics quality defect refund",
+        intent="quality_issue_refund",
+        category="electronics",
+        aftersales_type="standard",
+        as_of=AS_OF,
+        embedding_provider=DifferentModelProvider(),
+    )
+
+    assert response.hits == []

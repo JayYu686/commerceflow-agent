@@ -52,7 +52,20 @@ class ActionPlan(Base):
             "risk_level IN ('low', 'medium', 'high', 'critical')",
             name="ck_action_plans_risk_level",
         ),
+        CheckConstraint(
+            "workflow_status IN ("
+            "'legacy_manual', "
+            "'running', "
+            "'awaiting_approval', "
+            "'awaiting_execution', "
+            "'completed', "
+            "'blocked', "
+            "'failed'"
+            ")",
+            name="ck_action_plans_workflow_status",
+        ),
         UniqueConstraint("action_plan_id", name="uq_action_plans_action_plan_id"),
+        UniqueConstraint("run_id", name="uq_action_plans_run_id"),
         UniqueConstraint("idempotency_key", name="uq_action_plans_idempotency_key"),
         UniqueConstraint("business_dedupe_key", name="uq_action_plans_business_dedupe_key"),
     )
@@ -80,6 +93,11 @@ class ActionPlan(Base):
     llm_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     request_message: Mapped[str] = mapped_column(Text, nullable=False)
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    workflow_status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="legacy_manual"
+    )
+    workflow_error_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    trace_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -166,7 +184,13 @@ class AuditLog(Base):
             "'action_plan_not_executable', "
             "'tool_execution_succeeded', "
             "'tool_execution_blocked', "
-            "'tool_execution_idempotent_replay'"
+            "'tool_execution_idempotent_replay', "
+            "'workflow_started', "
+            "'workflow_interrupted', "
+            "'workflow_resumed', "
+            "'workflow_completed', "
+            "'workflow_blocked', "
+            "'workflow_failed'"
             ")",
             name="ck_audit_logs_event_type",
         ),
@@ -194,6 +218,7 @@ class AuditLog(Base):
     )
     order_no: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    trace_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
     payload_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "../../components/console/Badge";
@@ -11,16 +12,12 @@ import { KeyValue } from "../../components/console/KeyValue";
 import { Panel } from "../../components/console/Panel";
 import { SafeMockNotice } from "../../components/console/SafeMockNotice";
 import {
-  executeCouponIssue,
-  executeRefundApply,
-  executeTicketCreate,
+  executeActionPlan,
   getActionPlanResult,
   listActionPlans,
 } from "../../lib/api";
 import {
   displayLabel,
-  formatDateTime,
-  localizeText,
   money,
   recordIdLabel,
   toneForRiskValue,
@@ -28,23 +25,17 @@ import {
 } from "../../lib/display";
 import { newIdempotencyKey } from "../../lib/idempotency";
 import type {
+  ActionPlanExecuteResponse,
   ActionPlanListItem,
   ActionPlanResultResponse,
   ApiError,
-  CouponIssueRequest,
-  RefundApplyRequest,
-  TicketCreateRequest,
-  ToolExecutionResponse,
 } from "../../lib/types";
 
 export default function ToolsPage() {
   const [plans, setPlans] = useState<ActionPlanListItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [reason, setReason] = useState("");
-  const [ticketCategory, setTicketCategory] = useState("manual_review");
-  const [ticketSummary, setTicketSummary] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState("");
-  const [execution, setExecution] = useState<ToolExecutionResponse | null>(null);
+  const [execution, setExecution] = useState<ActionPlanExecuteResponse | null>(null);
   const [result, setResult] = useState<ActionPlanResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
@@ -60,30 +51,20 @@ export default function ToolsPage() {
     setError(null);
     try {
       const response = await listActionPlans({ execution_status: "not_executed", limit: 100 });
-      const executable = response.action_plans.filter((plan) => plan.planned_tool_name);
+      const executable = response.action_plans.filter(
+        (plan) => plan.workflow_status === "awaiting_execution" && plan.planned_tool_name,
+      );
       setPlans(executable);
-      const next = executable[0] ?? null;
-      setSelectedId(next?.action_plan_id ?? null);
-      initializeForm(next);
+      setSelectedId((current) =>
+        executable.some((plan) => plan.action_plan_id === current)
+          ? current
+          : (executable[0]?.action_plan_id ?? null),
+      );
     } catch (caught: unknown) {
       setError(caught instanceof Error ? caught : (caught as ApiError));
     } finally {
       setLoading(false);
     }
-  }
-
-  function choosePlan(plan: ActionPlanListItem) {
-    setSelectedId(plan.action_plan_id);
-    initializeForm(plan);
-    setExecution(null);
-    setResult(null);
-    setError(null);
-  }
-
-  function initializeForm(plan: ActionPlanListItem | null) {
-    setReason(defaultReason(plan));
-    setTicketCategory(plan?.intent ?? "manual_review");
-    setTicketSummary(plan ? localizeText(plan.summary) : "创建人工复核工单，用于补充证据或跟进处理。");
   }
 
   async function executeSelected() {
@@ -93,7 +74,7 @@ export default function ToolsPage() {
     setExecuting(true);
     setError(null);
     try {
-      const response = await executeForPlan(selected, reason, ticketCategory, ticketSummary, idempotencyKey);
+      const response = await executeActionPlan(selected.action_plan_id, idempotencyKey);
       setExecution(response);
       setResult(await getActionPlanResult(selected.action_plan_id));
     } catch (caught: unknown) {
@@ -105,39 +86,46 @@ export default function ToolsPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setIdempotencyKey(newIdempotencyKey("web-tool-execution"));
+      setIdempotencyKey(newIdempotencyKey("web-workflow-execution"));
       void loadPlans();
     }, 0);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <header className="border-b border-line pb-6">
-        <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-signal">持久化工作流</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">本地模拟工具执行</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          手动执行已计划或已批准的本地模拟工具。Agent 不会自动调用这些接口，LLM 也不能决定工具执行。
+          人工确认后恢复 LangGraph 工作流，由工作流通过 stdio MCP 调用受控工具。页面不会拼装金额、订单号或审批结果。
         </p>
       </header>
 
       <SafeMockNotice />
+      <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+        审批通过只代表允许进入执行确认，不代表已经退款。点击执行仍只创建本地 Mock 记录，不调用真实支付、优惠券或客服系统。
+      </div>
       <ErrorNotice error={error} />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-        <Panel title="可执行动作计划" eyebrow={loading ? "加载中" : `${plans.length} 条`}>
+        <Panel title="等待执行确认的动作计划" eyebrow={loading ? "加载中" : `${plans.length} 条`}>
           {loading ? (
-            <EmptyState message="正在加载可执行动作计划..." />
+            <EmptyState message="正在加载持久化动作计划..." />
           ) : plans.length === 0 ? (
-            <EmptyState message="当前没有未执行且带计划工具的动作计划。可以先从工作台创建计划，或在审批中心批准高风险计划。" />
+            <EmptyState message="当前没有等待执行确认的动作计划。请先在审批中心批准高风险计划，或创建低额补偿计划。" />
           ) : (
             <div className="grid gap-3">
               {plans.map((plan) => (
                 <button
                   key={plan.action_plan_id}
                   type="button"
-                  onClick={() => choosePlan(plan)}
+                  onClick={() => {
+                    setSelectedId(plan.action_plan_id);
+                    setExecution(null);
+                    setResult(null);
+                    setError(null);
+                  }}
                   className={`rounded-lg border p-4 text-left ${
                     plan.action_plan_id === selectedId
                       ? "border-signal bg-teal-50"
@@ -145,9 +133,8 @@ export default function ToolsPage() {
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={toneForStatusValue(plan.status)}>{displayLabel(plan.status)}</Badge>
-                    <Badge tone={toneForStatusValue(plan.execution_status)}>
-                      {displayLabel(plan.execution_status)}
+                    <Badge tone={toneForStatusValue(plan.workflow_status)}>
+                      {displayLabel(plan.workflow_status)}
                     </Badge>
                     <Badge tone={toneForRiskValue(plan.risk_level)}>
                       {displayLabel(plan.risk_level)}
@@ -164,89 +151,70 @@ export default function ToolsPage() {
           )}
         </Panel>
 
-        <Panel title="执行面板" eyebrow="人工触发本地模拟工具">
+        <Panel title="执行确认" eyebrow="人工触发 Graph Resume">
           {!selected ? (
-            <EmptyState message="请选择一个可执行动作计划。" />
+            <EmptyState message="请选择一个等待执行确认的动作计划。" />
           ) : (
             <div className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
+              <dl className="grid gap-4 md:grid-cols-2">
                 <KeyValue label="动作计划 ID" value={selected.action_plan_id} />
-                <KeyValue label="审批 ID" value={selected.approval_id ?? "无"} />
+                <KeyValue label="运行 ID" value={selected.run_id} />
+                <KeyValue label="审批 ID" value={selected.approval_id ?? "无需审批"} />
+                <KeyValue
+                  label="工作流状态"
+                  value={displayLabel(selected.workflow_status)}
+                  raw={selected.workflow_status}
+                />
                 <KeyValue
                   label="计划工具"
                   value={displayLabel(selected.planned_tool_name)}
                   raw={selected.planned_tool_name}
                 />
-                <KeyValue label="状态" value={displayLabel(selected.status)} raw={selected.status} />
-                <KeyValue label="订单号" value={selected.order_no ?? "无"} />
                 <KeyValue label="金额" value={money(selected.proposed_amount, selected.currency)} />
-              </div>
+              </dl>
 
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                前端只提供人工触发入口。退款和高额优惠券是否可执行，仍由后端工具服务检查审批、金额、订单、
-                政策依据、幂等键和重复执行状态。
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-950">
+                执行参数将由后端从已持久化的动作计划生成，LLM 和浏览器都不能改写订单号、金额、审批 ID 或政策依据。
               </div>
 
               <IdempotencyKeyBox
                 value={idempotencyKey}
                 onRefresh={() => {
-                  setIdempotencyKey(newIdempotencyKey("web-tool-execution"));
+                  setIdempotencyKey(newIdempotencyKey("web-workflow-execution"));
                   setExecution(null);
                   setResult(null);
                 }}
               />
 
-              {selected.planned_tool_name === "ticket_create" ? (
-                <>
-                  <label className="block text-sm">
-                    <span className="font-medium text-slate-700">工单类别</span>
-                    <input
-                      value={ticketCategory}
-                      onChange={(event) => setTicketCategory(event.target.value)}
-                      className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="font-medium text-slate-700">工单摘要</span>
-                    <textarea
-                      value={ticketSummary}
-                      onChange={(event) => setTicketSummary(event.target.value)}
-                      rows={4}
-                      className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2"
-                    />
-                  </label>
-                </>
-              ) : (
-                <label className="block text-sm">
-                  <span className="font-medium text-slate-700">执行原因</span>
-                  <textarea
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    rows={4}
-                    className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2"
-                  />
-                </label>
-              )}
-
-              <button
-                type="button"
-                disabled={executing || !idempotencyKey || !canExecuteClientSide(selected)}
-                onClick={() => void executeSelected()}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-              >
-                {executing ? "正在执行本地模拟工具..." : execution ? "使用相同幂等键重试" : "执行本地模拟工具"}
-              </button>
-
-              {!canExecuteClientSide(selected) ? (
-                <div className="text-sm text-amber-800">
-                  该计划当前状态不适合从前端直接执行。后端仍会做最终安全校验。
-                </div>
-              ) : null}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={executing || !idempotencyKey}
+                  onClick={() => void executeSelected()}
+                  className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  {executing
+                    ? "正在恢复工作流并调用 MCP..."
+                    : execution
+                      ? "使用相同幂等键重试"
+                      : "确认执行本地模拟工具"}
+                </button>
+                <Link
+                  href={`/cases/${selected.action_plan_id}`}
+                  className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  查看案例详情
+                </Link>
+              </div>
 
               {execution ? <ExecutionResult execution={execution} result={result} /> : null}
               <DebugJson
-                title="工具请求预览 JSON"
-                data={selected ? buildPreviewPayload(selected, reason, ticketCategory, ticketSummary) : {}}
+                title="工作流恢复请求 JSON"
+                data={{
+                  action_plan_id: selected.action_plan_id,
+                  confirm: true,
+                  idempotency_key: idempotencyKey,
+                }}
               />
             </div>
           )}
@@ -256,105 +224,18 @@ export default function ToolsPage() {
   );
 }
 
-async function executeForPlan(
-  plan: ActionPlanListItem,
-  reason: string,
-  ticketCategory: string,
-  ticketSummary: string,
-  idempotencyKey: string,
-): Promise<ToolExecutionResponse> {
-  if (plan.planned_tool_name === "refund_apply") {
-    const request: RefundApplyRequest = {
-      action_plan_id: plan.action_plan_id,
-      approval_id: plan.approval_id ?? "",
-      order_no: plan.order_no ?? "",
-      amount: plan.proposed_amount ?? "0.00",
-      currency: plan.currency ?? "CNY",
-      reason,
-    };
-    return executeRefundApply(request, idempotencyKey);
-  }
-
-  if (plan.planned_tool_name === "coupon_issue") {
-    const request: CouponIssueRequest = {
-      action_plan_id: plan.action_plan_id,
-      approval_id: plan.approval_id,
-      order_no: plan.order_no ?? "",
-      amount: plan.proposed_amount ?? "0.00",
-      currency: plan.currency ?? "CNY",
-      reason,
-    };
-    return executeCouponIssue(request, idempotencyKey);
-  }
-
-  const request: TicketCreateRequest = {
-    action_plan_id: plan.action_plan_id,
-    order_no: plan.order_no ?? "",
-    category: ticketCategory,
-    summary: ticketSummary,
-  };
-  return executeTicketCreate(request, idempotencyKey);
-}
-
-function buildPreviewPayload(
-  plan: ActionPlanListItem,
-  reason: string,
-  ticketCategory: string,
-  ticketSummary: string,
-) {
-  if (plan.planned_tool_name === "ticket_create") {
-    return {
-      action_plan_id: plan.action_plan_id,
-      order_no: plan.order_no,
-      category: ticketCategory,
-      summary: ticketSummary,
-    };
-  }
-  return {
-    action_plan_id: plan.action_plan_id,
-    approval_id: plan.approval_id,
-    order_no: plan.order_no,
-    amount: plan.proposed_amount,
-    currency: plan.currency,
-    reason,
-  };
-}
-
-function canExecuteClientSide(plan: ActionPlanListItem): boolean {
-  return (
-    plan.execution_status === "not_executed" &&
-    Boolean(plan.planned_tool_name) &&
-    plan.status !== "pending_approval" &&
-    plan.status !== "rejected" &&
-    plan.status !== "not_executable"
-  );
-}
-
-function defaultReason(plan: ActionPlanListItem | null): string {
-  if (!plan) {
-    return "";
-  }
-  if (plan.planned_tool_name === "refund_apply") {
-    return "质量问题退款已通过审批，用于本地模拟执行。";
-  }
-  if (plan.planned_tool_name === "coupon_issue") {
-    return "物流延迟补偿，用于本地模拟执行。";
-  }
-  return localizeText(plan.summary);
-}
-
 function ExecutionResult({
   execution,
   result,
 }: {
-  execution: ToolExecutionResponse;
+  execution: ActionPlanExecuteResponse;
   result: ActionPlanResultResponse | null;
 }) {
   return (
     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone="success">{displayLabel(execution.tool_name)}</Badge>
-        <Badge tone="success">{displayLabel(execution.status)}</Badge>
+        <Badge tone="success">{displayLabel(execution.workflow_status)}</Badge>
         <Badge tone={execution.idempotent_replay ? "warning" : "success"}>
           {execution.idempotent_replay ? "幂等重放" : "首次执行"}
         </Badge>
@@ -362,12 +243,12 @@ function ExecutionResult({
       <dl className="mt-4 grid gap-3 md:grid-cols-2">
         <KeyValue label="记录 ID" value={execution.record_id} />
         <KeyValue label="动作计划 ID" value={execution.action_plan_id} />
-        <KeyValue label="订单号" value={execution.order_no} />
+        <KeyValue label="运行 ID" value={execution.run_id} />
         <KeyValue label="执行状态" value={displayLabel(execution.execution_status)} />
-        <KeyValue label="创建时间" value={formatDateTime(execution.created_at)} />
+        <KeyValue label="Trace ID" value={execution.trace_id ?? "未启用 Trace"} />
         <KeyValue
           label={recordIdLabel(result?.result_type)}
-          value={result?.result ? recordId(result.result as unknown as Record<string, unknown>) : "正在等待结果查询"}
+          value={result?.result ? recordId(result.result) : "正在等待结果查询"}
         />
       </dl>
       <DebugJson title="本地模拟结果调试 JSON" data={result ?? execution} />

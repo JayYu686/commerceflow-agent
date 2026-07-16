@@ -143,6 +143,14 @@ export type AgentPreviewResponse = {
 };
 
 export type ExecutionStatus = "not_executed" | "not_applicable" | "executed" | "execution_failed";
+export type WorkflowStatus =
+  | "legacy_manual"
+  | "running"
+  | "awaiting_approval"
+  | "awaiting_execution"
+  | "completed"
+  | "blocked"
+  | "failed";
 
 export type ActionPlanCreateResponse = {
   action_plan_id: string;
@@ -159,6 +167,8 @@ export type ActionPlanCreateResponse = {
   proposed_amount: string | null;
   currency: string | null;
   summary: string;
+  workflow_status: WorkflowStatus;
+  trace_id: string | null;
   created_at: string;
 };
 
@@ -193,6 +203,9 @@ export type ActionPlanResponse = {
   fact_evidence: FactEvidence[] | Record<string, unknown>[];
   policy_evidence: PolicyEvidence[] | Record<string, unknown>[];
   llm: Record<string, unknown>;
+  workflow_status: WorkflowStatus;
+  workflow_error_code: string | null;
+  trace_id: string | null;
   approval: ApprovalSummary | null;
   created_at: string;
   updated_at: string;
@@ -243,6 +256,18 @@ export type ToolExecutionResponse = {
   execution_status: "executed";
   idempotent_replay: boolean;
   created_at: string;
+};
+
+export type ActionPlanExecuteResponse = {
+  action_plan_id: string;
+  run_id: string;
+  workflow_status: WorkflowStatus;
+  tool_name: "refund_apply" | "coupon_issue" | "ticket_create";
+  execution_status: "executed";
+  result_type: "refund" | "coupon" | "ticket";
+  record_id: string;
+  idempotent_replay: boolean;
+  trace_id: string | null;
 };
 
 export type RefundApplyRequest = {
@@ -322,6 +347,7 @@ export type AuditLogEvent = {
   approval_id: string | null;
   order_no: string | null;
   idempotency_key: string | null;
+  trace_id: string | null;
   payload: Record<string, unknown>;
   created_at: string;
 };

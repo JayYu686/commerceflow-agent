@@ -627,8 +627,8 @@ function ActionPlanPanel({
     <Panel title="创建动作计划（Action Plan）" eyebrow="持久化计划">
       <div className="space-y-4">
         <p className="text-sm leading-6 text-slate-600">
-          创建动作计划会复用当前预览的用户请求和 as_of 业务时间。它只保存动作计划，不会批准、
-          执行退款、发放优惠券、创建真实工单或调用 MCP 工具。
+          创建动作计划会复用当前预览的用户请求和 as_of 业务时间，并把工作流暂停在“等待审批”或
+          “等待执行确认”。创建阶段不会执行退款、发放优惠券、创建真实工单或调用 MCP 工具。
         </p>
         <IdempotencyKeyBox value={idempotencyKey} onRefresh={onRefreshKey} />
         <button
@@ -656,7 +656,13 @@ function ActionPlanPanel({
             ) : null}
             <div className="grid gap-3 rounded-lg border border-line bg-slate-50 p-4 text-sm md:grid-cols-2">
               <KeyValue label="动作计划 ID" value={actionPlan.action_plan_id} />
+              <KeyValue
+                label="工作流状态"
+                value={displayLabel(actionPlan.workflow_status)}
+                raw={actionPlan.workflow_status}
+              />
               <KeyValue label="审批 ID" value={actionPlan.approval_id ?? "无"} />
+              <KeyValue label="Trace ID" value={actionPlan.trace_id ?? "未启用 Trace"} />
               <KeyValue
                 label="来源"
                 value={actionPlanSource === "reused" ? "复用历史动作计划" : "本次新建动作计划"}
@@ -808,6 +814,8 @@ function actionPlanResponseToCreateResponse(
     proposed_amount: response.proposed_amount,
     currency: response.currency,
     summary: response.summary,
+    workflow_status: response.workflow_status,
+    trace_id: response.trace_id,
     created_at: response.created_at,
   };
 }

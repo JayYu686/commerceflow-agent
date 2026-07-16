@@ -4,22 +4,23 @@
 
 **CommerceFlow Agent：可审批、可审计的电商售后业务智能体平台**
 
-- 基于 FastAPI、SQLAlchemy、PostgreSQL/pgvector、LangGraph、Next.js 和 MCP 构建电商售后 Agent 演示系统，覆盖订单/物流事实查询、售后政策 RAG、Agent Preview、Action Plan、人工审批、Mock 工具执行和审计时间线。
+- 基于 Python 3.13、FastAPI、PostgreSQL/pgvector、LangGraph 1.x、Next.js 和 MCP 构建电商售后 Agent，覆盖事实查询、政策依据、Action Plan、人工审批、持久化恢复、Mock 工具执行和审计时间线。
 - 设计受控 LLM Adapter，支持 disabled/fake/OpenAI-compatible Provider。真实模型只参与意图理解和用户回复措辞，不能覆盖订单事实、政策依据、风险结论、审批状态或工具执行。
 - 实现 Action Plan、Approval Request、Audit Log、Mock Refund/Coupon/Ticket 结果表；所有写操作要求 `Idempotency-Key`，退款和高额补偿必须通过人工审批后才能进入 Mock 执行。
-- 使用 stdio MCP Server 将 `refund_apply`、`coupon_issue`、`ticket_create` 暴露为薄工具包装层，所有审批、幂等、金额、订单和政策依据校验仍由内部 service 统一负责。
+- 使用 PostgreSQL Checkpoint 和 LangGraph Interrupt/Resume 持久化人工审批流程；审批后仍需执行确认，再通过官方 stdio MCP 协议调用工具，所有审批、幂等、金额、订单和证据校验仍由内部 service 统一负责。
+- 使用 OpenTelemetry 将工作流节点、LLM、检索、审批恢复和 MCP 调用关联到 Action Plan/Audit trace_id，并通过可选 Jaeger 展示运行链路。
 - 构建中文 Agent Operations Console，支持 Workbench、案例详情、审批中心、工具执行、审计时间线和评测看板，降低命令行依赖，便于业务演示和验收。
 - 新增 100 条固定 MVP 评测集和 deterministic runner，生成 JSON/Markdown 报告。当前保存报告显示 Task Success Rate 94.00%，Unsafe Action Block Rate 100.00%，Approval Enforcement Rate 100.00%，Idempotency Protection Rate 100.00%。
+- 扩展 120 条 v1.1 评测集覆盖 checkpoint 恢复、workflow resume、MCP 失败与 trace 关联，实际报告为 112/120 通过，四项 durable workflow 指标均为 100%。
 
 ## 技术栈
 
-- 后端：Python 3.11、FastAPI、Pydantic、SQLAlchemy 2.x、Alembic。
-- 数据：PostgreSQL、pgvector、Redis、deterministic seed。
-- Agent：LangGraph、deterministic parser、controlled LLM adapter、OpenAI-compatible Chat Completions provider。
+- 后端：Python 3.13、FastAPI 0.138、Pydantic Settings、SQLAlchemy 2.x、Alembic。
+- 数据：PostgreSQL 16、pgvector、LangGraph Postgres Checkpoint、deterministic seed。
+- Agent：LangGraph 1.x Interrupt/Resume、deterministic parser、controlled LLM adapter、OpenAI-compatible providers。
 - RAG：结构化政策 JSON、deterministic embedding、pgvector cosine retrieval、metadata filter。
-- 工具边界：internal tool service、stdio MCP Server、idempotency、audit log。
-- 前端：Next.js 16、React 19、TypeScript、TailwindCSS。
-- 测试与交付：pytest、ruff、Next lint/build、JSONL eval dataset、Markdown/JSON report。
+- 工具与可观测性：internal tool service、stdio MCP Client/Server、OpenTelemetry、Jaeger、idempotency、audit log。
+- 前端与测试：Next.js 16、React 19、TypeScript 6、TailwindCSS 4.3、Playwright、pytest、Ruff、JSONL eval。
 
 ## 技术难点
 
@@ -61,6 +62,7 @@ MCP wrapper 不复制业务规则、不直接写 ORM、不自行判断审批，�
 - Approval Enforcement Rate：100.00%。
 - Idempotency Protection Rate：100.00%。
 - Trace Completeness：100.00%。
+- v1.1 Workflow Resume / MCP Execution / Trace Correlation：100.00%（各 4/4）。
 
 ## 不应声称的内容
 

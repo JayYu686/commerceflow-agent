@@ -3,8 +3,13 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
+from app.agent.mcp_client import StdioMCPToolClient
+from app.agent.workflow import execute_action_plan_workflow, resume_after_approval
 from app.db.session import get_session
+from app.repositories.aftersales import get_approval_request_by_external_id
 from app.schemas.aftersales import (
+    ActionPlanExecuteRequest,
+    ActionPlanExecuteResponse,
     ActionPlanListResponse,
     ActionPlanResponse,
     ActionPlanResultResponse,
@@ -24,6 +29,10 @@ from app.services.aftersales import (
 )
 
 router = APIRouter(prefix="/api", tags=["approvals"])
+
+
+def get_mcp_tool_client() -> StdioMCPToolClient:
+    return StdioMCPToolClient()
 
 
 @router.get("/action-plans", response_model=ActionPlanListResponse)
@@ -98,9 +107,33 @@ def decide_approval_request(
     idempotency_key: str = Header(alias="Idempotency-Key"),
     session: Session = Depends(get_session),
 ) -> ApprovalRequestResponse:
-    return decide_approval(
+    existing = get_approval_request_by_external_id(session, approval_id)
+    should_resume = existing is not None and existing.status == "pending"
+    response = decide_approval(
         session,
         approval_id,
         request,
         idempotency_key=idempotency_key,
+    )
+    if should_resume:
+        resume_after_approval(session, response.action_plan_id)
+    return response
+
+
+@router.post(
+    "/action-plans/{action_plan_id}/execute",
+    response_model=ActionPlanExecuteResponse,
+)
+def execute_action_plan(
+    action_plan_id: str,
+    _request: ActionPlanExecuteRequest,
+    idempotency_key: str = Header(alias="Idempotency-Key"),
+    session: Session = Depends(get_session),
+    mcp_client: StdioMCPToolClient = Depends(get_mcp_tool_client),
+) -> ActionPlanExecuteResponse:
+    return execute_action_plan_workflow(
+        session,
+        action_plan_id,
+        idempotency_key=idempotency_key,
+        mcp_client=mcp_client,
     )

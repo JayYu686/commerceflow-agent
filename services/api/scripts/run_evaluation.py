@@ -20,6 +20,7 @@ def main() -> None:
             cases,
             report_id=args.output.stem,
             provider=args.provider,
+            dataset_version=args.dataset.stem,
         )
     write_report(report, args.output, args.markdown)
     print(f"Wrote evaluation JSON report: {args.output}")

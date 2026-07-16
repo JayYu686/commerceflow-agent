@@ -1,5 +1,6 @@
 import type {
   ActionPlanCreateResponse,
+  ActionPlanExecuteResponse,
   ActionPlanListResponse,
   ActionPlanResponse,
   ActionPlanResultResponse,
@@ -91,6 +92,23 @@ export async function getActionPlanResult(
 ): Promise<ActionPlanResultResponse> {
   return apiRequest<ActionPlanResultResponse>(
     `/api/action-plans/${encodeURIComponent(actionPlanId)}/result`,
+  );
+}
+
+export async function executeActionPlan(
+  actionPlanId: string,
+  idempotencyKey: string,
+): Promise<ActionPlanExecuteResponse> {
+  return apiRequest<ActionPlanExecuteResponse>(
+    `/api/action-plans/${encodeURIComponent(actionPlanId)}/execute`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify({ confirm: true }),
+    },
   );
 }
 

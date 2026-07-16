@@ -19,6 +19,7 @@ from app.agent.parser import (
     has_unsafe_instruction,
 )
 from app.core.config import Settings
+from app.observability import workflow_span
 
 INTENT_TASK = "intent_extraction"
 CUSTOMER_REPLY_TASK = "customer_reply"
@@ -267,20 +268,24 @@ class OpenAICompatibleLLMProvider:
         }
         started_at = time.perf_counter()
         try:
-            with httpx.Client(
-                timeout=self._timeout_seconds,
-                transport=self._transport,
-            ) as client:
-                response = client.post(
-                    f"{self._base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self._api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json=request_body,
-                )
-                response.raise_for_status()
-                payload = response.json()
+            with workflow_span(
+                "llm.chat.completions",
+                {"llm.provider": self.provider, "llm.model": self.model, "llm.task": task},
+            ):
+                with httpx.Client(
+                    timeout=self._timeout_seconds,
+                    transport=self._transport,
+                ) as client:
+                    response = client.post(
+                        f"{self._base_url}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self._api_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json=request_body,
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
         except (httpx.HTTPError, ValueError) as exc:
             raise LLMOutputError("openai-compatible provider failed") from exc
 
@@ -306,13 +311,12 @@ def create_llm_provider(settings: Settings) -> LLMProvider | None:
     if settings.llm_provider == FAKE_LLM_PROVIDER:
         return FakeLLMProvider(model=settings.llm_model or "fake-after-sales-v1")
     if settings.llm_provider == OPENAI_COMPATIBLE_LLM_PROVIDER:
-        if not (
-            settings.llm_model and settings.openai_api_key and settings.openai_compatible_base_url
-        ):
+        api_key = settings.openai_api_key.get_secret_value()
+        if not (settings.llm_model and api_key and settings.openai_compatible_base_url):
             return None
         return OpenAICompatibleLLMProvider(
             model=settings.llm_model,
-            api_key=settings.openai_api_key,
+            api_key=api_key,
             base_url=settings.openai_compatible_base_url,
             timeout_seconds=settings.llm_timeout_seconds,
             max_tokens=settings.llm_max_tokens,

@@ -1,4 +1,4 @@
-CommerceFlow Agent v1.0.0 Windows 体验说明
+CommerceFlow Agent v1.1.0 Windows 体验说明
 ==========================================
 
 这是一个求职演示用途的本地 Mock 系统，不会调用真实支付、退款、优惠券或客服系统。
@@ -19,12 +19,14 @@ CommerceFlow Agent v1.0.0 Windows 体验说明
 命令行
 ------
 CommerceFlowAgent.exe start
+CommerceFlowAgent.exe start --observability
 CommerceFlowAgent.exe status
 CommerceFlowAgent.exe stop
 CommerceFlowAgent.exe reset
 
 stop 会停止容器但保留本地演示数据。
 reset 会要求二次确认，并删除本地演示数据后重新初始化。
+start --observability 会额外启动 OpenTelemetry Collector 和 Jaeger，访问 http://localhost:16686 查看运行链路。
 
 安全说明
 --------

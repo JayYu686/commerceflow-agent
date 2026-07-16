@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
-from app.models import PolicyDocument
+from app.models import PolicyChunk, PolicyDocument
+from app.services.embeddings import EMBEDDING_DIMENSION
 from app.services.policy_ingestion import (
     DEFAULT_POLICY_DIR,
     PolicyIngestionSummary,
@@ -80,3 +81,20 @@ def test_policy_ingestion_without_reset_refuses_existing_data(policy_session: Se
 
     with pytest.raises(RuntimeError, match="--reset"):
         ingest_policies(policy_session, reset=False)
+
+
+def test_policy_ingestion_records_the_active_embedding_model(policy_session: Session) -> None:
+    class TestEmbeddingProvider:
+        model_name = "test-embedding-v2"
+
+        def embed(self, texts: list[str]) -> list[list[float]]:
+            return [[1.0] + [0.0] * (EMBEDDING_DIMENSION - 1) for _ in texts]
+
+    ingest_policies(
+        policy_session,
+        reset=True,
+        embedding_provider=TestEmbeddingProvider(),
+    )
+
+    models = set(policy_session.scalars(select(PolicyChunk.embedding_model)).all())
+    assert models == {"test-embedding-v2"}

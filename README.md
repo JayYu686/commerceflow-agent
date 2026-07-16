@@ -38,11 +38,11 @@ flowchart LR
 ### Windows 一键体验（推荐）
 
 1. 安装并启动 [Docker Desktop](https://www.docker.com/products/docker-desktop/)。
-2. 从 [Releases](https://github.com/JayYu686/commerceflow-agent/releases/latest) 下载 `CommerceFlowAgent-v1.0.0-windows-amd64.zip`。
+2. 从 [Releases](https://github.com/JayYu686/commerceflow-agent/releases/latest) 下载最新的 `CommerceFlowAgent-<version>-windows-amd64.zip`。
 3. 解压并双击 `CommerceFlowAgent.exe`。
 4. 选择“启动系统并打开浏览器”，等待控制台打开 `http://localhost:3000`。
 
-启动器会拉取固定版本的 API/Web 镜像并启动 PostgreSQL、Redis、FastAPI 和 Next.js。用户不需要单独安装 Python、Node.js 或 PostgreSQL。
+启动器会拉取固定版本的 API/Web 镜像并启动 PostgreSQL、FastAPI 和 Next.js。用户不需要单独安装 Python、Node.js 或 PostgreSQL。`start --observability` 可额外启动 OpenTelemetry Collector 和 Jaeger。
 
 注意：程序未使用商业代码签名证书，Windows 可能显示 SmartScreen 提示。请从本仓库 Release 下载，并使用随包提供的 `SHA256SUMS.txt` 校验文件。
 
@@ -56,7 +56,7 @@ flowchart LR
 
 ## 可验证结果
 
-项目包含固定 JSONL 数据集、确定性 runner、JSON/Markdown 报告和浏览器评测看板。当前保存的 [MVP 评测报告](eval/reports/MVP_REPORT.md)包含 100 条案例，失败案例没有被删除。
+项目包含固定 JSONL 数据集、确定性 runner、JSON/Markdown 报告和浏览器评测看板。v1 的 [100 条 MVP 基线](eval/reports/MVP_REPORT.md)保持不变；v1.1 的 [120 条 durable workflow 报告](eval/reports/MVP_V2_REPORT.md)新增 checkpoint、interrupt/resume、MCP 和 trace 评测。失败案例均未删除。
 
 | 指标 | 结果 |
 |---|---:|
@@ -67,6 +67,8 @@ flowchart LR
 | Trace Completeness | 100.00% |
 
 这些指标来自 `LLM_PROVIDER=disabled` 的可复现基线，不代表真实 DeepSeek 的线上效果。
+
+v1.1 的 120 条报告实际结果为 Task Success 93.33%（112/120），Checkpoint Recovery、Workflow Resume、MCP Execution、Trace Correlation、Unsafe Action Block、Approval Enforcement 和 Idempotency Protection 均为 100%。8 条失败主要集中在政策召回和状态预期，详见报告中的失败案例。
 
 ## 浏览器可以完成什么
 
@@ -81,11 +83,12 @@ flowchart LR
 
 | 层级 | 技术与职责 |
 |---|---|
-| Agent | LangGraph、确定性意图识别、受控 LLM Adapter、结构化输出 |
-| API | Python 3.11、FastAPI、Pydantic、repository/service 分层 |
-| 数据 | PostgreSQL、pgvector、SQLAlchemy 2.x、Alembic、Redis |
-| 工具 | 内部受控工具服务、人工审批、幂等保护、stdio MCP Wrapper |
-| 前端 | Next.js 16、React 19、TypeScript、TailwindCSS |
+| Agent | LangGraph 1.x、PostgreSQL Checkpoint、Interrupt/Resume、受控 LLM Adapter |
+| API | Python 3.13、FastAPI 0.138、Pydantic Settings、SQLAlchemy 2.x、Alembic |
+| 数据 | PostgreSQL 16、pgvector、业务数据与工作流 Checkpoint |
+| 工具 | 人工审批、执行前确认、幂等保护、官方 stdio MCP Client/Server |
+| 可观测性 | OpenTelemetry、OTLP HTTP、可选 Jaeger、业务审计与 trace_id 关联 |
+| 前端 | Next.js 16、React 19、TypeScript 6、TailwindCSS 4.3、Playwright |
 | 交付 | Docker Compose、GHCR、Windows Go 启动器、GitHub Release |
 | 质量 | pytest、Ruff、确定性 evaluation runner、GitHub Actions |
 
@@ -104,19 +107,20 @@ flowchart LR
 
 ## 开发环境启动
 
-环境要求：Python 3.11、Node.js 20.9+、Docker Compose。仓库的 Python 标准版本固定为 3.11。
+环境要求：Python 3.13、Node.js 22、Docker Compose。仓库的 Python 标准版本固定为 3.13。
 
 ```powershell
 # 1. 环境变量与基础服务
 Copy-Item .env.example .env
 Copy-Item apps\web\.env.local.example apps\web\.env.local
-docker compose up -d postgres redis
+docker compose up -d postgres
 
 # 2. 后端依赖、migration 和确定性数据
-py -3.11 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r services/api/requirements-lock.txt
 Set-Location services/api
 ..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.setup_checkpoints
 ..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
 ..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
 ..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
@@ -149,6 +153,18 @@ Set-Location services/api
 Set-Location ../../apps/web
 npm.cmd run lint
 npm.cmd run build
+# E2E 前请另开终端启动 API 和 `npm.cmd run dev`
+npm.cmd run test:e2e
+```
+
+`mvp_eval_v1.jsonl` 和已保存的 100 条基线报告保持不变。运行 v2：
+
+```powershell
+..\..\.venv\Scripts\python.exe -m scripts.run_evaluation `
+  --dataset ..\..\data\eval\mvp_eval_v2.jsonl `
+  --output ..\..\eval\reports\mvp_run_v2_deterministic.json `
+  --markdown ..\..\eval\reports\MVP_V2_REPORT.md `
+  --provider disabled
 ```
 
 ## 可选真实 LLM
@@ -164,14 +180,36 @@ OPENAI_API_KEY=your_api_key_here
 
 前端不会接触 API Key。真实 LLM 只辅助意图抽取和回复措辞，失败时回退到确定性行为，且不能改变事实、政策、风险、审批或工具执行。
 
+## 可选真实 Embedding
+
+Release、CI 和可复现评测默认使用 deterministic embedding。也可在后端 `.env` 配置 OpenAI-compatible `/embeddings` 服务：
+
+```env
+EMBEDDING_PROVIDER=openai_compatible
+EMBEDDING_MODEL=your-embedding-model
+EMBEDDING_API_KEY=your_api_key_here
+EMBEDDING_BASE_URL=https://your-provider.example/v1
+EMBEDDING_DIMENSIONS=1536
+```
+
+向量维度必须为 1536，模型变更后必须重新执行 `python -m scripts.ingest_policies --reset`。系统按 `embedding_model` 隔离检索，禁止混用不同模型生成的向量。
+
 ## MCP
 
-本地 stdio MCP Server 暴露 `refund_apply`、`coupon_issue`、`ticket_create` 三个工具。MCP 只是内部工具服务的薄适配层，不复制或绕过审批、金额、政策证据和幂等规则，也不会开放公网端口。
+本地 stdio MCP Server 暴露 `refund_apply`、`coupon_issue`、`ticket_create` 三个工具。审批通过后工作流仍会停在“等待执行确认”；只有用户显式确认，LangGraph 才会通过官方 stdio MCP Client 调用工具。MCP 只是薄适配层，不复制或绕过审批、金额、政策证据和幂等规则，也不会开放公网端口。
 
 ```powershell
 Set-Location services/api
 ..\..\.venv\Scripts\python.exe -m app.mcp_server.server
 ```
+
+## 可选运行链路追踪
+
+```powershell
+docker compose --profile observability up -d
+```
+
+启用 `OTEL_ENABLED=true` 后，API 将白名单化的 Agent node、LLM、policy retrieval、审批恢复和 MCP 调用 span 发送到 OTLP HTTP endpoint。Jaeger 默认地址为 `http://localhost:16686`。Trace 不记录原始用户消息、完整 prompt、密钥、连接串或完整工具参数。
 
 ## 求职展示材料
 
@@ -179,11 +217,12 @@ Set-Location services/api
 - [简历项目总结](docs/resume/PROJECT_SUMMARY.zh-CN.md)
 - [公开架构概览](docs/architecture/commerceflow-agent-overview.md)
 - [MVP 评测报告](eval/reports/MVP_REPORT.md)
-- [v1.0.0 发布验收清单](docs/release/RELEASE_CHECKLIST.zh-CN.md)
+- [v1.1 持久化工作流评测报告](eval/reports/MVP_V2_REPORT.md)
+- [v1.1.0 发布验收清单](docs/release/RELEASE_CHECKLIST.zh-CN.md)
 
 ## 当前边界
 
-项目未接入真实支付、优惠券、工单、物流或电商系统，也未实现生产级认证、多租户和云部署。LangGraph 审批后自动 interrupt/resume 与 Agent 自动 MCP 调用不属于当前版本；所有工具执行仍由人工在控制台触发。
+项目未接入真实支付、优惠券、工单、物流或电商系统，也未实现生产级认证、多租户和云部署。LangGraph 能持久化暂停并在审批后恢复，但不会自动审批或无确认执行；所有 Mock 工具调用仍需用户在控制台显式确认。
 
 ## License
 

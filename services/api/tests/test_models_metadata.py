@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from alembic.config import Config
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     CheckConstraint,
@@ -12,7 +13,6 @@ from sqlalchemy import (
 )
 
 from alembic import command
-from alembic.config import Config
 from app.db.base import Base
 from app.models import aftersales as aftersales_models
 from app.models import commerce as commerce_models
@@ -80,6 +80,7 @@ def test_unique_constraints_exist_for_business_identifiers() -> None:
     assert "uq_policy_chunks_chunk_id" in unique_constraint_names("policy_chunks")
     assert "uq_policy_chunks_document_sequence" in unique_constraint_names("policy_chunks")
     assert "uq_action_plans_action_plan_id" in unique_constraint_names("action_plans")
+    assert "uq_action_plans_run_id" in unique_constraint_names("action_plans")
     assert "uq_action_plans_idempotency_key" in unique_constraint_names("action_plans")
     assert "uq_action_plans_business_dedupe_key" in unique_constraint_names("action_plans")
     assert "uq_approval_requests_approval_id" in unique_constraint_names("approval_requests")
@@ -184,6 +185,21 @@ def test_phase_4b_check_constraints_allow_tool_execution_states() -> None:
     assert "tool_execution_succeeded" in audit_event_sql
     assert "tool_execution_blocked" in audit_event_sql
     assert "tool_execution_idempotent_replay" in audit_event_sql
+    assert "workflow_completed" in audit_event_sql
+    assert "workflow_interrupted" in audit_event_sql
+
+
+def test_durable_workflow_columns_exist() -> None:
+    action_plans = Base.metadata.tables["action_plans"]
+    audit_logs = Base.metadata.tables["audit_logs"]
+
+    assert action_plans.c.workflow_status.nullable is False
+    assert action_plans.c.workflow_error_code.nullable is True
+    assert action_plans.c.trace_id.nullable is True
+    assert audit_logs.c.trace_id.nullable is True
+    assert "awaiting_approval" in check_constraint_sql(
+        "action_plans", "ck_action_plans_workflow_status"
+    )
 
 
 def test_alembic_upgrade_head_creates_expected_tables(tmp_path: Path) -> None:

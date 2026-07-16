@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.models import PolicyChunk, PolicyDocument
 from app.schemas.policy import PolicyDocumentSource
 from app.services.embeddings import (
-    EMBEDDING_MODEL,
+    EMBEDDING_DIMENSION,
     DeterministicEmbeddingProvider,
     EmbeddingProvider,
 )
@@ -110,6 +110,7 @@ def ingest_policies(
 
         chunk_texts = [embedding_text(source, section.content) for section in source.sections]
         embeddings = provider.embed(chunk_texts)
+        validate_ingestion_embeddings(embeddings, len(chunk_texts))
         for sequence, (section, embedding) in enumerate(
             zip(source.sections, embeddings, strict=True),
             start=1,
@@ -122,13 +123,23 @@ def ingest_policies(
                 content=section.content,
                 content_hash=hashlib.sha256(section.content.encode("utf-8")).hexdigest(),
                 embedding=embedding,
-                embedding_model=EMBEDDING_MODEL,
+                embedding_model=provider.model_name,
                 metadata_json=metadata_for(source, section.section),
             )
             session.add(chunk)
 
     session.commit()
     return count_policy_rows(session)
+
+
+def validate_ingestion_embeddings(
+    embeddings: list[list[float]],
+    expected_count: int,
+) -> None:
+    if len(embeddings) != expected_count:
+        raise ValueError("embedding provider returned an unexpected vector count")
+    if any(len(vector) != EMBEDDING_DIMENSION for vector in embeddings):
+        raise ValueError(f"embedding vectors must have {EMBEDDING_DIMENSION} dimensions")
 
 
 def embedding_text(source: PolicyDocumentSource, content: str) -> str:

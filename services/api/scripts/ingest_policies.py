@@ -1,7 +1,9 @@
 import argparse
 from pathlib import Path
 
+from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.services.embeddings import create_embedding_provider
 from app.services.policy_ingestion import DEFAULT_POLICY_DIR, ingest_policies
 
 
@@ -23,8 +25,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    provider = create_embedding_provider(get_settings())
     with SessionLocal() as session:
-        summary = ingest_policies(session, policy_dir=args.policy_dir, reset=args.reset)
+        summary = ingest_policies(
+            session,
+            policy_dir=args.policy_dir,
+            reset=args.reset,
+            embedding_provider=provider,
+        )
     print(  # noqa: T201
         f"Policy ingestion complete: documents={summary.documents}, chunks={summary.chunks}"
     )

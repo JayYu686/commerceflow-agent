@@ -25,7 +25,7 @@ class EvalCase(BaseModel):
     category: str
     user_message: str
     as_of: datetime | None = None
-    kind: Literal["preview", "tool"] = "preview"
+    kind: Literal["preview", "tool", "durable"] = "preview"
     tool_scenario: str | None = None
     expected: EvalExpected
     adversarial: bool = False

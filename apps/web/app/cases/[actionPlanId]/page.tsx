@@ -38,6 +38,8 @@ import type {
   PolicyEvidence,
 } from "../../../lib/types";
 
+const TRACE_UI_URL = process.env.NEXT_PUBLIC_TRACE_UI_URL?.replace(/\/$/, "") ?? "";
+
 export default function CaseDetailPage() {
   const params = useParams<{ actionPlanId: string }>();
   const actionPlanId = Array.isArray(params.actionPlanId)
@@ -115,7 +117,13 @@ export default function CaseDetailPage() {
       {actionPlan ? (
         <>
           <Panel title="状态摘要" eyebrow="动作计划">
-            <div className="grid gap-3 md:grid-cols-5">
+            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-7">
+              <Metric
+                label="工作流状态"
+                value={displayLabel(actionPlan.workflow_status)}
+                raw={actionPlan.workflow_status}
+                tone={toneForStatusValue(actionPlan.workflow_status)}
+              />
               <Metric
                 label="状态"
                 value={displayLabel(actionPlan.status)}
@@ -144,6 +152,11 @@ export default function CaseDetailPage() {
                 value={result?.result_type ? displayLabel(result.result_type) : "尚未生成"}
                 tone={result?.result_type ? "success" : "neutral"}
               />
+              <Metric
+                label="运行链路"
+                value={actionPlan.trace_id ? "已关联" : "未启用"}
+                tone={actionPlan.trace_id ? "info" : "neutral"}
+              />
             </div>
           </Panel>
 
@@ -152,6 +165,12 @@ export default function CaseDetailPage() {
               <dl className="grid gap-4 md:grid-cols-2">
                 <KeyValue label="动作计划 ID" value={actionPlan.action_plan_id} />
                 <KeyValue label="运行 ID" value={actionPlan.run_id} />
+                <KeyValue label="Trace ID" value={actionPlan.trace_id ?? "未启用 Trace"} />
+                <KeyValue
+                  label="工作流错误"
+                  value={displayLabel(actionPlan.workflow_error_code, "无")}
+                  raw={actionPlan.workflow_error_code}
+                />
                 <KeyValue label="订单号" value={actionPlan.order_no ?? "无"} />
                 <KeyValue label="意图" value={displayLabel(actionPlan.intent)} raw={actionPlan.intent} />
                 <KeyValue
@@ -169,6 +188,16 @@ export default function CaseDetailPage() {
               </dl>
               <InfoBlock title="原始用户请求" value={actionPlan.request_message} />
               <InfoBlock title="处理摘要" value={localizeText(actionPlan.summary)} />
+              {actionPlan.trace_id && TRACE_UI_URL ? (
+                <a
+                  href={`${TRACE_UI_URL}/trace/${encodeURIComponent(actionPlan.trace_id)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-signal hover:bg-slate-100"
+                >
+                  在 Jaeger 查看运行链路
+                </a>
+              ) : null}
             </Panel>
 
             <Panel title="审批摘要" eyebrow="人工审批">
@@ -244,7 +273,7 @@ export default function CaseDetailPage() {
                 </dl>
               </div>
             ) : (
-              <EmptyState message="尚未生成本地模拟记录。审批通过后，可在工具执行页手动执行本地模拟工具。" />
+              <EmptyState message="尚未生成本地模拟记录。审批通过后，动作计划会进入等待执行确认状态，需在工具执行页手动恢复工作流。" />
             )}
           </Panel>
 

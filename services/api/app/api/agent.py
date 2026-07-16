@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from app.agent.workflow import run_after_sales_preview
+from app.agent.workflow import run_after_sales_preview, start_after_sales_workflow
 from app.db.session import get_session
 from app.schemas.aftersales import ActionPlanCreateResponse
 from app.schemas.agent import AgentPreviewRequest, AgentPreviewResponse
-from app.services.aftersales import create_action_plan_from_preview
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -35,7 +34,7 @@ def create_after_sales_action_plan(
     idempotency_key: str = Header(alias="Idempotency-Key"),
     session: Session = Depends(get_session),
 ) -> ActionPlanCreateResponse:
-    return create_action_plan_from_preview(
+    return start_after_sales_workflow(
         session,
         request,
         idempotency_key=idempotency_key,

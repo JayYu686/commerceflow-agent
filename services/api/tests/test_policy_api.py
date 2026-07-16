@@ -147,11 +147,6 @@ def test_policy_search_rejects_naive_as_of(client: TestClient) -> None:
 
 
 def test_policy_search_route_is_get_only(client: TestClient) -> None:
-    policy_search_routes = [
-        route
-        for route in client.app.routes
-        if getattr(route, "path", None) == "/api/policies/search"
-    ]
+    operations = client.app.openapi()["paths"]["/api/policies/search"]
 
-    assert len(policy_search_routes) == 1
-    assert policy_search_routes[0].methods == {"GET"}
+    assert set(operations) == {"get"}

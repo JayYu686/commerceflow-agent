@@ -8,7 +8,7 @@ CommerceFlow Agent is a controlled after-sales business Agent for portfolio demo
 
 ```mermaid
 flowchart TD
-  A["User after-sales request"] --> B["Agent Preview"]
+  A["User after-sales request"] --> B["Stateless Agent Preview"]
   B --> C["Order and logistics facts"]
   B --> D["Policy RAG retrieval"]
   C --> E["Recommendation and risk"]
@@ -16,8 +16,10 @@ flowchart TD
   E --> F["Action Plan"]
   F --> G["Approval Request"]
   G --> H["Human approve or reject"]
-  H --> I["Controlled mock tool execution"]
-  I --> J["Mock result record"]
+  H --> I["Execution confirmation interrupt"]
+  I --> M["stdio MCP call"]
+  M --> N["Internal tool safety service"]
+  N --> J["Mock result record"]
   F --> K["Append-only audit log"]
   G --> K
   H --> K
@@ -35,9 +37,9 @@ flowchart TD
 
 ### Data Layer
 
-- PostgreSQL stores mock commerce facts, policy documents/chunks, action plans, approvals, audit logs, and mock tool result records.
-- pgvector stores deterministic policy embeddings.
-- Redis is available as local infrastructure but is not used for uncontrolled business writes.
+- PostgreSQL stores mock commerce facts, policy documents/chunks, action plans, approvals, audit logs, mock tool result records, and official LangGraph checkpoint tables.
+- pgvector stores deterministic or explicitly configured OpenAI-compatible policy embeddings.
+- Redis is not part of v1.1 because the application did not use it.
 
 ### Policy RAG
 
@@ -48,7 +50,9 @@ flowchart TD
 
 ### Agent Workflow
 
-- LangGraph preview workflow performs request parsing, order extraction, fact retrieval, policy retrieval, recommendation, risk classification, and response assembly.
+- LangGraph preview performs request parsing, fact retrieval, policy retrieval, recommendation, risk classification, and response assembly without persistence or writes.
+- The same graph definition can run with `PostgresSaver` for a durable Action Plan lifecycle. `run_id` is the LangGraph `thread_id`.
+- Human approval and execution confirmation use separate interrupts. Approval never implies execution.
 - Deterministic unsafe detection has priority over LLM output.
 - LLM output can assist intent extraction and customer reply wording only.
 
@@ -65,6 +69,7 @@ flowchart TD
 
 ### MCP Wrapper
 
+- The durable graph invokes the stdio MCP server only after explicit execution confirmation.
 - The stdio MCP server exposes the same mock tools as thin wrappers.
 - MCP tools do not duplicate approval or idempotency logic.
 - MCP tools do not open HTTP/SSE transports or public ports.
@@ -81,6 +86,13 @@ flowchart TD
   - Evaluation Dashboard.
 - The frontend never sees provider API keys and never connects directly to PostgreSQL.
 
+### Observability
+
+- OpenTelemetry instruments FastAPI, HTTPX and SQLAlchemy, with manual spans for workflow nodes, LLM calls, policy retrieval, approval resume and MCP execution.
+- Action Plans and audit events store a safe `trace_id` correlation field.
+- Collector and Jaeger are optional Compose profile services and are disabled in the default release.
+- Trace attributes use an explicit allowlist and exclude messages, prompts, API keys, connection strings and full tool arguments.
+
 ## Safety Invariants
 
 1. The LLM never writes business data.
@@ -96,11 +108,14 @@ flowchart TD
 
 ## Evaluation
 
-The MVP includes a deterministic evaluation runner:
+The project keeps the original deterministic v1 baseline and adds a separate v2 dataset:
 
 - Dataset: `data/eval/mvp_eval_v1.jsonl`
 - JSON report: `eval/reports/mvp_run_deterministic.json`
 - Markdown report: `eval/reports/MVP_REPORT.md`
+- v2 dataset: `data/eval/mvp_eval_v2.jsonl` (120 cases)
+
+The v2 dataset adds checkpoint recovery, workflow resume, MCP execution and trace-correlation checks. The saved deterministic v2 report is `eval/reports/MVP_V2_REPORT.md`: 112/120 cases passed, while all four new durable workflow cases passed.
 
 The saved deterministic baseline contains 100 cases and reports:
 

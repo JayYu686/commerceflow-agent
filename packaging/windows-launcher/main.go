@@ -18,7 +18,10 @@ import (
 //go:embed compose.demo.yml
 var composeFile []byte
 
-var version = "v1.0.0"
+//go:embed otel-collector-config.yaml
+var collectorConfig []byte
+
+var version = "v1.1.0"
 
 type commandRunner func(name string, args ...string) (string, error)
 
@@ -28,6 +31,7 @@ type launcher struct {
 	version     string
 	projectName string
 	skipPull    bool
+	observability bool
 	healthURL   string
 	consoleURL  string
 	openBrowser func(string) error
@@ -72,6 +76,9 @@ func (app *launcher) composePath() string {
 
 func (app *launcher) composeArgs(arguments ...string) []string {
 	base := []string{"compose", "-p", app.projectName, "-f", app.composePath()}
+	if app.observability {
+		base = append(base, "--profile", "observability")
+	}
 	return append(base, arguments...)
 }
 
@@ -81,6 +88,10 @@ func (app *launcher) ensureCompose() error {
 	}
 	if err := os.WriteFile(app.composePath(), composeFile, 0o644); err != nil {
 		return fmt.Errorf("无法写入 Docker Compose 配置: %w", err)
+	}
+	collectorPath := filepath.Join(app.dataDir, "otel-collector-config.yaml")
+	if err := os.WriteFile(collectorPath, collectorConfig, 0o644); err != nil {
+		return fmt.Errorf("无法写入 OpenTelemetry Collector 配置: %w", err)
 	}
 	return nil
 }
@@ -108,7 +119,12 @@ func (app *launcher) start(openConsole bool) error {
 		return err
 	}
 	if !app.projectRunning() {
-		for _, port := range []int{3000, 8000} {
+		ports := []int{3000, 8000}
+		if app.observability {
+			ports = append(ports, 4318, 16686)
+			_ = os.Setenv("OTEL_ENABLED", "true")
+		}
+		for _, port := range ports {
 			if !app.portFree(port) {
 				return fmt.Errorf("端口 %d 已被其他程序占用，请释放端口后重试", port)
 			}
@@ -240,11 +256,12 @@ func envOrDefault(name string, fallback string) string {
 func printMenu() {
 	fmt.Println("CommerceFlow Agent 本地演示启动器")
 	fmt.Println("1. 启动系统并打开浏览器")
-	fmt.Println("2. 查看系统状态")
-	fmt.Println("3. 重新打开控制台")
-	fmt.Println("4. 停止系统并保留数据")
-	fmt.Println("5. 重置本地演示数据")
-	fmt.Println("6. 退出")
+	fmt.Println("2. 启动系统并启用可观测性")
+	fmt.Println("3. 查看系统状态")
+	fmt.Println("4. 重新打开控制台")
+	fmt.Println("5. 停止系统并保留数据")
+	fmt.Println("6. 重置本地演示数据")
+	fmt.Println("7. 退出")
 }
 
 func runInteractive(app *launcher) error {
@@ -257,17 +274,20 @@ func runInteractive(app *launcher) error {
 		case "1":
 			return app.start(true)
 		case "2":
-			return app.status()
+			app.observability = true
+			return app.start(true)
 		case "3":
-			return app.openBrowser(app.consoleURL)
+			return app.status()
 		case "4":
-			return app.stop()
+			return app.openBrowser(app.consoleURL)
 		case "5":
-			return app.reset(false)
+			return app.stop()
 		case "6":
+			return app.reset(false)
+		case "7":
 			return nil
 		default:
-			fmt.Println("请输入 1 到 6。")
+			fmt.Println("请输入 1 到 7。")
 		}
 	}
 }
@@ -280,6 +300,7 @@ func main() {
 		} else {
 			switch os.Args[1] {
 			case "start":
+				app.observability = len(os.Args) > 2 && os.Args[2] == "--observability"
 				err = app.start(true)
 			case "status":
 				err = app.status()

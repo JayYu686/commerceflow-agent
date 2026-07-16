@@ -21,6 +21,10 @@ node_modules/
 out/
 dist/
 coverage/
+playwright-report/
+test-results/
+services/api/uvicorn.stdout.log
+services/api/uvicorn.stderr.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -39,4 +43,6 @@ eval/reports/*.md
 !eval/reports/.gitkeep
 !eval/reports/mvp_run_deterministic.json
 !eval/reports/MVP_REPORT.md
+!eval/reports/mvp_run_v2_deterministic.json
+!eval/reports/MVP_V2_REPORT.md
 data/local/

@@ -36,7 +36,7 @@ export default function ApprovalsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<ApprovalRequestResponse | null>(null);
   const [reviewer, setReviewer] = useState("demo_reviewer");
-  const [comment, setComment] = useState("证据与政策匹配，同意进入后续本地模拟工具执行。");
+  const [comment, setComment] = useState("证据与政策匹配，同意进入等待执行确认阶段。");
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [deciding, setDeciding] = useState(false);
@@ -111,7 +111,7 @@ export default function ApprovalsPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">审批中心</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          审批高风险退款或高额补偿动作。批准只代表允许后续执行本地模拟工具，不代表已经真实退款、真实赔付或真实发券。
+          审批高风险退款或高额补偿动作。批准只会让工作流进入“等待执行确认”，不代表已经真实退款、真实赔付或真实发券。
         </p>
       </header>
 
@@ -271,7 +271,7 @@ export default function ApprovalsPage() {
                 </form>
               ) : (
                 <div className="rounded-lg border border-line bg-slate-50 p-4 text-sm text-slate-700">
-                  该审批已经决策。审批通过不等于已退款；如需执行本地模拟工具，请前往工具执行页。
+                  该审批已经决策。审批通过不等于已退款；批准后仍需在工具执行页显式确认，工作流才会通过 MCP 调用本地模拟工具。
                 </div>
               )}
 

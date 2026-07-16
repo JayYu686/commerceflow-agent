@@ -12,7 +12,13 @@ from uuid import uuid4
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.agent.workflow import run_after_sales_preview
+from app.agent.mcp_client import MCPToolCallError
+from app.agent.workflow import (
+    execute_action_plan_workflow,
+    resume_after_approval,
+    run_after_sales_preview,
+    start_after_sales_workflow,
+)
 from app.evaluation.schemas import (
     EvalBreakdownItem,
     EvalCase,
@@ -31,14 +37,16 @@ from app.models import (
     PolicyDocument,
     Shipment,
 )
+from app.schemas.aftersales import ApprovalDecisionRequest
 from app.schemas.agent import AgentPreviewRequest
 from app.schemas.tools import CouponIssueRequest, RefundApplyRequest
+from app.services.aftersales import decide_approval
 from app.services.errors import ConflictError
 from app.services.tools import apply_refund, issue_coupon
 
 DATASET_VERSION = "mvp_eval_v1"
 SEED_DATA_VERSION = "demo_seed_v1"
-EMBEDDING_PROVIDER = "deterministic-keyword-v1"
+EMBEDDING_PROVIDER = "deterministic-keyword-v2"
 RISK_POLICY_VERSION = "mvp-risk-policy-v1"
 
 
@@ -62,14 +70,22 @@ def run_evaluation(
     *,
     report_id: str,
     provider: str,
+    dataset_version: str = DATASET_VERSION,
 ) -> EvalReport:
     results = [evaluate_case(session, case) for case in cases]
-    return build_report(results, report_id=report_id, provider=provider)
+    return build_report(
+        results,
+        report_id=report_id,
+        provider=provider,
+        dataset_version=dataset_version,
+    )
 
 
 def evaluate_case(session: Session, case: EvalCase) -> EvalCaseResult:
     started = time.perf_counter()
-    if case.kind == "tool":
+    if case.kind == "durable":
+        actual, checks = evaluate_durable_case(session, case)
+    elif case.kind == "tool":
         actual, checks = evaluate_tool_case(session, case)
     else:
         actual, checks = evaluate_preview_case(session, case)
@@ -143,6 +159,155 @@ def evaluate_preview_case(
     return actual, checks
 
 
+class EvaluationMCPClient:
+    def __init__(self, session: Session, *, fail: bool = False) -> None:
+        self.session = session
+        self.fail = fail
+        self.calls: list[str] = []
+
+    def call_tool(self, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+        if self.fail:
+            raise MCPToolCallError("mcp_transport_failed", "evaluation transport failure")
+        self.calls.append(tool_name)
+        if tool_name == "refund_apply":
+            result = apply_refund(
+                self.session,
+                RefundApplyRequest.model_validate(arguments),
+                idempotency_key=str(arguments["idempotency_key"]),
+                actor_id="eval_mcp",
+            )
+        elif tool_name == "coupon_issue":
+            result = issue_coupon(
+                self.session,
+                CouponIssueRequest.model_validate(arguments),
+                idempotency_key=str(arguments["idempotency_key"]),
+                actor_id="eval_mcp",
+            )
+        else:
+            raise MCPToolCallError("unsupported_tool", "evaluation tool is unsupported")
+        return result.model_dump(mode="json")
+
+
+def evaluate_durable_case(
+    session: Session,
+    case: EvalCase,
+) -> tuple[dict, dict[str, bool]]:
+    scenario = case.tool_scenario or ""
+    plan_key = f"eval-durable-plan-{case.case_id}"
+    request = AgentPreviewRequest(message=case.user_message, as_of=case.as_of)
+    created = start_after_sales_workflow(
+        session,
+        request,
+        idempotency_key=plan_key,
+        mcp_client=EvaluationMCPClient(session),
+    )
+    action_plan = session.scalar(
+        select(ActionPlan).where(ActionPlan.action_plan_id == created.action_plan_id)
+    )
+    if action_plan is None:
+        raise RuntimeError("durable evaluation action plan was not persisted")
+
+    actual: dict[str, object] = {
+        "action_plan_id": action_plan.action_plan_id,
+        "run_id": action_plan.run_id,
+        "initial_workflow_status": action_plan.workflow_status,
+    }
+    checks: dict[str, bool] = {
+        "checkpoint_recovery_rate": action_plan.workflow_status
+        in {"awaiting_approval", "awaiting_execution"},
+        "trace_correlation_rate": workflow_events_are_correlated(session, action_plan),
+    }
+
+    if scenario in {
+        "durable_refund_success",
+        "durable_refund_replay",
+        "durable_refund_rejected",
+        "durable_mcp_failure",
+    }:
+        approval = action_plan.approval_request
+        checks["approval_enforcement_rate"] = (
+            action_plan.workflow_status == "awaiting_approval" and approval is not None
+        )
+        if approval is None:
+            checks["workflow_resume_success_rate"] = False
+            return actual, checks
+        decision = "reject" if scenario == "durable_refund_rejected" else "approve"
+        decide_approval(
+            session,
+            approval.approval_id,
+            ApprovalDecisionRequest(decision=decision, reviewer="eval_reviewer"),
+            idempotency_key=f"eval-durable-decision-{case.case_id}",
+        )
+        resume_after_approval(session, action_plan.action_plan_id)
+        session.refresh(action_plan)
+        expected_status = "blocked" if decision == "reject" else "awaiting_execution"
+        checks["workflow_resume_success_rate"] = action_plan.workflow_status == expected_status
+        actual["post_approval_workflow_status"] = action_plan.workflow_status
+        if decision == "reject":
+            checks["mcp_execution_accuracy"] = action_plan.execution_status == "not_executed"
+            checks["trace_correlation_rate"] = workflow_events_are_correlated(session, action_plan)
+            return actual, checks
+
+    fail_mcp = scenario == "durable_mcp_failure"
+    mcp_client = EvaluationMCPClient(session, fail=fail_mcp)
+    execution_key = f"eval-durable-execution-{case.case_id}"
+    try:
+        executed = execute_action_plan_workflow(
+            session,
+            action_plan.action_plan_id,
+            idempotency_key=execution_key,
+            mcp_client=mcp_client,
+        )
+    except ConflictError as exc:
+        actual["execution_error"] = exc.code
+        session.refresh(action_plan)
+        checks["mcp_execution_accuracy"] = (
+            fail_mcp
+            and exc.code == "mcp_transport_failed"
+            and action_plan.workflow_status == "awaiting_execution"
+            and action_plan.execution_status == "not_executed"
+        )
+    else:
+        actual.update(
+            {
+                "final_workflow_status": executed.workflow_status,
+                "record_id": executed.record_id,
+                "tool_name": executed.tool_name,
+            }
+        )
+        checks["mcp_execution_accuracy"] = (
+            executed.workflow_status == "completed"
+            and executed.execution_status == "executed"
+            and len(mcp_client.calls) == 1
+        )
+        checks["workflow_resume_success_rate"] = executed.workflow_status == "completed"
+        if scenario == "durable_refund_replay":
+            replay = execute_action_plan_workflow(
+                session,
+                action_plan.action_plan_id,
+                idempotency_key=execution_key,
+                mcp_client=mcp_client,
+            )
+            checks["idempotency_protection_rate"] = (
+                replay.record_id == executed.record_id
+                and replay.idempotent_replay
+                and len(mcp_client.calls) == 1
+            )
+
+    session.refresh(action_plan)
+    checks["trace_correlation_rate"] = workflow_events_are_correlated(session, action_plan)
+    return actual, checks
+
+
+def workflow_events_are_correlated(session: Session, action_plan: ActionPlan) -> bool:
+    events = session.scalars(
+        select(AuditLog)
+        .where(AuditLog.action_plan_id == action_plan.id)
+        .where(AuditLog.event_type.like("workflow_%"))
+    ).all()
+    return bool(events) and all(event.trace_id == action_plan.trace_id for event in events)
+
+
 def evaluate_tool_case(
     session: Session,
     case: EvalCase,
@@ -153,6 +318,7 @@ def evaluate_tool_case(
     before_audit_count = audit_log_count(session)
     actual: dict = {"tool_scenario": scenario}
     checks: dict[str, bool] = {}
+    tool_key = f"eval-{case.case_id}-{uuid4()}"
 
     if scenario == "refund_without_approval_blocked":
         action_plan = create_direct_action_plan(
@@ -175,7 +341,7 @@ def evaluate_tool_case(
                     currency="CNY",
                     reason="Quality issue refund.",
                 ),
-                idempotency_key=f"eval-{case.case_id}",
+                idempotency_key=tool_key,
                 actor_id="eval_runner",
             )
         )
@@ -204,7 +370,7 @@ def evaluate_tool_case(
                     currency="CNY",
                     reason="Quality issue refund.",
                 ),
-                idempotency_key=f"eval-{case.case_id}",
+                idempotency_key=tool_key,
                 actor_id="eval_runner",
             )
         )
@@ -232,7 +398,7 @@ def evaluate_tool_case(
                     currency="CNY",
                     reason="Quality issue refund.",
                 ),
-                idempotency_key=f"eval-{case.case_id}",
+                idempotency_key=tool_key,
                 actor_id="eval_runner",
             )
         )
@@ -257,12 +423,8 @@ def evaluate_tool_case(
             currency="CNY",
             reason="Quality issue refund.",
         )
-        first = apply_refund(
-            session, request, idempotency_key=f"eval-{case.case_id}", actor_id="eval_runner"
-        )
-        second = apply_refund(
-            session, request, idempotency_key=f"eval-{case.case_id}", actor_id="eval_runner"
-        )
+        first = apply_refund(session, request, idempotency_key=tool_key, actor_id="eval_runner")
+        second = apply_refund(session, request, idempotency_key=tool_key, actor_id="eval_runner")
         actual.update({"first_record_id": first.record_id, "second_record_id": second.record_id})
         checks["idempotency_protection_rate"] = (
             first.record_id == second.record_id and second.idempotent_replay
@@ -289,7 +451,7 @@ def evaluate_tool_case(
                     currency="CNY",
                     reason="Delay compensation.",
                 ),
-                idempotency_key=f"eval-{case.case_id}",
+                idempotency_key=tool_key,
                 actor_id="eval_runner",
             )
         )
@@ -315,13 +477,13 @@ def evaluate_tool_case(
             reason="Quality issue refund.",
         )
         first = apply_refund(
-            session, request, idempotency_key=f"eval-{case.case_id}-a", actor_id="eval_runner"
+            session, request, idempotency_key=f"{tool_key}-a", actor_id="eval_runner"
         )
         blocked_code = call_expect_conflict(
             lambda: apply_refund(
                 session,
                 request,
-                idempotency_key=f"eval-{case.case_id}-b",
+                idempotency_key=f"{tool_key}-b",
                 actor_id="eval_runner",
             )
         )
@@ -345,6 +507,7 @@ def build_report(
     *,
     report_id: str,
     provider: str,
+    dataset_version: str = DATASET_VERSION,
 ) -> EvalReport:
     total = len(results)
     passed = sum(1 for result in results if result.success)
@@ -355,7 +518,7 @@ def build_report(
         report_id=report_id,
         environment=EvalReportEnvironment(
             git_commit=current_git_commit(),
-            dataset_version=DATASET_VERSION,
+            dataset_version=dataset_version,
             seed_data_version=SEED_DATA_VERSION,
             model_provider=provider,
             model_name=None,
@@ -623,12 +786,19 @@ def percentile(values: list[int], percentile_value: float) -> float:
 
 def current_git_commit() -> str:
     try:
-        result = subprocess.run(
+        revision = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
             check=True,
             capture_output=True,
             text=True,
         )
     except Exception:
         return "unknown"
-    return result.stdout.strip() or "unknown"
+    commit = revision.stdout.strip() or "unknown"
+    return f"{commit}-dirty" if status.stdout.strip() else commit

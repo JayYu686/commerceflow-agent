@@ -9,6 +9,15 @@ DecisionValue = Literal["approve", "reject"]
 ExecutionStatus = Literal["not_executed", "not_applicable", "executed", "execution_failed"]
 ActionPlanStatus = Literal["not_executable", "planned", "pending_approval", "approved", "rejected"]
 ActionPlanResultType = Literal["refund", "coupon", "ticket"]
+WorkflowStatus = Literal[
+    "legacy_manual",
+    "running",
+    "awaiting_approval",
+    "awaiting_execution",
+    "completed",
+    "blocked",
+    "failed",
+]
 
 
 class ApprovalSummary(BaseModel):
@@ -42,6 +51,9 @@ class ActionPlanResponse(BaseModel):
     fact_evidence: list[dict]
     policy_evidence: list[dict]
     llm: dict
+    workflow_status: WorkflowStatus
+    workflow_error_code: str | None
+    trace_id: str | None
     approval: ApprovalSummary | None
     created_at: datetime
     updated_at: datetime
@@ -62,11 +74,14 @@ class ActionPlanCreateResponse(BaseModel):
     proposed_amount: str | None
     currency: str | None
     summary: str
+    workflow_status: WorkflowStatus
+    trace_id: str | None
     created_at: datetime
 
 
 class ActionPlanListItem(BaseModel):
     action_plan_id: str
+    run_id: str
     order_no: str | None
     intent: str
     planned_tool_name: str | None
@@ -79,6 +94,8 @@ class ActionPlanListItem(BaseModel):
     proposed_amount: str | None
     currency: str | None
     summary: str
+    workflow_status: WorkflowStatus
+    trace_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -96,6 +113,7 @@ class AuditLogResponse(BaseModel):
     approval_id: str | None
     order_no: str | None
     idempotency_key: str | None
+    trace_id: str | None
     payload: dict
     created_at: datetime
 
@@ -146,3 +164,19 @@ class ApprovalDecisionRequest(BaseModel):
         if not stripped:
             raise ValueError("value must not be empty")
         return stripped
+
+
+class ActionPlanExecuteRequest(BaseModel):
+    confirm: Literal[True]
+
+
+class ActionPlanExecuteResponse(BaseModel):
+    action_plan_id: str
+    run_id: str
+    workflow_status: WorkflowStatus
+    tool_name: str
+    execution_status: Literal["executed"]
+    result_type: ActionPlanResultType
+    record_id: str
+    idempotent_replay: bool
+    trace_id: str | None

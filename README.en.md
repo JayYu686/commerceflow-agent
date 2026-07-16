@@ -35,7 +35,7 @@ Key capabilities:
 3. Extract the archive and run `CommerceFlowAgent.exe`.
 4. Choose the start option and wait for `http://localhost:3000` to open.
 
-The launcher downloads versioned API/Web images and starts PostgreSQL, Redis, FastAPI, and Next.js. No local Python, Node.js, or PostgreSQL installation is required.
+The launcher downloads versioned API/Web images and starts PostgreSQL, FastAPI, and Next.js. No local Python, Node.js, or PostgreSQL installation is required. `start --observability` additionally enables OpenTelemetry Collector and Jaeger.
 
 The executable is not commercially code-signed, so Windows SmartScreen may show a warning. Download it only from this repository and verify the supplied SHA-256 checksum.
 
@@ -55,11 +55,12 @@ These results use `LLM_PROVIDER=disabled`; they are not claims about live DeepSe
 
 ## Technology
 
-- Python 3.11, FastAPI, Pydantic, SQLAlchemy 2.x, Alembic.
-- LangGraph with deterministic parsing and controlled LLM boundaries.
-- PostgreSQL, pgvector, Redis, structured policy documents.
-- Internal controlled tools plus a local stdio MCP wrapper.
-- Next.js 16, React 19, TypeScript, TailwindCSS.
+- Python 3.13, FastAPI 0.138, Pydantic Settings, SQLAlchemy 2.x, Alembic.
+- LangGraph 1.x with PostgreSQL checkpoints and durable interrupt/resume.
+- PostgreSQL 16 and pgvector for facts, policies, and workflow checkpoints.
+- Controlled internal tools plus official stdio MCP client/server boundaries.
+- OpenTelemetry 1.43 with optional Collector and Jaeger.
+- Next.js 16, React 19, TypeScript 6, TailwindCSS 4.3, Playwright.
 - pytest, Ruff, deterministic evaluation runner, Docker, GHCR, GitHub Actions.
 
 See the [public architecture overview](docs/architecture/commerceflow-agent-overview.md) for the component and safety design.
@@ -76,17 +77,18 @@ See the [public architecture overview](docs/architecture/commerceflow-agent-over
 
 ## Developer Quick Start
 
-Prerequisites: Python 3.11, Node.js 20.9+, and Docker Compose.
+Prerequisites: Python 3.13, Node.js 22, and Docker Compose.
 
 ```powershell
 Copy-Item .env.example .env
 Copy-Item apps\web\.env.local.example apps\web\.env.local
-docker compose up -d postgres redis
-py -3.11 -m venv .venv
+docker compose up -d postgres
+py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r services/api/requirements-lock.txt
 
 Set-Location services/api
 ..\..\.venv\Scripts\python.exe -m alembic upgrade head
+..\..\.venv\Scripts\python.exe -m scripts.setup_checkpoints
 ..\..\.venv\Scripts\python.exe -m scripts.seed_demo_data --reset
 ..\..\.venv\Scripts\python.exe -m scripts.ingest_policies --reset
 ..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
@@ -100,6 +102,20 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
+For Playwright E2E, keep both the API and web server running, then execute `npm.cmd run test:e2e` from `apps/web`.
+
+The saved 100-case v1 deterministic report remains the published baseline. The [v1.1 durable workflow report](eval/reports/MVP_V2_REPORT.md) contains 120 cases: 112 passed (93.33%). Checkpoint Recovery, Workflow Resume, MCP Execution, Trace Correlation, Unsafe Action Block, Approval Enforcement, and Idempotency Protection are all 100%. The eight failures remain visible in the report.
+
+## Durable Workflow and MCP
+
+Preview remains stateless and read-only. Persisted Action Plans use PostgreSQL-backed LangGraph checkpoints. Approval resumes a workflow only to the execution-confirmation interrupt; an explicit user confirmation is required before the graph invokes the existing mock tools through the official stdio MCP protocol.
+
+## Optional Embedding and Tracing
+
+- Deterministic embedding remains the default for releases, CI, and reproducible evaluation.
+- An OpenAI-compatible `/embeddings` provider can be enabled in backend `.env`; model changes require a policy re-ingestion reset and vectors from different models are never mixed.
+- `docker compose --profile observability up -d` starts OpenTelemetry Collector and Jaeger. Only allowlisted metadata is exported; raw messages, prompts, secrets, connection strings, and full tool arguments are excluded.
+
 Open `http://localhost:3000`.
 
 ## Portfolio Materials
@@ -108,6 +124,7 @@ Open `http://localhost:3000`.
 - [Chinese resume project summary](docs/resume/PROJECT_SUMMARY.zh-CN.md)
 - [Architecture overview](docs/architecture/commerceflow-agent-overview.md)
 - [MVP evaluation report](eval/reports/MVP_REPORT.md)
+- [v1.1 durable workflow evaluation report](eval/reports/MVP_V2_REPORT.md)
 - [v1.0.0 release checklist (Chinese)](docs/release/RELEASE_CHECKLIST.zh-CN.md)
 
 ## License

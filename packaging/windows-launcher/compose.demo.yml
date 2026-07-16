@@ -15,30 +15,21 @@ services:
       timeout: 5s
       retries: 20
 
-  redis:
-    image: redis:7.4-alpine
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
   api:
-    image: ghcr.io/jayyu686/commerceflow-agent-api:${COMMERCEFLOW_VERSION:-v1.0.0}
+    image: ghcr.io/jayyu686/commerceflow-agent-api:${COMMERCEFLOW_VERSION:-v1.1.0}
     environment:
       APP_ENV: demo
       DATABASE_URL: postgresql+psycopg://commerceflow:commerceflow_demo_password@postgres:5432/commerceflow
-      REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       LLM_PROVIDER: disabled
+      EMBEDDING_PROVIDER: deterministic
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      TRACE_UI_URL: http://localhost:16686
     ports:
       - "8000:8000"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test:
@@ -51,13 +42,29 @@ services:
       retries: 24
 
   web:
-    image: ghcr.io/jayyu686/commerceflow-agent-web:${COMMERCEFLOW_VERSION:-v1.0.0}
+    image: ghcr.io/jayyu686/commerceflow-agent-web:${COMMERCEFLOW_VERSION:-v1.1.0}
     ports:
       - "3000:3000"
     depends_on:
       api:
         condition: service_healthy
 
+  otel-collector:
+    image: otel/opentelemetry-collector:0.131.0
+    profiles: ["observability"]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/jaeger:2.8.0
+    profiles: ["observability"]
+    ports:
+      - "16686:16686"
+
 volumes:
   postgres_data:
-  redis_data:

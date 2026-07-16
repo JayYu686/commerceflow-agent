@@ -375,7 +375,7 @@ def test_tool_execution_does_not_mutate_protected_business_tables(
 
 
 def test_tool_routes_do_not_expose_mcp_or_arbitrary_sql(client: TestClient) -> None:
-    paths = {getattr(route, "path", "") for route in client.app.routes}
+    paths = set(client.app.openapi()["paths"])
     forbidden_fragments = ("mcp", "sql")
 
     forbidden_paths = [
