@@ -218,7 +218,7 @@ docker compose --profile observability up -d
 - [公开架构概览](docs/architecture/commerceflow-agent-overview.md)
 - [MVP 评测报告](eval/reports/MVP_REPORT.md)
 - [v1.1 持久化工作流评测报告](eval/reports/MVP_V2_REPORT.md)
-- [v1.1.2 发布验收清单](docs/release/RELEASE_CHECKLIST.zh-CN.md)
+- [v1.1.3 发布验收清单](docs/release/RELEASE_CHECKLIST.zh-CN.md)
 
 ## 当前边界
 
