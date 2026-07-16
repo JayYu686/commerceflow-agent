@@ -31,7 +31,7 @@ Key capabilities:
 ## Try the Windows Release
 
 1. Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-2. Download `CommerceFlowAgent-v1.0.0-windows-amd64.zip` from [Releases](https://github.com/JayYu686/commerceflow-agent/releases/latest).
+2. Download `CommerceFlowAgent-v1.1.2-windows-amd64.zip` from [Releases](https://github.com/JayYu686/commerceflow-agent/releases/latest).
 3. Extract the archive and run `CommerceFlowAgent.exe`.
 4. Choose the start option and wait for `http://localhost:3000` to open.
 
@@ -125,7 +125,7 @@ Open `http://localhost:3000`.
 - [Architecture overview](docs/architecture/commerceflow-agent-overview.md)
 - [MVP evaluation report](eval/reports/MVP_REPORT.md)
 - [v1.1 durable workflow evaluation report](eval/reports/MVP_V2_REPORT.md)
-- [v1.0.0 release checklist (Chinese)](docs/release/RELEASE_CHECKLIST.zh-CN.md)
+- [v1.1.2 release checklist (Chinese)](docs/release/RELEASE_CHECKLIST.zh-CN.md)
 
 ## License
 
