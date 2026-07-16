@@ -182,7 +182,7 @@ jobs:
 
             本版本只产生本地 Mock 退款、优惠券和工单记录，不调用真实外部系统。
 
-            v1.1.0 新增 PostgreSQL 持久化 LangGraph Checkpoint、审批与执行确认 Interrupt/Resume、stdio MCP 执行闭环、OpenTelemetry 可观测性、可选 OpenAI-compatible Embedding，以及 120 条确定性评测基线。
+            本版本新增 PostgreSQL 持久化 LangGraph Checkpoint、审批与执行确认 Interrupt/Resume、stdio MCP 执行闭环、OpenTelemetry 可观测性、可选 OpenAI-compatible Embedding，以及 120 条确定性评测基线。
 
             下载 ZIP 后请使用 `SHA256SUMS.txt` 校验完整性。当前 Windows 启动器未进行商业代码签名，SmartScreen 可能显示提示。
           files: |

@@ -21,7 +21,7 @@ var composeFile []byte
 //go:embed otel-collector-config.yaml
 var collectorConfig []byte
 
-var version = "v1.1.0"
+var version = "v1.1.1"
 
 type commandRunner func(name string, args ...string) (string, error)
 

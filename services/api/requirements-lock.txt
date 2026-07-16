@@ -68,7 +68,7 @@ PyJWT==2.13.0
 pytest==9.1.1
 python-dotenv==1.2.2
 python-multipart==0.0.32
-pywin32==312
+pywin32==312; sys_platform == "win32"
 PyYAML==6.0.3
 referencing==0.37.0
 requests==2.34.2
