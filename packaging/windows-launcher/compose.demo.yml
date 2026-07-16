@@ -16,7 +16,7 @@ services:
       retries: 20
 
   api:
-    image: ghcr.io/jayyu686/commerceflow-agent-api:${COMMERCEFLOW_VERSION:-v1.1.1}
+    image: ghcr.io/jayyu686/commerceflow-agent-api:${COMMERCEFLOW_VERSION:-v1.1.2}
     environment:
       APP_ENV: demo
       DATABASE_URL: postgresql+psycopg://commerceflow:commerceflow_demo_password@postgres:5432/commerceflow
@@ -42,7 +42,7 @@ services:
       retries: 24
 
   web:
-    image: ghcr.io/jayyu686/commerceflow-agent-web:${COMMERCEFLOW_VERSION:-v1.1.1}
+    image: ghcr.io/jayyu686/commerceflow-agent-web:${COMMERCEFLOW_VERSION:-v1.1.2}
     ports:
       - "3000:3000"
     depends_on:

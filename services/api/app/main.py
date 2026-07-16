@@ -21,7 +21,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     api = FastAPI(
         title="CommerceFlow Agent API",
-        version="1.1.1",
+        version="1.1.2",
         description=(
             "Controlled after-sales Agent API with grounded evidence, durable approvals, "
             "MCP execution and audit traces."

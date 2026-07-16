@@ -1,6 +1,6 @@
-# CommerceFlow Agent v1.1.1 发布清单
+# CommerceFlow Agent v1.1.2 发布清单
 
-本清单用于维护者发布 GitHub Release。`v1.1.1` tag 只有在后端、前端 E2E、镜像和 Windows 启动器构建全部成功后才会自动发布为 Latest；`v1.0.0` 保留为可回退版本。
+本清单用于维护者发布 GitHub Release。`v1.1.2` tag 只有在后端、前端 E2E、镜像和 Windows 启动器构建全部成功后才会自动发布为 Latest；`v1.0.0` 保留为可回退版本。
 
 ## 1. 发布前自动验证
 
@@ -27,8 +27,8 @@
 ## 3. 触发 Release
 
 ```powershell
-git tag -a v1.1.1 -m "CommerceFlow Agent v1.1.1"
-git push origin v1.1.1
+git tag -a v1.1.2 -m "CommerceFlow Agent v1.1.2"
+git push origin v1.1.2
 ```
 
 Tag 会触发 `.github/workflows/release.yml`：
@@ -41,7 +41,7 @@ Tag 会触发 `.github/workflows/release.yml`：
 ## 4. 人工发布门槛
 
 - 将 `commerceflow-agent-api` 和 `commerceflow-agent-web` 两个 GHCR package 设置为 Public。
-- 在未登录 GitHub 的环境中匿名拉取 `v1.1.1` 镜像。
+- 在未登录 GitHub 的环境中匿名拉取 `v1.1.2` 镜像。
 - 在仅安装 Docker Desktop 的干净 Windows x64 环境下载 ZIP 并校验 SHA-256。
 - 验证启动器 `start`、`start --observability`、`status`、`stop`、`reset`。
 - 完成质量退款：创建计划 -> 审批 -> 等待执行确认 -> stdio MCP -> Mock Result -> Audit/trace。

@@ -13,7 +13,7 @@ func testLauncher(t *testing.T, runner commandRunner) *launcher {
 	return &launcher{
 		run:         runner,
 		dataDir:     t.TempDir(),
-		version:     "v1.1.1",
+		version:     "v1.1.2",
 		projectName: "commerceflow-agent-demo",
 		healthURL:   "http://127.0.0.1:1/health",
 		consoleURL:  "http://localhost:3000",
