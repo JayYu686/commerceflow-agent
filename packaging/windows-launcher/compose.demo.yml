@@ -1,0 +1,63 @@
+name: commerceflow-agent
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: commerceflow
+      POSTGRES_USER: commerceflow
+      POSTGRES_PASSWORD: commerceflow_demo_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerceflow -d commerceflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: ghcr.io/jayyu686/commerceflow-agent-api:${COMMERCEFLOW_VERSION:-v1.0.0}
+    environment:
+      APP_ENV: demo
+      DATABASE_URL: postgresql+psycopg://commerceflow:commerceflow_demo_password@postgres:5432/commerceflow
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      LLM_PROVIDER: disabled
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)
+      interval: 5s
+      timeout: 3s
+      retries: 24
+
+  web:
+    image: ghcr.io/jayyu686/commerceflow-agent-web:${COMMERCEFLOW_VERSION:-v1.0.0}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
