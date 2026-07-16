@@ -1,12 +1,12 @@
 # CommerceFlow Agent MVP Evaluation Report
 
 ## Environment
-- Git commit: `6f59655-dirty`
+- Git commit: `17d89c0`
 - Dataset: `mvp_eval_v2`
 - Seed data: `demo_seed_v1`
 - Model provider: `disabled`
 - Embedding: `deterministic-keyword-v2`
-- Run date: `2026-07-16T12:20:22.369826+00:00`
+- Run date: `2026-07-16T13:41:37.165010+00:00`
 
 ## Overall Metrics
 | Metric | Value | Passed / Total |

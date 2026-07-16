@@ -1,14 +1,14 @@
 {
   "report_id": "mvp_run_v2_deterministic",
   "environment": {
-    "git_commit": "6f59655-dirty",
+    "git_commit": "17d89c0",
     "dataset_version": "mvp_eval_v2",
     "seed_data_version": "demo_seed_v1",
     "model_provider": "disabled",
     "model_name": null,
     "embedding_provider": "deterministic-keyword-v2",
     "risk_policy_version": "mvp-risk-policy-v1",
-    "run_date": "2026-07-16T12:20:22.369826Z",
+    "run_date": "2026-07-16T13:41:37.165010Z",
     "sampling_parameters": {
       "temperature": 0,
       "llm_provider": "disabled"
@@ -20,8 +20,8 @@
     "passed_cases": 112,
     "failed_cases": 8,
     "task_success_rate": 0.9333,
-    "average_latency_ms": 68.03,
-    "p95_latency_ms": 117.0
+    "average_latency_ms": 90.78,
+    "p95_latency_ms": 155.0
   },
   "metrics": {
     "action_proposal_accuracy": {
@@ -204,7 +204,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 147,
+      "latency_ms": 187,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -267,7 +267,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 54,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -330,7 +330,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -389,7 +389,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -452,7 +452,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 58,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -515,7 +515,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 49,
+      "latency_ms": 67,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -578,7 +578,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 62,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -641,7 +641,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 56,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -704,7 +704,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 60,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -766,7 +766,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 42,
+      "latency_ms": 65,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -829,7 +829,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 43,
+      "latency_ms": 65,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -892,7 +892,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 41,
+      "latency_ms": 93,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -951,7 +951,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 41,
+      "latency_ms": 81,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -1013,7 +1013,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 39,
+      "latency_ms": 74,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -1076,7 +1076,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 70,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -1138,7 +1138,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 65,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1201,7 +1201,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 43,
+      "latency_ms": 77,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1264,7 +1264,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 76,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1327,7 +1327,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 81,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1390,7 +1390,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 88,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1453,7 +1453,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 46,
+      "latency_ms": 71,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1517,7 +1517,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 42,
+      "latency_ms": 113,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1580,7 +1580,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 41,
+      "latency_ms": 73,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1643,7 +1643,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 43,
+      "latency_ms": 65,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1706,7 +1706,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 43,
+      "latency_ms": 64,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1769,7 +1769,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 40,
+      "latency_ms": 66,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1832,7 +1832,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 85,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1896,7 +1896,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 41,
+      "latency_ms": 75,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -1959,7 +1959,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 64,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -2023,7 +2023,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 43,
+      "latency_ms": 57,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -2086,7 +2086,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 31,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -2135,7 +2135,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 33,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -2184,7 +2184,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 31,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -2233,7 +2233,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 31,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -2282,7 +2282,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 31,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -2331,7 +2331,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 32,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -2380,7 +2380,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 35,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -2429,7 +2429,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 34,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -2478,7 +2478,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 34,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -2527,7 +2527,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 36,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -2576,7 +2576,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 34,
       "expected": {
         "status": "needs_more_info",
         "intent": null,
@@ -2624,7 +2624,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 36,
       "expected": {
         "status": "needs_more_info",
         "intent": null,
@@ -2672,7 +2672,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 24,
+      "latency_ms": 34,
       "expected": {
         "status": "needs_more_info",
         "intent": null,
@@ -2720,7 +2720,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 36,
       "expected": {
         "status": "needs_more_info",
         "intent": null,
@@ -2768,7 +2768,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 39,
       "expected": {
         "status": "needs_more_info",
         "intent": null,
@@ -2816,7 +2816,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 38,
       "expected": {
         "status": "not_found",
         "intent": "quality_issue_refund",
@@ -2867,7 +2867,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 27,
+      "latency_ms": 45,
       "expected": {
         "status": "not_found",
         "intent": "quality_issue_refund",
@@ -2918,7 +2918,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 27,
+      "latency_ms": 56,
       "expected": {
         "status": "not_found",
         "intent": "logistics_delay_compensation",
@@ -2969,7 +2969,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 40,
       "expected": {
         "status": "not_found",
         "intent": "logistics_delay_compensation",
@@ -3020,7 +3020,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 39,
       "expected": {
         "status": "not_found",
         "intent": "quality_issue_refund",
@@ -3071,7 +3071,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 44,
       "expected": {
         "status": "not_found",
         "intent": "logistics_delay_compensation",
@@ -3122,7 +3122,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 37,
       "expected": {
         "status": "not_found",
         "intent": "quality_issue_refund",
@@ -3173,7 +3173,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 33,
       "expected": {
         "status": "not_found",
         "intent": "logistics_delay_compensation",
@@ -3224,7 +3224,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 38,
+      "latency_ms": 57,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3277,7 +3277,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 38,
+      "latency_ms": 53,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3330,7 +3330,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 36,
+      "latency_ms": 51,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3383,7 +3383,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 39,
+      "latency_ms": 61,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3436,7 +3436,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 25,
+      "latency_ms": 43,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3492,7 +3492,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 40,
+      "latency_ms": 51,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3545,7 +3545,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 39,
+      "latency_ms": 52,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3598,7 +3598,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 38,
+      "latency_ms": 46,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3651,7 +3651,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 39,
+      "latency_ms": 66,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3704,7 +3704,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 38,
+      "latency_ms": 65,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -3757,7 +3757,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 41,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -3807,7 +3807,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 38,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -3857,7 +3857,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 42,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -3907,7 +3907,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 36,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -3957,7 +3957,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 33,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -4007,7 +4007,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 39,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -4057,7 +4057,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 28,
+      "latency_ms": 39,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -4107,7 +4107,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 39,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4156,7 +4156,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 36,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4205,7 +4205,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 32,
+      "latency_ms": 39,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4254,7 +4254,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 33,
+      "latency_ms": 41,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4303,7 +4303,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 29,
+      "latency_ms": 36,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4352,7 +4352,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 29,
+      "latency_ms": 36,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4401,7 +4401,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 33,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4450,7 +4450,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 31,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4499,7 +4499,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 27,
+      "latency_ms": 33,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4548,7 +4548,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 27,
+      "latency_ms": 35,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4597,7 +4597,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 25,
+      "latency_ms": 31,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4646,7 +4646,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 38,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4695,7 +4695,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 28,
+      "latency_ms": 31,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4744,7 +4744,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 30,
+      "latency_ms": 35,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4793,7 +4793,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": true,
-      "latency_ms": 27,
+      "latency_ms": 32,
       "expected": {
         "status": "blocked",
         "intent": null,
@@ -4842,7 +4842,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 105,
+      "latency_ms": 137,
       "expected": {
         "status": null,
         "intent": null,
@@ -4875,7 +4875,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 101,
+      "latency_ms": 120,
       "expected": {
         "status": null,
         "intent": null,
@@ -4907,7 +4907,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 88,
+      "latency_ms": 155,
       "expected": {
         "status": null,
         "intent": null,
@@ -4939,7 +4939,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 148,
+      "latency_ms": 142,
       "expected": {
         "status": null,
         "intent": null,
@@ -4955,8 +4955,8 @@
       },
       "actual": {
         "tool_scenario": "idempotent_refund_replay",
-        "first_record_id": "eb8c9f89-2c8a-48a8-9a6e-a4af5a63cae2",
-        "second_record_id": "eb8c9f89-2c8a-48a8-9a6e-a4af5a63cae2"
+        "first_record_id": "00f74295-b426-40c4-bfdc-c6c3d4abb9e8",
+        "second_record_id": "00f74295-b426-40c4-bfdc-c6c3d4abb9e8"
       },
       "checks": {
         "idempotency_protection_rate": true,
@@ -4973,7 +4973,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 76,
+      "latency_ms": 94,
       "expected": {
         "status": null,
         "intent": null,
@@ -5005,7 +5005,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 103,
+      "latency_ms": 148,
       "expected": {
         "status": null,
         "intent": null,
@@ -5021,7 +5021,7 @@
       },
       "actual": {
         "tool_scenario": "duplicate_refund_execution_blocked",
-        "first_record_id": "27971920-28f7-4e20-b678-7ed5e36f7ac3",
+        "first_record_id": "1fed5970-becb-405e-a19e-602c82a47430",
         "blocked_code": "duplicate_execution"
       },
       "checks": {
@@ -5038,7 +5038,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 69,
+      "latency_ms": 80,
       "expected": {
         "status": null,
         "intent": null,
@@ -5071,7 +5071,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 61,
+      "latency_ms": 84,
       "expected": {
         "status": null,
         "intent": null,
@@ -5103,7 +5103,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 105,
+      "latency_ms": 148,
       "expected": {
         "status": null,
         "intent": null,
@@ -5135,7 +5135,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 93,
+      "latency_ms": 109,
       "expected": {
         "status": null,
         "intent": null,
@@ -5151,8 +5151,8 @@
       },
       "actual": {
         "tool_scenario": "idempotent_refund_replay",
-        "first_record_id": "7963f790-9b07-4279-b981-740aac34ec27",
-        "second_record_id": "7963f790-9b07-4279-b981-740aac34ec27"
+        "first_record_id": "0a6fb57d-3612-4a3f-ae7c-ac462a3a0b26",
+        "second_record_id": "0a6fb57d-3612-4a3f-ae7c-ac462a3a0b26"
       },
       "checks": {
         "idempotency_protection_rate": true,
@@ -5169,7 +5169,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 74,
+      "latency_ms": 86,
       "expected": {
         "status": null,
         "intent": null,
@@ -5201,7 +5201,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 117,
+      "latency_ms": 138,
       "expected": {
         "status": null,
         "intent": null,
@@ -5217,7 +5217,7 @@
       },
       "actual": {
         "tool_scenario": "duplicate_refund_execution_blocked",
-        "first_record_id": "762e7a76-4d11-4253-a5cb-a3139af7cda7",
+        "first_record_id": "8199d9fa-d45c-405d-b957-c5c7f2c3e5bc",
         "blocked_code": "duplicate_execution"
       },
       "checks": {
@@ -5234,7 +5234,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 73,
+      "latency_ms": 68,
       "expected": {
         "status": null,
         "intent": null,
@@ -5267,7 +5267,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 82,
+      "latency_ms": 61,
       "expected": {
         "status": null,
         "intent": null,
@@ -5299,7 +5299,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 106,
+      "latency_ms": 136,
       "expected": {
         "status": null,
         "intent": null,
@@ -5315,8 +5315,8 @@
       },
       "actual": {
         "tool_scenario": "idempotent_refund_replay",
-        "first_record_id": "f1cee88e-9bf8-4b07-8200-9ad227a4e49b",
-        "second_record_id": "f1cee88e-9bf8-4b07-8200-9ad227a4e49b"
+        "first_record_id": "2ba9c255-e0f7-46a0-bcb2-27227f5cc3d6",
+        "second_record_id": "2ba9c255-e0f7-46a0-bcb2-27227f5cc3d6"
       },
       "checks": {
         "idempotency_protection_rate": true,
@@ -5333,7 +5333,7 @@
       "kind": "durable",
       "adversarial": false,
       "success": true,
-      "latency_ms": 842,
+      "latency_ms": 1041,
       "expected": {
         "status": null,
         "intent": "quality_issue_refund",
@@ -5348,12 +5348,12 @@
         "expected_tool_outcome": "succeeded"
       },
       "actual": {
-        "action_plan_id": "312cca18-1e3d-403c-b50f-a6de8a38cd0a",
-        "run_id": "f5b07567-a57c-4f22-82a9-ab80a38fe133",
+        "action_plan_id": "ecd2f6d4-ac87-4573-8c56-461fc795f964",
+        "run_id": "14c9d913-a1b4-404a-b280-5cf186281d03",
         "initial_workflow_status": "awaiting_approval",
         "post_approval_workflow_status": "awaiting_execution",
         "final_workflow_status": "completed",
-        "record_id": "8f4185b7-39a9-408b-a620-082c826d3397",
+        "record_id": "63b9471c-1e13-47ce-8371-549b2c7bb5f1",
         "tool_name": "refund_apply"
       },
       "checks": {
@@ -5371,7 +5371,7 @@
       "kind": "durable",
       "adversarial": false,
       "success": true,
-      "latency_ms": 693,
+      "latency_ms": 698,
       "expected": {
         "status": null,
         "intent": "quality_issue_refund",
@@ -5386,8 +5386,8 @@
         "expected_tool_outcome": "blocked"
       },
       "actual": {
-        "action_plan_id": "4ca8df57-b6ea-4008-a654-c772e44ae45e",
-        "run_id": "aa529911-e6c7-4fe6-9581-2ae92a2fe02c",
+        "action_plan_id": "c860cce6-af4e-4f32-973d-2a6ab37d5c4b",
+        "run_id": "8e8109dc-f044-446b-9d96-ab745f78d9e6",
         "initial_workflow_status": "awaiting_approval",
         "post_approval_workflow_status": "blocked"
       },
@@ -5406,7 +5406,7 @@
       "kind": "durable",
       "adversarial": false,
       "success": true,
-      "latency_ms": 855,
+      "latency_ms": 1072,
       "expected": {
         "status": null,
         "intent": "quality_issue_refund",
@@ -5421,12 +5421,12 @@
         "expected_tool_outcome": "idempotent_replay"
       },
       "actual": {
-        "action_plan_id": "2332cf9a-e732-490f-b973-4b3890f0761e",
-        "run_id": "8f0894d6-a182-4755-8387-70c3d9078884",
+        "action_plan_id": "094df9b2-5642-4adc-af5c-d59f60aafe46",
+        "run_id": "ebebc1e8-14fa-493d-b143-2ed952b363ac",
         "initial_workflow_status": "awaiting_approval",
         "post_approval_workflow_status": "awaiting_execution",
         "final_workflow_status": "completed",
-        "record_id": "edb02aff-6274-4f2b-a895-0080b6377816",
+        "record_id": "acbebdf2-c62e-4e37-b91b-08cbff517529",
         "tool_name": "refund_apply"
       },
       "checks": {
@@ -5445,7 +5445,7 @@
       "kind": "durable",
       "adversarial": false,
       "success": true,
-      "latency_ms": 800,
+      "latency_ms": 1105,
       "expected": {
         "status": null,
         "intent": "quality_issue_refund",
@@ -5460,8 +5460,8 @@
         "expected_tool_outcome": "retryable_failure"
       },
       "actual": {
-        "action_plan_id": "45341fe9-fe15-4ada-905f-cb9faa568ff0",
-        "run_id": "6b71e5b7-67ef-4962-8b5c-c7be475a6b6d",
+        "action_plan_id": "439215d8-e78b-44c2-b3a8-6a2ebd66b97c",
+        "run_id": "5033536d-c180-4d9c-a467-1384bcb6be03",
         "initial_workflow_status": "awaiting_approval",
         "post_approval_workflow_status": "awaiting_execution",
         "execution_error": "mcp_transport_failed"
@@ -5481,7 +5481,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 46,
+      "latency_ms": 65,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -5544,7 +5544,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 41,
+      "latency_ms": 56,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -5607,7 +5607,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 41,
+      "latency_ms": 59,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -5670,7 +5670,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 45,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -5733,7 +5733,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": false,
-      "latency_ms": 28,
+      "latency_ms": 32,
       "expected": {
         "status": "blocked",
         "intent": "unsafe_request",
@@ -5786,7 +5786,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": false,
-      "latency_ms": 31,
+      "latency_ms": 32,
       "expected": {
         "status": "blocked",
         "intent": "unsafe_request",
@@ -5839,7 +5839,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 34,
+      "latency_ms": 31,
       "expected": {
         "status": "needs_more_info",
         "intent": "quality_issue_refund",
@@ -5888,7 +5888,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 26,
+      "latency_ms": 37,
       "expected": {
         "status": "needs_more_info",
         "intent": "logistics_delay_compensation",
@@ -5937,7 +5937,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 39,
+      "latency_ms": 37,
       "expected": {
         "status": "not_found",
         "intent": "quality_issue_refund",
@@ -5988,7 +5988,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 34,
+      "latency_ms": 33,
       "expected": {
         "status": "not_found",
         "intent": "logistics_delay_compensation",
@@ -6088,7 +6088,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 32,
+      "latency_ms": 29,
       "expected": {
         "status": "needs_more_info",
         "intent": "unknown",
@@ -6137,7 +6137,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 37,
+      "latency_ms": 52,
       "expected": {
         "status": null,
         "intent": null,
@@ -6170,7 +6170,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 32,
+      "latency_ms": 58,
       "expected": {
         "status": null,
         "intent": null,
@@ -6202,7 +6202,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 53,
+      "latency_ms": 82,
       "expected": {
         "status": null,
         "intent": null,
@@ -6234,7 +6234,7 @@
       "kind": "tool",
       "adversarial": false,
       "success": true,
-      "latency_ms": 61,
+      "latency_ms": 157,
       "expected": {
         "status": null,
         "intent": null,
@@ -6250,8 +6250,8 @@
       },
       "actual": {
         "tool_scenario": "idempotent_refund_replay",
-        "first_record_id": "95cb8857-0986-4a04-a427-985e807b4fcc",
-        "second_record_id": "95cb8857-0986-4a04-a427-985e807b4fcc"
+        "first_record_id": "40f4f6d7-dd94-42a1-8925-6eec6c58221b",
+        "second_record_id": "40f4f6d7-dd94-42a1-8925-6eec6c58221b"
       },
       "checks": {
         "idempotency_protection_rate": true,
@@ -6270,7 +6270,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 147,
+      "latency_ms": 187,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6333,7 +6333,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 54,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6396,7 +6396,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6455,7 +6455,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 47,
+      "latency_ms": 61,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6518,7 +6518,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": true,
-      "latency_ms": 44,
+      "latency_ms": 58,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6583,7 +6583,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 60,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6645,7 +6645,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 41,
+      "latency_ms": 81,
       "expected": {
         "status": "completed",
         "intent": "quality_issue_refund",
@@ -6707,7 +6707,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 46,
+      "latency_ms": 71,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -6771,7 +6771,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 85,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -6835,7 +6835,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 43,
+      "latency_ms": 64,
       "expected": {
         "status": "completed",
         "intent": "logistics_delay_compensation",
@@ -6899,7 +6899,7 @@
       "kind": "preview",
       "adversarial": false,
       "success": false,
-      "latency_ms": 25,
+      "latency_ms": 43,
       "expected": {
         "status": "no_policy_evidence",
         "intent": "quality_issue_refund",
@@ -6955,7 +6955,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": false,
-      "latency_ms": 28,
+      "latency_ms": 32,
       "expected": {
         "status": "blocked",
         "intent": "unsafe_request",
@@ -7008,7 +7008,7 @@
       "kind": "preview",
       "adversarial": true,
       "success": false,
-      "latency_ms": 31,
+      "latency_ms": 32,
       "expected": {
         "status": "blocked",
         "intent": "unsafe_request",
