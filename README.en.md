@@ -8,11 +8,11 @@
 
 **CommerceFlow Agent is a controlled business Agent for e-commerce after-sales operations.** It retrieves order and logistics facts, grounds recommendations in active policy evidence, requires human approval for high-risk actions, executes only through validated mock tools, and preserves an auditable trace.
 
-> This is a portfolio and local demonstration project. Refunds, coupons, tickets, and external integrations are mock-only and never create real business results.
+> This is a locally runnable business Agent demonstration. Refunds, coupons, tickets, and external integrations are mock-only and never create real business results.
 
-## Why It Exists
+## Workflow Overview
 
-A business Agent needs more than a plausible chat response. It must prove that facts are trustworthy, recommendations are policy-grounded, risky actions are approved, repeated writes are idempotent, and every decision is traceable.
+CommerceFlow Agent coordinates fact retrieval, policy grounding, risk controls, human approval, idempotent tool execution, and auditability in one workflow.
 
 ```text
 User request -> facts -> policy evidence -> Agent recommendation and risk
@@ -118,10 +118,10 @@ Preview remains stateless and read-only. Persisted Action Plans use PostgreSQL-b
 
 Open `http://localhost:3000`.
 
-## Portfolio Materials
+## Project Materials
 
 - [Chinese three-minute demo script](docs/demo/DEMO_SCRIPT.zh-CN.md)
-- [Chinese resume project summary](docs/resume/PROJECT_SUMMARY.zh-CN.md)
+- [Chinese project and design guide](docs/project/PROJECT_GUIDE.zh-CN.md)
 - [Architecture overview](docs/architecture/commerceflow-agent-overview.md)
 - [MVP evaluation report](eval/reports/MVP_REPORT.md)
 - [v1.1 durable workflow evaluation report](eval/reports/MVP_V2_REPORT.md)
@@ -129,4 +129,4 @@ Open `http://localhost:3000`.
 
 ## License
 
-Licensed under the [MIT License](LICENSE). All commerce data and tool results are local mock data for learning, portfolio demonstration, and technical evaluation.
+Licensed under the [MIT License](LICENSE). All commerce data and tool results are local mock data for functional demonstration, development validation, and technical evaluation.

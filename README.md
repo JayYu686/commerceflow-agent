@@ -8,13 +8,11 @@
 
 **CommerceFlow Agent 是一个面向电商售后的可控业务智能体。** 它会查询订单和物流事实、引用有效售后政策、生成处理建议，并通过人工审批、受控 Mock 工具和审计日志约束退款等高风险操作。
 
-> 这是求职展示和本地演示项目。退款、优惠券、工单和外部系统调用均为本地 Mock，不会产生真实业务结果。
+> 这是一个可本地运行的业务 Agent 演示系统。退款、优惠券、工单和外部系统调用均为 Mock，不会产生真实业务结果。
 
 ## 30 秒了解项目
 
-普通聊天机器人可以生成一段看似合理的回复，但企业业务还需要解决四个问题：事实是否真实、建议是否有政策依据、高风险操作是否经过审批、执行过程是否可追踪。
-
-CommerceFlow Agent 将这四个问题串成完整链路：
+CommerceFlow Agent 将售后诉求理解、业务事实查询、政策检索、风险控制和工具执行组织为一条可恢复、可审计的处理链路：
 
 ```mermaid
 flowchart LR
@@ -28,10 +26,10 @@ flowchart LR
   G --> H[Mock 结果与审计时间线]
 ```
 
-- **不是自由聊天**：Agent 输出结构化意图、事实、政策依据、建议和风险。
-- **不是让模型直接操作数据库**：LLM 只辅助理解和表达，不能修改事实或执行业务动作。
-- **不是无条件自动退款**：退款和高额补偿必须匹配已批准的审批记录。
-- **不是只展示成功路径**：幂等冲突、越权请求、无政策依据和执行拦截都会被记录。
+- **事实驱动**：订单、商品和物流信息来自受控查询服务。
+- **政策约束**：处理建议引用处于有效期内且适用于当前场景的政策依据。
+- **受控执行**：退款和高额补偿必须经过人工审批与执行确认。
+- **全程留痕**：Action Plan、审批、工具调用、幂等重放和失败事件均可追踪。
 
 ## 立即体验
 
@@ -46,7 +44,7 @@ flowchart LR
 
 注意：程序未使用商业代码签名证书，Windows 可能显示 SmartScreen 提示。请从本仓库 Release 下载，并使用随包提供的 `SHA256SUMS.txt` 校验文件。
 
-### 三个面试演示场景
+### 三个典型演示场景
 
 | 场景 | 输入 | 预期结果 |
 |---|---|---|
@@ -211,10 +209,10 @@ docker compose --profile observability up -d
 
 启用 `OTEL_ENABLED=true` 后，API 将白名单化的 Agent node、LLM、policy retrieval、审批恢复和 MCP 调用 span 发送到 OTLP HTTP endpoint。Jaeger 默认地址为 `http://localhost:16686`。Trace 不记录原始用户消息、完整 prompt、密钥、连接串或完整工具参数。
 
-## 求职展示材料
+## 项目演示材料
 
 - [3 分钟中文演示脚本](docs/demo/DEMO_SCRIPT.zh-CN.md)
-- [简历项目总结](docs/resume/PROJECT_SUMMARY.zh-CN.md)
+- [项目说明与设计指南](docs/project/PROJECT_GUIDE.zh-CN.md)
 - [公开架构概览](docs/architecture/commerceflow-agent-overview.md)
 - [MVP 评测报告](eval/reports/MVP_REPORT.md)
 - [v1.1 持久化工作流评测报告](eval/reports/MVP_V2_REPORT.md)
@@ -226,4 +224,4 @@ docker compose --profile observability up -d
 
 ## License
 
-本项目采用 [MIT License](LICENSE)。项目中的业务数据、退款、优惠券和工单均为本地模拟，仅用于学习、求职展示和技术评估。
+本项目采用 [MIT License](LICENSE)。项目中的业务数据、退款、优惠券和工单均为本地模拟，仅用于功能演示、开发验证和技术评估。

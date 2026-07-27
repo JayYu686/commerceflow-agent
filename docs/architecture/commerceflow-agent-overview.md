@@ -2,7 +2,7 @@
 
 ## Purpose
 
-CommerceFlow Agent is a controlled after-sales business Agent for portfolio demonstration. It shows how an Agent can retrieve facts, ground recommendations in policy evidence, require human approval for high-risk actions, execute only through validated mock tools, and preserve an audit trail.
+CommerceFlow Agent is a controlled after-sales business Agent. It retrieves facts, grounds recommendations in policy evidence, requires human approval for high-risk actions, executes only through validated mock tools, and preserves an audit trail.
 
 ## High-Level Flow
 
