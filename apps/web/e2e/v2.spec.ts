@@ -23,11 +23,11 @@ test("real refund approval and explicit confirmation", async ({browser})=>{
     await page.getByRole("button",{name:"登录",exact:true}).click();
     await expect(page.getByRole("heading",{name:"售后工作台",exact:true})).toBeVisible({timeout:30000});
   }
-  // CF000004 is a separate seeded eligible order, leaving the smoke demonstration intact.
-  await op.getByLabel("售后诉求",{exact:true}).fill("订单 CF000004 的蓝牙耳机左耳没有声音，收纳包正常，请只退耳机的钱。");
+  const order = process.env.CF_E2E_ORDER || "CF000004";
+  await op.getByLabel("售后诉求",{exact:true}).fill(`订单 ${order} 的蓝牙耳机左耳没有声音，收纳包正常，请只退耳机的钱。`);
   await op.getByRole("button",{name:"提交调查",exact:true}).click();
   await expect(op.getByText("等待审核",{exact:true}).first()).toBeVisible({timeout:150000});
-  await review.getByRole("button").filter({has:review.getByText("CF000004",{exact:true})}).first().click();
+  await review.getByRole("button").filter({has:review.getByText(order,{exact:true})}).first().click();
   await review.getByLabel("已核实故障证据、商品范围及人为损坏/擅自维修等排除条款").check();
   await review.getByLabel("审核意见").fill("已核实耳机故障描述，确认排除人为损坏。");
   await review.getByRole("button",{name:"批准此版本方案"}).click();

@@ -132,6 +132,16 @@ def test_request_idempotency_and_conflicting_reuse(clients):
     assert post(client, "/api/cases", {"content": "different"}, key="same").status_code == 409
 
 
+def test_logout_is_replayable_and_revokes_the_original_cookie(clients):
+    client = clients[0]
+    token = client.cookies.get("cf_session")
+    first = post(client, "/api/logout", {}, key="logout-once")
+    assert first.status_code == 200
+    assert post(client, "/api/logout", {}, key="logout-once").json() == first.json()
+    client.cookies.set("cf_session", token)
+    assert client.get("/api/session").status_code == 401
+
+
 def test_coupon_requires_confirmation_but_not_reviewer(clients):
     operator = clients[0]
     _, plan_id = plan(operator, delay=True)

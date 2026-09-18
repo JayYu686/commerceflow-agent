@@ -1,3 +1,5 @@
+> 历史 v1 文档，仅用于理解 Git 历史。当前实现、启动和验收请以 [v2 README](../../README.md)、[v2 部署说明](../deployment-v2.md) 与 [v2 契约](../architecture/v2-contract.md) 为准。下文命令不适用于 v2。
+
 # CommerceFlow Agent Architecture Overview
 
 ## Purpose

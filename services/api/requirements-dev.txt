@@ -1,3 +1,4 @@
 -r requirements-v2.txt
+-c requirements-lock.txt
 pytest==9.1.1
 ruff==0.15.21

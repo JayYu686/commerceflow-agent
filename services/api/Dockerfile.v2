@@ -1,9 +1,9 @@
 FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-COPY services/api/requirements-v2.txt .
+COPY services/api/requirements-v2.txt services/api/requirements-lock.txt ./
 RUN pip install --no-cache-dir torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements-v2.txt
+    && pip install --no-cache-dir -r requirements-v2.txt -c requirements-lock.txt
 COPY services/api/commerceflow ./commerceflow
 COPY services/api/migrations_v2 ./migrations_v2
 COPY services/api/alembic-v2.ini .

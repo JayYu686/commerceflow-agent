@@ -51,7 +51,7 @@ jobs:
       - name: Install backend
         run: |
           pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
-          pip install -r services/api/requirements-v2.txt pytest==9.1.1 ruff==0.15.21
+          pip install -r services/api/requirements-dev.txt
       - name: Initialize isolated databases
         run: |
           sh deploy/init-databases.sh
@@ -81,6 +81,13 @@ jobs:
         run: |
           docker build -f services/api/Dockerfile.v2 -t commerceflow-api:ci .
           docker build -f apps/web/Dockerfile -t commerceflow-web:ci .
+      - name: Start complete Compose deployment
+        run: |
+          python deploy/configure.py
+          python deploy/download_embedding.py
+          docker compose --env-file .env.v2 -f compose.v2.yml up --build --wait --wait-timeout 300
+          docker compose --env-file .env.v2 -f compose.v2.yml exec -T api python - < deploy/compose_smoke.py
+          docker compose --env-file .env.v2 -f compose.v2.yml down
       - uses: actions/upload-artifact@v4
         if: always()
         with:

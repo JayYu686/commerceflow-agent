@@ -139,15 +139,14 @@ def whoami(role=Depends(actor)):
 def logout(
     request: Request,
     response: Response,
-    _role=Depends(actor),
     idempotency_key: str = Header(alias="Idempotency-Key"),
 ):
     with transaction() as session:
         row = session.get(
-            LoginSession, hashlib.sha256(request.cookies["cf_session"].encode()).hexdigest()
+            LoginSession, hashlib.sha256(request.cookies.get("cf_session", "").encode()).hexdigest()
         )
         if row:
-            session.delete(row)
+            row.expires_at = min(row.expires_at, utcnow())
     response.delete_cookie("cf_session", path="/")
     return {"status": "logged_out"}
 

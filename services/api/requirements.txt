@@ -1,1 +1,2 @@
 -r requirements-v2.txt
+-c requirements-lock.txt

@@ -37,6 +37,8 @@ GET /api/cases/{id}/events (SSE, Last-Event-ID); POST /api/plans/{id}/approval;
 POST /api/plans/{id}/confirmation; GET /api/executions/{id}.
 Mutation requests require Idempotency-Key. Server sessions identify operator and
 reviewer. Plan payloads are immutable and hashed; decisions bind the exact version.
+Logout is replayable even after the browser has removed its cookie. Revoked sessions
+remain expired records, preventing a repeated login key from resurrecting a token.
 Confirmation and execution job are committed together. Per-case advisory locks
 serialize jobs. Expired job leases permit restart. External timeout is uncertain:
 query by the same execution ID before retrying. Successful remote results are

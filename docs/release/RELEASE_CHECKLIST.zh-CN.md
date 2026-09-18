@@ -1,3 +1,5 @@
+> 历史 v1 文档，仅用于理解 Git 历史。当前实现、启动和验收请以 [v2 README](../../README.md)、[v2 部署说明](../deployment-v2.md) 与 [v2 契约](../architecture/v2-contract.md) 为准。下文命令不适用于 v2。
+
 # CommerceFlow Agent v1.1.3 发布清单
 
 本清单用于维护者发布 GitHub Release。`v1.1.3` tag 只有在后端、前端 E2E、镜像和 Windows 启动器构建全部成功后才会自动发布为 Latest；`v1.0.0` 保留为可回退版本。

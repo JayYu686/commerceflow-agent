@@ -57,6 +57,23 @@ const names: Record<string, string> = {
   job_stopped: "处理停止",
   assistant_message: "助手回复",
 };
+const receiptLabels: Record<string, string> = {
+  execution_id: "执行编号", ticket_id: "售后工单", order_no: "订单号",
+  item_id: "商品行", amount_fen: "本次金额", refunded_fen: "累计退款",
+  coupon_code: "优惠券编号", status: "业务状态", simulated: "模拟业务",
+  order_refunded_fen: "订单累计退款", resolution: "处理结果",
+  intent: "处理类型", entitlement_key: "权益编号",
+};
+function receiptValue(key: string, value: unknown) {
+  if (key.endsWith("_fen") && typeof value === "number") return `¥${(value / 100).toFixed(2)}`;
+  if (key === "simulated") return value ? "是（不接入真实支付）" : "否";
+  if (value === "succeeded") return "已成功";
+  if (value === "refund_succeeded") return "退款已入模拟账本";
+  if (value === "coupon_issued") return "模拟优惠券已发放";
+  if (value === "quality_issue_refund") return "商品质量退款";
+  if (value === "logistics_delay_compensation") return "物流延误补偿";
+  return String(value);
+}
 async function api<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {
     method: body === undefined ? "GET" : "POST",
@@ -357,7 +374,7 @@ export default function Workbench() {
             {current?.plan && (
               <article className="plan-card">
                 <div className="section-label">
-                  待执行方案
+                  {current.status === "completed" ? "已执行方案" : "待执行方案"}
                   <span>
                     {current.plan.requires_approval
                       ? "须人工审核"
@@ -482,8 +499,8 @@ export default function Workbench() {
                     .filter(([, v]) => v !== null)
                     .map(([k, v]) => (
                       <div key={k}>
-                        <dt>{k}</dt>
-                        <dd>{String(v)}</dd>
+                        <dt>{receiptLabels[k] || k}</dt>
+                        <dd>{receiptValue(k, v)}</dd>
                       </div>
                     ))}
                 </dl>
