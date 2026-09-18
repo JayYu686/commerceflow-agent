@@ -191,11 +191,38 @@ def investigation_tool(case_id, name, arguments):
                 or case.item_id != item_id
                 or case.intent != arguments["intent"]
             )
-            reported = (
-                user_messages[-1].created_at
-                if changed or not case.target_reported_at
-                else case.target_reported_at
-            )
+            reported = case.target_reported_at
+            if changed or reported is None:
+                if arguments["intent"] == policy.REFUND:
+                    previous_targets = session.scalars(
+                        select(EvidenceSnapshot).where(
+                            EvidenceSnapshot.case_id == case.id,
+                            EvidenceSnapshot.tool == "check_eligibility",
+                        )
+                    )
+                    boundary = max(
+                        (
+                            s.generation
+                            for s in previous_targets
+                            if any(
+                                s.arguments.get(k) != arguments[k]
+                                for k in ("order_no", "item_id", "intent")
+                            )
+                        ),
+                        default=0,
+                    )
+                    reports = [
+                        m
+                        for m in user_messages
+                        if m.generation > boundary and quote and quote in m.content
+                    ]
+                    if not reports:
+                        raise DomainError(
+                            "ungrounded_defect", "请描述当前商品的故障，不能沿用其他处理目标的证据"
+                        )
+                    reported = reports[0].created_at
+                else:
+                    reported = user_messages[-1].created_at
             result = policy.eligibility(
                 order, history, selected, arguments["intent"], item_id, quote, reported
             )

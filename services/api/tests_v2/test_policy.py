@@ -120,6 +120,26 @@ def test_actual_late_delivery_qualifies():
     assert check(facts(), DELAY)["amount_fen"] == 1000
 
 
+def test_movement_after_signed_delivery_is_inconsistent():
+    order = facts()
+    order["carrier_events"].append(
+        {"kind": "movement", "at": (NOW - timedelta(days=1)).isoformat()}
+    )
+    with pytest.raises(DomainError, match="签收与轨迹"):
+        check(order, DELAY)
+
+
+@pytest.mark.parametrize("amount,requires_review", [(1000, False), (1001, True)])
+def test_coupon_review_threshold(amount, requires_review):
+    source = next(s for s in policy_sources() if s["intent"] == DELAY)
+    source["rules"]["coupon_fen"] = amount
+    source["checksum"] = "test"
+    result = eligibility(
+        facts(), {"results": []}, SimpleNamespace(**source), DELAY, None, "", NOW, now=NOW
+    )
+    assert result["requires_approval"] is requires_review
+
+
 @pytest.mark.parametrize(
     "events", [[], [{"kind": "movement", "at": (NOW + timedelta(days=1)).isoformat()}]]
 )

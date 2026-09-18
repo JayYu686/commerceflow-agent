@@ -1,12 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta
 from uuid import uuid4
 
+import httpx
 import pytest
 from sqlalchemy import func, select
 
 from commerceflow.commerce import WriteRequest, execute_business, order_snapshot
-from commerceflow.db import DomainError, identifier, transaction
-from commerceflow.models import BusinessResult, Execution, Job, Policy, Ticket
+from commerceflow.config import settings
+from commerceflow.db import DomainError, identifier, transaction, utcnow
+from commerceflow.models import BusinessResult, CaseMessage, Execution, Job, Order, Policy, Ticket
 from commerceflow.tools import investigation_tool, mcp_call
 from commerceflow.worker import execute
 
@@ -78,6 +81,31 @@ def test_real_mcp_reads_and_item_refund_roundtrip(clients):
     assert clients[0].get(f"/api/cases/{case_id}").json()["status"] == "completed"
 
 
+@pytest.mark.parametrize("host,expected", [("commerce:8001", 200), ("untrusted.example", 421)])
+def test_mcp_accepts_compose_hostname_but_rejects_unknown_host(db, host, expected):
+    response = httpx.post(
+        settings().commerce_url + "/tools/mcp",
+        headers={
+            "Host": host,
+            "Accept": "application/json, text/event-stream",
+            "Authorization": "Bearer " + settings().commerce_read_token.get_secret_value(),
+        },
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "compose-test", "version": "2"},
+            },
+        },
+        timeout=10,
+        trust_env=False,
+    )
+    assert response.status_code == expected
+
+
 def test_refund_cannot_confirm_before_review(clients):
     _, plan_id = plan(clients[0])
     response = post(clients[0], f"/api/plans/{plan_id}/confirmation", {"confirmed": True})
@@ -140,6 +168,36 @@ def test_logout_is_replayable_and_revokes_the_original_cookie(clients):
     assert post(client, "/api/logout", {}, key="logout-once").json() == first.json()
     client.cookies.set("cf_session", token)
     assert client.get("/api/session").status_code == 401
+
+
+def test_first_defect_report_is_not_replaced_by_later_order_clarification(clients):
+    client = clients[0]
+    case_id = post(client, "/api/cases", {"content": "耳机左耳没有声音"}).json()["case_id"]
+    reported = utcnow() - timedelta(days=2)
+    with transaction(True) as session:
+        session.get(Order, "TEST-REFUND").delivered_at = utcnow() - timedelta(days=8)
+    with transaction() as session:
+        first = session.scalar(select(CaseMessage).where(CaseMessage.case_id == case_id))
+        first.created_at = reported
+        session.scalar(select(Job).where(Job.case_id == case_id)).status = "completed"
+    post(client, f"/api/cases/{case_id}/messages", {"content": "订单号 TEST-REFUND"})
+    for name in ("get_order", "get_aftersales_history"):
+        investigation_tool(case_id, name, {"order_no": "TEST-REFUND"})
+    investigation_tool(
+        case_id, "search_policy", {"query": "质量退款", "intent": "quality_issue_refund"}
+    )
+    result = investigation_tool(
+        case_id,
+        "check_eligibility",
+        {
+            "order_no": "TEST-REFUND",
+            "item_id": "TEST-REFUND-1",
+            "intent": "quality_issue_refund",
+            "defect_quote": "耳机左耳没有声音",
+        },
+    )
+    assert datetime.fromisoformat(result["reported_at"]) == reported
+    assert result["amount_fen"] == 19900
 
 
 def test_coupon_requires_confirmation_but_not_reviewer(clients):

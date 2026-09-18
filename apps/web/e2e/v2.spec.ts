@@ -2,12 +2,43 @@ import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
+// Real demo login traces contain password input; keep screenshots of the final UI only.
+test.use({ trace: "off" });
+
 test("login layout presents roles and simulated business boundary", async ({page})=>{
   await page.goto("/");
   await expect(page.getByRole("heading",{name:"进入演示工作台"})).toBeVisible();
   await expect(page.getByLabel("工作角色")).toHaveValue("operator");
   await expect(page.getByText("所有订单、退款和优惠券均为模拟数据。")).toBeVisible();
   await page.screenshot({path:"test-results/v2-login.png",fullPage:true});
+});
+
+test("real logistics coupon confirms once and duplicate claim is blocked", async ({page})=>{
+  test.skip(!process.env.CF_E2E_REAL_MODEL,"Requires the running real model and demo services");
+  test.setTimeout(240000);
+  const config=Object.fromEntries(fs.readFileSync(path.resolve(process.cwd(),"../../.env.v2"),"utf8").split(/\r?\n/).filter(l=>l.includes("=")).map(l=>[l.slice(0,l.indexOf("=")),l.slice(l.indexOf("=")+1)]));
+  const order=process.env.CF_E2E_DELAY_ORDER || "CF000002";
+  await page.goto("/");
+  await page.getByLabel("密码",{exact:true}).fill(config.CF_OPERATOR_PASSWORD);
+  await page.getByRole("button",{name:"登录",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"售后工作台",exact:true})).toBeVisible({timeout:30000});
+  await page.getByLabel("售后诉求",{exact:true}).fill(`订单 ${order} 五天没有物流更新，请查询是否符合物流延误补偿。`);
+  await page.getByRole("button",{name:"提交调查",exact:true}).click();
+  const confirmation=page.getByRole("button",{name:"确认执行 ¥10.00 模拟补偿"});
+  await expect(confirmation).toBeVisible({timeout:150000});
+  await expect(page.getByRole("heading",{name:"执行成功",exact:true})).toHaveCount(0);
+  await confirmation.click();
+  await expect(page.getByRole("heading",{name:"执行成功",exact:true})).toBeVisible({timeout:30000});
+  await expect(page.getByText("模拟优惠券已发放",{exact:true})).toBeVisible();
+  await page.screenshot({path:"test-results/v2-coupon-completed.png",fullPage:true});
+  await page.getByRole("button",{name:"＋ 新建",exact:true}).click();
+  await page.getByLabel("售后诉求",{exact:true}).fill(`订单 ${order} 的物流延误补偿再申请一次。`);
+  await page.getByRole("button",{name:"提交调查",exact:true}).click();
+  await expect(page.locator(".main-panel .status")).toHaveText(/未执行操作|已停止|待补充信息/,{timeout:150000});
+  await expect(page.locator(".plan-card")).toHaveCount(0);
+  await expect(confirmation).toHaveCount(0);
+  await expect(page.locator(".event pre").filter({hasText:"该售后权益已经处理"}).first()).toHaveCount(1);
+  await page.screenshot({path:"test-results/v2-duplicate-blocked.png",fullPage:true});
 });
 
 test("real refund approval and explicit confirmation", async ({browser})=>{

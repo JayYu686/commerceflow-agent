@@ -136,7 +136,7 @@ def eligibility(order, history, policy, intent, item_id, defect_quote, reported_
         if dates != sorted(dates) or any(d > now or d < moment(order["paid_at"]) for d in dates):
             raise DomainError("inconsistent_tracking", "物流轨迹时间不一致，需人工处理")
         delivered = moment(order["delivered_at"])
-        if delivered and (delivered > now or delivered < dates[0]):
+        if delivered and (delivered > now or delivered < dates[-1]):
             raise DomainError("inconsistent_tracking", "签收与轨迹时间不一致")
         movements = [moment(e["at"]) for e in events if e["kind"] in {"picked_up", "movement"}]
         stalled = (

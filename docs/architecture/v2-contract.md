@@ -11,6 +11,10 @@ unexecuted plans, approvals and confirmations. A quality refund returns the rema
 net paid amount of one electronic, standard-after-sales item. Its first problem
 report must be within [delivery, delivery + 168 hours]. A clear defect description
 is required; a reviewer checks evidence, misuse and unauthorized repair exclusions.
+The report timestamp comes from the first stored user message containing the quoted
+defect for the target, not the later clarification or investigation time. When a
+previously established target changes, defect text predating that target's last
+eligibility snapshot cannot establish the new target's report date.
 No return parcel or real payment integration is claimed. An approved refund is a
 simulated financial ledger update, not a physical return workflow.
 

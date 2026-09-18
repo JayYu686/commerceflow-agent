@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Header
 from fastapi.responses import JSONResponse
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
@@ -165,7 +166,15 @@ def execute_business(request: WriteRequest):
         return result
 
 
-mcp = FastMCP("CommerceFlow commerce facts", stateless_http=True, json_response=True)
+mcp = FastMCP(
+    "CommerceFlow commerce facts",
+    stateless_http=True,
+    json_response=True,
+    transport_security=TransportSecuritySettings(
+        allowed_hosts=["127.0.0.1:*", "localhost:*", "[::1]:*", "commerce:8001"],
+        allowed_origins=[],
+    ),
+)
 
 
 @mcp.tool()
