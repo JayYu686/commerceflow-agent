@@ -252,7 +252,7 @@ small,
   padding: 32px;
   max-width: 900px;
   width: 100%;
-  margin: auto;
+  margin: 0 auto;
   align-self: start;
 }
 .page-heading {

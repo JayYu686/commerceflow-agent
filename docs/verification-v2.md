@@ -6,7 +6,7 @@
 
 | 项目 | 实测证据 |
 |---|---|
-| 后端40项测试 | [GitHub CI 35326379828](https://github.com/JayYu686/commerceflow-agent/actions/runs/35326379828)，真实 PostgreSQL16/pgvector，含真实 MCP 服务 |
+| 后端41项测试 | [GitHub CI 35328379499](https://github.com/JayYu686/commerceflow-agent/actions/runs/35328379499)，真实 PostgreSQL16/pgvector，含真实 MCP 服务与512维向量索引检查 |
 | 安全边界 | 未审批退款、伪造审核员、未检查证据、旧方案确认、政策变化/失效、跨库连接、并发重复权益、请求键冲突、预算并发预留、10元阈值 |
 | 真实进程恢复 | 业务服务提交后丢弃响应并终止 worker；替代 worker 按原执行ID恢复，业务结果及工单各一条；[本地恢复凭证](../eval/reports/v2/recovery-proof.json) |
 | 多轮和断线续接 | 实际 Qwen：先追问订单号，补充后得到199元商品行方案，未审批无执行；SSE第二次连接从已收到ID之后返回。[凭证](../eval/reports/v2/multiturn-proof.json) |
@@ -38,6 +38,6 @@
 
 本机 Docker Desktop 未恢复，实际本地演示使用原生 Next.js/FastAPI，通过SSH访问独立 PostgreSQL；完整 Compose 在 Linux CI 验证。没有部署公网域名或在线托管。
 
-共享3090上的Qwen评测实际用时约36分钟。评测结束后模型服务未及时停止，造成空闲占卡；交付已增加独立停止脚本。此次关闭后曾出现NVIDIA驱动相关D/Z状态，不能把停止主进程等同于显存释放，需要服务器维护者排查；没有重置共享GPU、修改驱动或终止他人任务。收尾演示显式选用DeepSeek，保持预算与模型标识，不作自动兜底。
+共享3090上的Qwen评测实际用时约36分钟。评测结束后模型服务未及时停止，造成空闲占卡；交付已增加独立停止脚本。此次关闭后曾出现NVIDIA驱动相关D/Z状态，随后观察到服务器由外部重启，原GPU占用降至1MiB、利用率0%。本任务没有重置共享GPU、重启服务器、修改驱动或终止他人任务。恢复了独立数据库与隧道，未重新启动GPU推理；收尾演示显式选用DeepSeek，保持预算与模型标识，不作自动兜底。
 
 该项目适合展示受控执行、真实工具调用、事务防重及恢复验证；上述模型短板和运行边界应当在面试中如实说明。
