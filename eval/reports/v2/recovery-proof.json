@@ -1,0 +1,8 @@
+{
+  "test": "kill_after_remote_commit",
+  "execution_id": "7093de8a-83b3-4726-9e29-e4f14c33eb99",
+  "worker_attempts": 2,
+  "business_results": 1,
+  "tickets": 1,
+  "status": "succeeded"
+}

@@ -1,0 +1,10 @@
+{
+  "case_id": "8564187d-773d-43d7-a59b-ada2b4025c81",
+  "order_no": "CF000010",
+  "first_status": "needs_information",
+  "second_status": "waiting_approval",
+  "amount_fen": 19900,
+  "sse_first_id": 2893,
+  "sse_resumed_id": 2896,
+  "executions_without_approval": 0
+}

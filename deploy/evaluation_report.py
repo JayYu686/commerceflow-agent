@@ -144,7 +144,7 @@ def main():
         actual = sorted({m for r in report["results"] for m in r["actual_models"]})
         lines += [
             "",
-            f"原始结果：[JSON]({name}.json)。代码 `{report['git_commit']}`；实际模型：`{', '.join(actual) or '无模型'}`。运行时间：{report['started_at']} 至 {report['finished_at']}。工作区脏标记：{report['working_tree_dirty']}（生成报告及前端类型文件也会触发；推理核心在三轮运行期间未修改）。",
+                f"原始结果：[JSON]({name}.json)。代码 `{report['git_commit']}`；实际模型：`{', '.join(actual) or '无模型'}`。运行时间：{report['started_at']} 至 {report['finished_at']}。工作区脏标记：{report['working_tree_dirty']}（生成报告及前端类型文件也会触发；运行进程从记录的提交加载调查核心）。",
             "",
         ]
     lines += [

@@ -272,6 +272,12 @@ export default function Workbench() {
                 {error}
               </p>
             )}
+            {current?.status === "stopped" && events.filter(e => e.kind === "job_stopped").slice(-1).map(e => (
+              <div role="status" className="error" key={e.id}>
+                调查已停止：{String(e.payload.message || "请查看处理时间线")}
+                {e.payload.code ? `（${String(e.payload.code)}）` : ""}
+              </div>
+            ))}
             <button className="primary" disabled={busy}>
               登录
             </button>

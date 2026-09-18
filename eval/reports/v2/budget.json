@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-09-18T08:58:43.117921+00:00",
+  "scope": "All DeepSeek calls through the project v2 demonstration database; excludes unrelated account usage",
+  "committed_and_reserved_yuan": 0.490326,
+  "completed_calls": 109,
+  "unknown_usage_calls": 0,
+  "actual_models": [
+    "deepseek-flash"
+  ],
+  "input_tokens": 192359,
+  "output_tokens": 13201,
+  "pricing": {
+    "verified_date": "2026-09-18",
+    "yuan_per_million_input": 2,
+    "yuan_per_million_output": 8,
+    "calculation": "Conservative uncached peak price, not provider invoice"
+  },
+  "admission_ceiling_yuan": 25,
+  "task_budget_yuan": 30
+}

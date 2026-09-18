@@ -55,6 +55,9 @@ model switching. The model may ask, investigate, cite and propose, never approve
 or execute. Structured rules and Chinese policy text share a version/hash;
 mandatory exclusions are checked independently of semantic top-k retrieval.
 BGE-small-zh-v1.5 is 512 dimensional; no padded legacy embeddings.
+The v2 schema includes a cosine HNSW index on the 512-dimensional policy column.
+With only two policies PostgreSQL may still choose an exact sequential scan;
+no large-corpus indexing performance is claimed.
 
 ## Models, deployment and budget
 

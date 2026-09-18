@@ -1,0 +1,30 @@
+{
+  "application_versions": {
+    "torch": "2.14.0",
+    "sentence-transformers": "5.1.2",
+    "transformers": "4.57.6",
+    "mcp": "1.27.2",
+    "langgraph": "1.2.9",
+    "langgraph-checkpoint-postgres": "3.1.0",
+    "psycopg": "3.3.4",
+    "fastapi": "0.138.2"
+  },
+  "inference": {
+    "model": "Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "vllm": "0.8.5.post1+cu118",
+    "torch": "2.6.0+cu118",
+    "gpu": "one RTX3090 24GB",
+    "dtype": "bfloat16",
+    "max_model_len": 8192,
+    "max_num_seqs": 2,
+    "thinking": false,
+    "tool_parser": "hermes"
+  },
+  "concurrency": {
+    "qwen_cases": 4,
+    "fixed_cases": 2,
+    "deepseek_cases": 2
+  },
+  "post_benchmark_changes": "Later commits fix first-report timestamp, inconsistent delivery tracking, and MCP Compose hostname. The frozen benchmark reflects its recorded source commit; it is not a new score for those later changes."
+}

@@ -29,7 +29,13 @@ ssh -N -L 18080:127.0.0.1:18080 your-server
 
 检查个人 SSH 配置中的 RemoteForward，避免无关转发。需要忽略个人配置时用 `-F` 指定空配置并显式提供用户名和身份文件。**不要在需要转发的连接上使用 `ClearAllForwardings=yes`，它也会清掉命令行的 `-L`。**
 
-仅关闭 `qwen.pid` 中本任务启动的进程，并核对进程身份后再停止。不要按显卡编号批量终止他人的任务。
+演示/评测结束后立即停止独立推理服务，避免模型空闲时仍占用显存：
+
+```bash
+python deploy/stop_qwen.py --runtime /your/commerceflow-runtime
+```
+
+该命令核对 PID 对应的运行目录和独立进程组，只停止本项目服务及其子进程。若出现 D/Z 状态，不能声称显存已释放，需要由服务器维护者排查驱动；脚本不会重置 GPU 或重启服务器。
 
 ## 本地原生与完整 Compose
 
@@ -65,6 +71,8 @@ python deploy/user_postgres.py /your/commerceflow-runtime
 
 `python deploy/smoke.py` 调用真实模型完成 CF000001 的退款全链路。该命令会消耗该演示订单的退款权益；不是无副作用的健康检查。
 
-浏览器端到端测试默认只检查登录页。显式设置 `CF_E2E_REAL_MODEL=1` 后，会用独立客服/审核员会话处理 CF000004 并保留截图。
+浏览器端到端测试默认只检查登录页。显式设置 `CF_E2E_REAL_MODEL=1` 后，会用独立客服/审核员会话处理退款、补偿和重复申请并保留截图。默认消耗 CF000004 与 CF000002 的权益；复跑用 `CF_E2E_ORDER`、`CF_E2E_DELAY_ORDER` 指定尚未处理的同类订单，不清空账本。
+
+`python deploy/verify_multiturn.py --order CF000010` 验证缺订单号的追问、补充信息后199元商品行方案，以及 SSE 的 Last-Event-ID 续接；它停在待审核，不执行退款。
 
 DeepSeek预算账本位于应用数据库，跨重启保留；不要为重置评测而清空账本。预算只约束本项目的调用，不覆盖账号在其他程序的消费。

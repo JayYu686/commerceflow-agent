@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from commerceflow.commerce import WriteRequest, execute_business, order_snapshot
 from commerceflow.config import settings
@@ -104,6 +104,16 @@ def test_mcp_accepts_compose_hostname_but_rejects_unknown_host(db, host, expecte
         trust_env=False,
     )
     assert response.status_code == expected
+
+
+def test_native_vector_dimension_and_cosine_index_exist(db):
+    with transaction() as session:
+        dimension = session.scalar(text("SELECT vector_dims(embedding) FROM policies LIMIT 1"))
+        index = session.scalar(
+            text("SELECT indexdef FROM pg_indexes WHERE indexname='ix_policies_embedding'")
+        )
+    assert dimension == 512
+    assert "USING hnsw" in index and "vector_cosine_ops" in index
 
 
 def test_refund_cannot_confirm_before_review(clients):

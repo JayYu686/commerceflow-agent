@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from commerceflow.db import identifier, utcnow
@@ -123,6 +123,14 @@ class LoginSession(Base):
 
 
 class Policy(Base):
+    __table_args__ = (
+        Index(
+            "ix_policies_embedding",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
     __tablename__ = "policies"
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     version: Mapped[str] = mapped_column(String(20))

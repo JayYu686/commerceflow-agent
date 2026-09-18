@@ -85,6 +85,20 @@ Qwen 的独立部署、SSH 隧道、资源约束及关闭方法见 [部署说明
 
 ## 验证与评测
 
+2026-09-18 实测结果（合成测试集）：
+
+| 配置 | 任务成功 | 范围 |
+|---|---|---|
+| Qwen3-8B 非思考 | 271/450，60.2% | 150条测试案例 × 3轮 |
+| 同工具固定工作流 | 140/150，93.3% | 完整测试集 |
+| DeepSeek-flash 非思考 | 27/30，90.0% | 预选分层子集，不能替代完整测试集 |
+
+**Qwen没有达到80%的目标，也没有超过固定工作流。**主要失败为资格被拒绝后反复调查、错误追问及达到调用上限。报告保留所有失败；工程安全测试通过不能代替模型效果达标。
+
+[完整评测与原始数据](eval/reports/v2/REPORT.md) · [工程验收记录](docs/verification-v2.md) · [预算账本快照](eval/reports/v2/budget.json)
+
+![真实工作台中的模拟退款凭证](docs/screenshots/v2/refund-completed.png)
+
 ```bash
 python deploy/local.py exec python -m pytest -q -p no:cacheprovider
 cd apps/web

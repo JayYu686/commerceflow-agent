@@ -10,7 +10,7 @@ test("login layout presents roles and simulated business boundary", async ({page
   await expect(page.getByRole("heading",{name:"进入演示工作台"})).toBeVisible();
   await expect(page.getByLabel("工作角色")).toHaveValue("operator");
   await expect(page.getByText("所有订单、退款和优惠券均为模拟数据。")).toBeVisible();
-  await page.screenshot({path:"test-results/v2-login.png",fullPage:true});
+  await page.screenshot({path:"test-results/v2-login.png",fullPage:true,caret:"initial"});
 });
 
 test("real logistics coupon confirms once and duplicate claim is blocked", async ({page})=>{
@@ -37,7 +37,9 @@ test("real logistics coupon confirms once and duplicate claim is blocked", async
   await expect(page.locator(".main-panel .status")).toHaveText(/未执行操作|已停止|待补充信息/,{timeout:150000});
   await expect(page.locator(".plan-card")).toHaveCount(0);
   await expect(confirmation).toHaveCount(0);
-  await expect(page.locator(".event pre").filter({hasText:"该售后权益已经处理"}).first()).toHaveCount(1);
+  // The agent may refuse directly from the authoritative prior entitlement;
+  // it need not call eligibility again merely to repeat the same rejection.
+  await expect(page.locator(".event pre").filter({hasText:`delay:${order}`}).first()).toHaveCount(1);
   await page.screenshot({path:"test-results/v2-duplicate-blocked.png",fullPage:true});
 });
 
