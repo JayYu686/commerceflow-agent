@@ -1,185 +1,539 @@
 "use client";
-
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-import { Badge } from "../components/console/Badge";
-import { ErrorNotice } from "../components/console/ErrorNotice";
-import { Panel } from "../components/console/Panel";
-import { SafeMockNotice } from "../components/console/SafeMockNotice";
-import { getHealth } from "../lib/api";
-import { DEMO_SCENARIOS } from "../lib/demo-scenarios";
-import type { ApiError, HealthResponse } from "../lib/types";
-
-const capabilityChain = [
-  "接收中文售后诉求",
-  "确定性解析与受控 LLM 辅助理解",
-  "查询订单与物流事实",
-  "检索售后政策依据",
-  "生成处理建议与风险等级",
-  "创建动作计划",
-  "人工审批批准或拒绝",
-  "人工触发本地模拟工具执行",
-  "查看本地模拟结果与审计时间线",
-];
-
-const implemented = [
-  "只读订单与物流查询 API",
-  "政策知识库与 RAG 检索 API",
-  "LangGraph Agent 预览工作流",
-  "OpenAI 兼容真实模型接入（默认受控关闭）",
-  "动作计划、审批与审计数据层",
-  "本地模拟退款、优惠券和工单工具 API",
-  "本地 stdio MCP 工具服务封装",
-  "中文 Agent 工作台",
-  "审批中心、工具执行和审计时间线 UI",
-];
-
-const notYetImplemented = [
-  "LangGraph 人工中断与恢复执行",
-  "Agent 自动调用 MCP 工具",
-  "真实支付、优惠券、客服或物流系统",
-  "真实评测看板与评测报告",
-  "生产级认证、权限和多租户",
-];
-
-export default function Home() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<ApiError | Error | null>(null);
-
+type Role = "operator" | "reviewer";
+type Event = {
+  id: number;
+  kind: string;
+  payload: Record<string, unknown>;
+  at: string;
+};
+type Case = {
+  id: string;
+  status: string;
+  order_no: string | null;
+  messages: { id: string; role: string; content: string }[];
+  plan: {
+    id: string;
+    amount_fen: number;
+    intent: string;
+    item_id: string | null;
+    policy_id: string;
+    policy_text: string;
+    defect_quote: string;
+    checksum: string;
+    requires_approval: boolean;
+  } | null;
+  approval: { approved: boolean; comment: string } | null;
+  executions: {
+    id: string;
+    status: string;
+    result: Record<string, unknown> | null;
+  }[];
+};
+const status: Record<string, string> = {
+  investigating: "正在调查",
+  needs_information: "待补充信息",
+  waiting_approval: "等待审核",
+  waiting_confirmation: "等待执行确认",
+  executing: "正在执行",
+  completed: "已完成",
+  result_uncertain: "结果待核验",
+  rejected: "审核拒绝",
+  stopped: "已停止",
+  no_action: "未执行操作",
+};
+const names: Record<string, string> = {
+  message_received: "收到售后诉求",
+  job_started: "开始处理",
+  tool_completed: "取得工具证据",
+  tool_rejected: "工具调用被阻止",
+  plan_submitted: "提交处置方案",
+  approval_decided: "审核已记录",
+  execution_confirmed: "客服确认执行",
+  execution_succeeded: "业务执行成功",
+  job_uncertain: "正在核验结果",
+  job_stopped: "处理停止",
+  assistant_message: "助手回复",
+};
+async function api<T>(path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    method: body === undefined ? "GET" : "POST",
+    credentials: "same-origin",
+    headers:
+      body === undefined
+        ? {}
+        : {
+            "Content-Type": "application/json",
+            "X-Requested-With": "CommerceFlow",
+            "Idempotency-Key": crypto.randomUUID(),
+          },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok)
+    throw new Error(
+      data.message ||
+        JSON.stringify(data.detail) ||
+        `请求失败 ${response.status}`,
+    );
+  return data;
+}
+export default function Workbench() {
+  const [role, setRole] = useState<Role | null>(null),
+    [loginRole, setLoginRole] = useState<Role>("operator"),
+    [password, setPassword] = useState("");
+  const [model, setModel] = useState(""),
+    [caseId, setCaseId] = useState<string | null>(null),
+    [current, setCurrent] = useState<Case | null>(null);
+  const [cases, setCases] = useState<
+      { id: string; status: string; order_no: string | null }[]
+    >([]),
+    [events, setEvents] = useState<Event[]>([]);
+  const [message, setMessage] = useState(""),
+    [comment, setComment] = useState(""),
+    [checked, setChecked] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [spent, setSpent] = useState(0);
+  function selectCase(id: string | null) {
+    setCaseId(id);
+    setCurrent(null);
+    setEvents([]);
+    setChecked(false);
+    setComment("");
+  }
+  const refresh = useCallback(async () => {
+    const list = await api<typeof cases>("/cases");
+    setCases(list);
+    if (caseId) {
+      const view = await api<Case>(`/cases/${caseId}`);
+      setCurrent(view);
+    }
+  }, [caseId]);
   useEffect(() => {
-    getHealth()
-      .then((payload) => {
-        setHealth(payload);
-        setError(null);
+    api<{ role: Role; model: string }>("/session")
+      .then((s) => {
+        setRole(s.role);
+        setModel(s.model);
       })
-      .catch((caught: unknown) => {
-        setHealth(null);
-        setError(caught instanceof Error ? caught : (caught as ApiError));
-      });
+      .catch(() => {});
   }, []);
-
+  useEffect(() => {
+    if (!role) return;
+    api<typeof cases>("/cases").then(setCases).catch((e) => setError(e.message));
+    if (caseId) api<Case>(`/cases/${caseId}`).then(setCurrent).catch((e) => setError(e.message));
+    api<{ committed_yuan: number }>("/budget")
+      .then((b) => setSpent(b.committed_yuan))
+      .catch(() => {});
+    const timer = setInterval(() => refresh().catch(() => {}), 3000);
+    return () => clearInterval(timer);
+  }, [role, refresh, caseId]);
+  useEffect(() => {
+    if (!role || !caseId) return;
+    const stream = new EventSource(`/api/cases/${caseId}/events`);
+    stream.onmessage = (e) => {
+      const item = JSON.parse(e.data) as Event;
+      setEvents((previous) =>
+        previous.some((x) => x.id === item.id) ? previous : [...previous, item],
+      );
+    };
+    return () => stream.close();
+  }, [role, caseId]);
+  async function action(work: () => Promise<void>) {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await work();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "请求失败");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function login(e: FormEvent) {
+    e.preventDefault();
+    await action(async () => {
+      const s = await api<{ role: Role }>("/session", {
+        role: loginRole,
+        password,
+      });
+      setPassword("");
+      setRole(s.role);
+      setModel((await api<{ model: string }>("/session")).model);
+    });
+  }
+  async function send(e: FormEvent) {
+    e.preventDefault();
+    await action(async () => {
+      const r = await api<{ case_id: string }>(
+        caseId ? `/cases/${caseId}/messages` : "/cases",
+        { content: message },
+      );
+      if (r.case_id !== caseId) selectCase(r.case_id);
+      setMessage("");
+      setCurrent(await api(`/cases/${r.case_id}`));
+    });
+  }
+  const active =
+    !!current &&
+    ["investigating", "executing", "result_uncertain"].includes(current.status);
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-signal">Phase 5B</p>
-          <h2 className="mt-1 text-3xl font-semibold tracking-tight">
-            CommerceFlow Agent 运营控制台
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-            通过浏览器完成从 Agent 预览、创建动作计划、人工审批、本地模拟工具执行到审计复盘的完整演示链路。
-            所有执行结果都是本地模拟记录，不调用真实外部业务系统。
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/workbench"
-            className="rounded-md bg-signal px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-          >
-            进入 Agent 工作台
-          </Link>
-          <Link
-            href="/cases"
-            className="rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          >
-            查看案例
-          </Link>
+    <div>
+      <header className="topbar">
+        <Link className="brand" href="/">
+          CF<span>CommerceFlow</span>
+          <small>AGENT WORKSPACE / V2</small>
+        </Link>
+        <div className="identity">
+          <i />
+          模拟业务环境{" "}
+          {role && (
+            <>
+              <b>{role === "operator" ? "客服" : "审核员"}</b>
+              <button
+                className="text-button"
+                onClick={() =>
+                  action(async () => {
+                    await api("/logout", {});
+                    setRole(null);
+                  })
+                }
+              >
+                退出
+              </button>
+            </>
+          )}
         </div>
       </header>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Panel title="系统状态" eyebrow="运行时">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Metric
-              label="API 健康状态"
-              value={health?.status ?? "未知"}
-              tone={health?.status === "ok" ? "success" : "warning"}
-            />
-            <Metric label="环境" value={health?.environment ?? "未连接"} tone="info" />
-            <Metric label="最近检查" value={health?.timestamp ?? "等待连接"} tone="neutral" />
-          </div>
-          <div className="mt-4">
-            <ErrorNotice error={error} />
-          </div>
-        </Panel>
-
-        <SafeMockNotice />
-      </div>
-
-      <Panel title="能力链路" eyebrow="浏览器可演示">
-        <div className="grid gap-3 md:grid-cols-3">
-          {capabilityChain.map((item, index) => (
-            <div key={item} className="rounded-lg border border-line bg-slate-50 p-4">
-              <div className="text-xs font-semibold text-slate-500">步骤 {index + 1}</div>
-              <div className="mt-2 text-sm font-medium text-ink">{item}</div>
+      {!role ? (
+        <main className="login-layout">
+          <section>
+            <span className="eyebrow">GROUNDED. REVIEWED. EXECUTED.</span>
+            <h1>
+              让每一次售后处理，
+              <br />
+              都有依据、有结果。
+            </h1>
+            <p>
+              Agent
+              查询订单与政策，人工审核业务方案，受控执行器完成退款与补偿。每一步都可核验。
+            </p>
+            <div className="steps">
+              <span>01 事实调查</span>
+              <span>02 人工审核</span>
+              <span>03 确认执行</span>
             </div>
-          ))}
-        </div>
-      </Panel>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Panel title="一键 Demo" eyebrow="工作台入口">
-          <div className="grid gap-3">
-            {DEMO_SCENARIOS.map((scenario) => (
-              <Link
-                key={scenario.id}
-                href={`/workbench?scenario=${scenario.id}`}
-                className="rounded-lg border border-line bg-white p-4 text-left hover:border-signal hover:bg-teal-50"
+          </section>
+          <form className="login-card" onSubmit={login}>
+            <h2>进入演示工作台</h2>
+            <p>使用部署时配置的演示账号。</p>
+            <label>
+              工作角色
+              <select
+                value={loginRole}
+                onChange={(e) => setLoginRole(e.target.value as Role)}
               >
-                <div className="text-sm font-semibold text-ink">{scenario.title}</div>
-                <p className="mt-2 text-sm text-slate-600">{scenario.message}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {scenario.expected.slice(0, 3).map((item) => (
-                    <Badge key={item} tone="info">
-                      {item}
-                    </Badge>
-                  ))}
+                <option value="operator">客服 · 调查与确认执行</option>
+                <option value="reviewer">审核员 · 核实证据与审批</option>
+              </select>
+            </label>
+            <label>
+              密码
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+            {error && (
+              <p role="alert" className="error">
+                {error}
+              </p>
+            )}
+            <button className="primary" disabled={busy}>
+              登录
+            </button>
+            <small>所有订单、退款和优惠券均为模拟数据。</small>
+          </form>
+        </main>
+      ) : (
+        <main className="workspace">
+          <aside className="sidebar">
+            <div className="section-label">
+              售后案件
+              <button
+                className="text-button"
+                onClick={() => {
+                  selectCase(null);
+                  setMessage("");
+                }}
+              >
+                ＋ 新建
+              </button>
+            </div>
+            <div className="case-list">
+              {cases.map((c) => (
+                <button
+                  className={`case-link ${c.id === caseId ? "selected" : ""}`}
+                  key={c.id}
+                  onClick={() => selectCase(c.id)}
+                >
+                  <strong>{c.order_no || "待确认订单"}</strong>
+                  <span>{status[c.status] || c.status}</span>
+                  <small>{c.id.slice(0, 8)}</small>
+                </button>
+              ))}
+              {!cases.length && (
+                <p className="muted">提交诉求后，案件会显示在这里。</p>
+              )}
+            </div>
+            <div className="runtime">
+              <span className="eyebrow">运行信息</span>
+              <p>{model}</p>
+              <small>
+                DeepSeek 已结算及预留
+                <br />¥{spent.toFixed(3)} / ¥25
+                <br />
+                总预算 ¥30 · 无自动模型切换
+              </small>
+            </div>
+          </aside>
+          <section className="main-panel">
+            <div className="page-heading">
+              <div>
+                <span className="eyebrow">AFTER-SALES OPERATIONS</span>
+                <h1>{current?.order_no || "售后工作台"}</h1>
+              </div>
+              <span className="status">
+                {current
+                  ? status[current.status] || current.status
+                  : "新建案件"}
+              </span>
+            </div>
+            {error && (
+              <div role="alert" className="error">
+                {error}
+              </div>
+            )}
+            {!current && (
+              <div className="welcome">
+                <h2>从一个真实诉求开始</h2>
+                <p>说明订单和问题。信息不足时，Agent 会继续询问。</p>
+                <div className="scenario-grid">
+                  <button
+                    onClick={() =>
+                      setMessage(
+                        "订单 CF000001 的蓝牙耳机左耳没有声音，我想退这个耳机的钱。收纳包没有问题。",
+                      )
+                    }
+                  >
+                    商品质量退款<span>多商品订单 · 按商品行退款</span>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setMessage(
+                        "订单 CF000002 五天没有物流更新了，请帮我查询是否可以补偿。",
+                      )
+                    }
+                  >
+                    物流延误补偿<span>真实轨迹 · 一次性补偿权益</span>
+                  </button>
                 </div>
-              </Link>
+              </div>
+            )}
+            <div className="conversation">
+              {current?.messages.map((m) => (
+                <div className={`message ${m.role}`} key={m.id}>
+                  <span>{m.role === "user" ? "客服提交" : "调查助手"}</span>
+                  <p>{m.content}</p>
+                </div>
+              ))}
+            </div>
+            {current?.plan && (
+              <article className="plan-card">
+                <div className="section-label">
+                  待执行方案
+                  <span>
+                    {current.plan.requires_approval
+                      ? "须人工审核"
+                      : "免审核 · 须确认"}
+                  </span>
+                </div>
+                <h2>
+                  {current.plan.intent === "quality_issue_refund"
+                    ? "商品行退款"
+                    : "物流延误补偿"}
+                  <strong>¥{(current.plan.amount_fen / 100).toFixed(2)}</strong>
+                </h2>
+                <p>处理商品：{current.plan.item_id || "订单物流补偿"}</p>
+                {current.plan.defect_quote && (
+                  <blockquote>
+                    用户证据：“{current.plan.defect_quote}”
+                  </blockquote>
+                )}
+                <details open>
+                  <summary>政策依据 · {current.plan.policy_id}</summary>
+                  <p>{current.plan.policy_text}</p>
+                </details>
+                <small>
+                  方案版本 {current.plan.checksum.slice(0, 16)} ·
+                  内容改变后须重新授权
+                </small>
+                {current.approval && (
+                  <p className="approval-note">
+                    {current.approval.approved ? "已批准" : "已拒绝"} ·{" "}
+                    {current.approval.comment}
+                  </p>
+                )}
+                {role === "reviewer" &&
+                  current.status === "waiting_approval" && (
+                    <div className="approval-form">
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => setChecked(e.target.checked)}
+                        />
+                        已核实故障证据、商品范围及人为损坏/擅自维修等排除条款
+                      </label>
+                      <label>
+                        审核意见
+                        <textarea
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          placeholder="填写核实依据，至少4个字"
+                        />
+                      </label>
+                      <div className="button-row">
+                        <button
+                          className="primary"
+                          disabled={busy || !checked || comment.length < 4}
+                          onClick={() =>
+                            action(async () => {
+                              await api(`/plans/${current.plan!.id}/approval`, {
+                                approved: true,
+                                comment,
+                                evidence_checked: checked,
+                              });
+                              await refresh();
+                            })
+                          }
+                        >
+                          批准此版本方案
+                        </button>
+                        <button
+                          disabled={busy || comment.length < 4}
+                          onClick={() =>
+                            action(async () => {
+                              await api(`/plans/${current.plan!.id}/approval`, {
+                                approved: false,
+                                comment,
+                                evidence_checked: checked,
+                              });
+                              await refresh();
+                            })
+                          }
+                        >
+                          拒绝
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                {role === "operator" &&
+                  current.status === "waiting_confirmation" && (
+                    <button
+                      className="primary confirm"
+                      disabled={busy}
+                      onClick={() =>
+                        action(async () => {
+                          await api(`/plans/${current.plan!.id}/confirmation`, {
+                            confirmed: true,
+                          });
+                          await refresh();
+                        })
+                      }
+                    >
+                      确认执行 ¥{(current.plan.amount_fen / 100).toFixed(2)}{" "}
+                      模拟
+                      {current.plan.intent === "quality_issue_refund"
+                        ? "退款"
+                        : "补偿"}
+                    </button>
+                  )}
+              </article>
+            )}
+            {current?.executions.map((ex) => (
+              <article className="result-card" key={ex.id}>
+                <span className="eyebrow">业务凭证</span>
+                <h2>
+                  {ex.status === "succeeded"
+                    ? "执行成功"
+                    : ex.status === "uncertain"
+                      ? "结果待核验，请勿重复申请"
+                      : "执行状态：" + ex.status}
+                </h2>
+                <dl>
+                  {Object.entries(ex.result || {})
+                    .filter(([, v]) => v !== null)
+                    .map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>{String(v)}</dd>
+                      </div>
+                    ))}
+                </dl>
+              </article>
             ))}
-          </div>
-        </Panel>
-
-        <Panel title="已实现模块" eyebrow="当前可演示">
-          <ul className="space-y-2 text-sm text-slate-700">
-            {implemented.map((item) => (
-              <li key={item} className="border-l-4 border-emerald-400 pl-3">
-                {item}
-              </li>
+            {role === "operator" && (
+              <form className="composer" onSubmit={send}>
+                <label htmlFor="message">
+                  {caseId ? "补充信息（未执行的旧方案将失效）" : "售后诉求"}
+                </label>
+                <textarea
+                  id="message"
+                  required
+                  maxLength={6000}
+                  value={message}
+                  disabled={active}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="例如：订单 CF000001 的耳机左耳没有声音，想申请退款。"
+                />
+                <div>
+                  <small>仅操作模拟业务 · 不接入真实支付</small>
+                  <button
+                    className="primary"
+                    disabled={busy || active || !message.trim()}
+                  >
+                    {active ? "正在处理…" : "提交调查"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+          <aside className="timeline">
+            <div className="section-label">
+              处理时间线<span>{events.length} 个事件</span>
+            </div>
+            {!events.length && (
+              <p className="muted">工具证据、审核与执行结果将实时显示。</p>
+            )}
+            {events.map((e) => (
+              <details className="event" key={e.id}>
+                <summary>
+                  <span>{names[e.kind] || e.kind}</span>
+                  <time>{new Date(e.at).toLocaleTimeString("zh-CN")}</time>
+                </summary>
+                <pre>{JSON.stringify(e.payload, null, 2)}</pre>
+              </details>
             ))}
-          </ul>
-        </Panel>
-
-        <Panel title="尚未实现" eyebrow="后续阶段">
-          <ul className="space-y-2 text-sm text-slate-700">
-            {notYetImplemented.map((item) => (
-              <li key={item} className="border-l-4 border-amber-400 pl-3">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-      </div>
-    </div>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "neutral" | "success" | "warning" | "danger" | "critical" | "info";
-}) {
-  return (
-    <div className="rounded-lg border border-line bg-slate-50 p-4">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-3">
-        <Badge tone={tone}>{value}</Badge>
-      </div>
+          </aside>
+        </main>
+      )}
     </div>
   );
 }

@@ -4,8 +4,6 @@ COPY apps/web/package.json apps/web/package-lock.json ./
 RUN npm ci
 
 FROM dependencies AS builder
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 COPY apps/web/ ./
 RUN npm run build
 

@@ -1,0 +1,91 @@
+name: v2 verification
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: cf_admin
+          POSTGRES_PASSWORD: ci-admin
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cf_admin -d postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGPASSWORD: ci-admin
+      POSTGRES_USER: cf_admin
+      AGENT_DB_PASSWORD: ci-agent
+      COMMERCE_DB_PASSWORD: ci-commerce
+      CF_DATABASE_URL: postgresql+psycopg://cf_agent:ci-agent@localhost:5432/cf_agent_v2
+      CF_COMMERCE_DATABASE_URL: postgresql+psycopg://cf_commerce:ci-commerce@localhost:5432/cf_commerce_v2
+      CF_COMMERCE_READ_TOKEN: ci-only-read-token
+      CF_COMMERCE_WRITE_TOKEN: ci-only-write-token
+      CF_OPERATOR_PASSWORD: ci-only-operator
+      CF_REVIEWER_PASSWORD: ci-only-reviewer
+      CF_EMBEDDING_MODEL: BAAI/bge-small-zh-v1.5
+      CF_EMBEDDING_REVISION: 7999e1d3359715c523056ef9478215996d62a620
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: bge-small-zh-v1.5-7999e1d
+      - name: Install backend
+        run: |
+          pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r services/api/requirements-v2.txt pytest==9.1.1 ruff==0.15.21
+      - name: Initialize isolated databases
+        run: |
+          sh deploy/init-databases.sh
+          psql -U cf_admin -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE DATABASE cf_agent_test OWNER cf_agent;
+          CREATE DATABASE cf_commerce_test OWNER cf_commerce;
+          REVOKE CONNECT ON DATABASE cf_agent_test FROM PUBLIC;
+          REVOKE CONNECT ON DATABASE cf_commerce_test FROM PUBLIC;
+          GRANT CONNECT ON DATABASE cf_agent_test TO cf_agent;
+          GRANT CONNECT ON DATABASE cf_commerce_test TO cf_commerce;
+          SQL
+          psql -U cf_admin -d cf_agent_test -c 'CREATE EXTENSION vector;'
+      - name: Backend and real process recovery tests
+        working-directory: services/api
+        run: |
+          ruff check commerceflow tests_v2
+          pytest -q -p no:cacheprovider --junitxml=../../data/local/pytest.xml
+      - name: Frontend verification
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npx playwright install --with-deps chromium
+          npm run test:e2e -- --grep 'login layout'
+      - name: Build deployment images
+        run: |
+          docker build -f services/api/Dockerfile.v2 -t commerceflow-api:ci .
+          docker build -f apps/web/Dockerfile -t commerceflow-web:ci .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-evidence
+          path: |
+            data/local/pytest.xml
+            data/local/recovery-proof.json
+            apps/web/test-results

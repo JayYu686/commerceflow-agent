@@ -1,0 +1,14 @@
+alembic==1.18.4
+fastapi==0.138.2
+httpx==0.28.1
+langgraph==1.2.9
+langgraph-checkpoint-postgres==3.1.0
+mcp==1.27.2
+pgvector==0.4.2
+psycopg[binary,pool]==3.3.4
+pydantic-settings==2.14.2
+SQLAlchemy==2.0.50
+uvicorn==0.51.0
+sentence-transformers==5.1.2
+transformers==4.57.6
+torch==2.14.0

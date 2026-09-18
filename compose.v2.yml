@@ -1,0 +1,89 @@
+name: commerceflow-v2
+x-agent: &agent
+  build:
+    context: .
+    dockerfile: services/api/Dockerfile.v2
+  environment: &agent-env
+    CF_DATABASE_URL: postgresql+psycopg://cf_agent:${AGENT_DB_PASSWORD:?set password}@postgres:5432/cf_agent_v2
+    CF_COMMERCE_URL: http://commerce:8001
+    CF_COMMERCE_READ_TOKEN: ${CF_COMMERCE_READ_TOKEN:?set read token}
+    CF_MODEL_PROVIDER: ${CF_MODEL_PROVIDER:-qwen}
+    CF_MODEL_URL: ${CF_CONTAINER_MODEL_URL:-http://host.docker.internal:18080/v1}
+    CF_MODEL_NAME: ${CF_MODEL_NAME:-Qwen3-8B}
+    CF_MODEL_KEY: ${CF_MODEL_KEY:-}
+    CF_DEEPSEEK_KEY: ${CF_DEEPSEEK_KEY:-}
+    CF_EMBEDDING_MODEL: /models/bge-small-zh-v1.5
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  volumes:
+    - ${CF_EMBEDDING_PATH:?set local BGE directory}:/models/bge-small-zh-v1.5:ro
+  depends_on:
+    postgres:
+      condition: service_healthy
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: cf_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set admin password}
+      AGENT_DB_PASSWORD: ${AGENT_DB_PASSWORD:?set password}
+      COMMERCE_DB_PASSWORD: ${COMMERCE_DB_PASSWORD:?set password}
+    ports:
+      - 127.0.0.1:55432:5432
+    volumes:
+      - v2_postgres:/var/lib/postgresql/data
+      - ./deploy/init-databases.sh:/docker-entrypoint-initdb.d/10-databases.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U cf_admin -d postgres]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  commerce:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile.v2
+    environment:
+      CF_COMMERCE_DATABASE_URL: postgresql+psycopg://cf_commerce:${COMMERCE_DB_PASSWORD}@postgres:5432/cf_commerce_v2
+      CF_COMMERCE_READ_TOKEN: ${CF_COMMERCE_READ_TOKEN}
+      CF_COMMERCE_WRITE_TOKEN: ${CF_COMMERCE_WRITE_TOKEN:?set write token}
+    command: [sh, -c, 'alembic -c alembic-v2.ini -x database=commerce upgrade head && python -m commerceflow.bootstrap commerce && uvicorn commerceflow.commerce:app --host 0.0.0.0 --port 8001']
+    depends_on:
+      postgres:
+        condition: service_healthy
+  api:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      CF_OPERATOR_PASSWORD: ${CF_OPERATOR_PASSWORD:?set operator password}
+      CF_REVIEWER_PASSWORD: ${CF_REVIEWER_PASSWORD:?set reviewer password}
+      CF_COOKIE_SECURE: ${CF_COOKIE_SECURE:-false}
+    command: [sh, -c, 'alembic -c alembic-v2.ini upgrade head && python -m commerceflow.bootstrap agent && uvicorn commerceflow.api:app --host 0.0.0.0 --port 8000']
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://localhost:8000/health")']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  worker:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      CF_COMMERCE_WRITE_TOKEN: ${CF_COMMERCE_WRITE_TOKEN}
+    command: [python, -m, commerceflow.worker]
+    depends_on:
+      api:
+        condition: service_healthy
+      commerce:
+        condition: service_started
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      CF_API_URL: http://api:8000
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  v2_postgres:
