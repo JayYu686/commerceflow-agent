@@ -1,0 +1,12 @@
+{"id":"multi-01","kind":"missing_order","product":"便携音箱","paid_fen":17800}
+{"id":"multi-02","kind":"missing_order","product":"桌面音箱","paid_fen":23600}
+{"id":"multi-03","kind":"missing_defect","product":"便携音箱","paid_fen":17800}
+{"id":"multi-04","kind":"missing_defect","product":"桌面音箱","paid_fen":23600}
+{"id":"multi-05","kind":"choose_item","product":"便携音箱","paid_fen":17800}
+{"id":"multi-06","kind":"choose_item","product":"桌面音箱","paid_fen":23600}
+{"id":"multi-07","kind":"change_order","product":"便携音箱","paid_fen":17800}
+{"id":"multi-08","kind":"change_order","product":"桌面音箱","paid_fen":23600}
+{"id":"multi-09","kind":"change_item","product":"便携音箱","paid_fen":17800}
+{"id":"multi-10","kind":"change_item","product":"桌面音箱","paid_fen":23600}
+{"id":"multi-11","kind":"repeat_coupon","product":"便携音箱","paid_fen":17800}
+{"id":"multi-12","kind":"repeat_coupon","product":"桌面音箱","paid_fen":23600}
