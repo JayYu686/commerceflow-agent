@@ -43,3 +43,20 @@ Paid runs keep their original artifacts and identify the code/data version, actu
 returned model name, call count, usage, conservative cost, latency, denominators,
 failure categories and repeat-level results. Do not compare latency to old runs as
 an isolated speed benchmark: concurrency and shared infrastructure differ.
+
+## Budget-based final allocation
+
+The three baseline runs completed at CNY 6.730720 (446/450 successes). Development
+and multi-turn validation were retained for both the first and final candidates:
+the second baseline repeat exposed an unsolicited remedy change, requiring the
+final prompt to explicitly retain the user's requested remedy. All intermediate
+artifacts remain published and charged to this experiment.
+
+After this work the ledger reached CNY 10.665004. The first 33 final-regression
+cases cost CNY 0.546420, projecting about CNY 2.48 per full 150-case run. Two more
+full runs plus demo checks would exceed the remaining CNY 4.824996 allowance.
+Therefore final validation is one complete 150-case regression, all 50 development
+cases, all 12 multi-turn cases, and five repetitions of the four failures observed
+in the unchanged baseline (20 focused regressions). This choice is based on budget,
+not the final test score. The focused subset copies original labels verbatim and
+must not be presented as unseen examples or added to the full-set denominator.
