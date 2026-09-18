@@ -24,7 +24,7 @@ flowchart LR
     B --> L[退款 / 优惠券 / 工单 / 幂等结果]
 ```
 
-- **Agent**：Qwen3-8B 非思考模式，真实工具调用；最多 12 次模型调用，无关键词兜底或自动模型切换。
+- **Agent**：Qwen3-8B 本地部署或显式选择 DeepSeek-flash 非思考模式，真实工具调用；最多 12 次模型调用，无关键词兜底或自动模型切换。当前求职演示使用 DeepSeek。
 - **业务规则**：退款按问题商品行剩余实付金额计算；质量报告期限为签收后 168 小时；运输中超过 72 小时未移动或实际送达超过承诺时间可补偿。
 - **审核绑定**：审批和确认绑定方案内容哈希。修改诉求会使未执行旧方案失效。
 - **可靠执行**：确认与任务同事务提交；每案件串行 worker；稳定执行 ID 与业务权益唯一键共同防重。超时先核验原执行结果。
@@ -47,7 +47,7 @@ python deploy/download_embedding.py
 
 编辑自动生成且被 Git 忽略的 `.env.v2`：配置模型地址、模型访问密钥，并在本地读取生成的客服和审核员密码。不要上传此文件。
 
-**完整 Compose**：设置 `CF_CONTAINER_MODEL_URL` 为容器可访问的 Qwen 推理地址，或明确设置 `CF_MODEL_PROVIDER=deepseek` 和 `CF_DEEPSEEK_KEY`。
+**完整 Compose**：设置 `CF_CONTAINER_MODEL_URL` 为容器可访问的 Qwen 推理地址，或明确设置 `CF_MODEL_PROVIDER=deepseek`、`CF_MODEL_NAME=deepseek-flash` 和 `CF_DEEPSEEK_KEY`。
 
 ```bash
 docker compose --env-file .env.v2 -f compose.v2.yml up --build -d
@@ -91,11 +91,19 @@ Qwen 的独立部署、SSH 隧道、资源约束及关闭方法见 [部署说明
 |---|---|---|
 | Qwen3-8B 非思考 | 271/450，60.2% | 150条测试案例 × 3轮 |
 | 同工具固定工作流 | 140/150，93.3% | 完整测试集 |
-| DeepSeek-flash 非思考 | 27/30，90.0% | 预选分层子集，不能替代完整测试集 |
+| DeepSeek-flash 原始子集 | 27/30，90.0% | 历史预选分层子集 |
+| DeepSeek-flash 本轮改进前 | 446/450，99.1% | 完整150条 × 3轮；此成绩发生在提示词改进前 |
+| DeepSeek-flash 改进后 | 150/150，100.0% | 已查看失败后的完整合成集回归，1轮 |
 
 **Qwen没有达到80%的目标，也没有超过固定工作流。**主要失败为资格被拒绝后反复调查、错误追问及达到调用上限。报告保留所有失败；工程安全测试通过不能代替模型效果达标。
 
-[完整评测与原始数据](eval/reports/v2/REPORT.md) · [工程验收记录](docs/verification-v2.md) · [预算账本快照](eval/reports/v2/budget.json)
+[本轮完整评测与改进对照](eval/reports/v2/IMPROVEMENT.md) · [历史评测](eval/reports/v2/REPORT.md) · [工程验收记录](docs/verification-v2.md) · [本轮预算](eval/reports/v2/budget-improvement.json)
+
+新增验证覆盖完整DeepSeek评测、50条开发集和12条多轮验收。多轮案例实际检查澄清后执行、换订单/商品后旧审批失效，以及重复补偿阻断。面试中的设计讲解与证据入口见[求职展示说明](docs/job-evidence-v2.md)。
+
+最终版本开发集50/50、多轮验收12/12、原先4个失败各重复5次的专项回归20/20。
+这些分母分别报告，不合并为“独立测试样本”。本轮新增DeepSeek保守记账13.082836元，
+项目累计13.573162元，无未知用量预留。有限合成集100%通过不代表真实业务100%成功。
 
 ![真实工作台中的模拟退款凭证](docs/screenshots/v2/refund-completed.png)
 
@@ -117,7 +125,7 @@ python deploy/local.py exec python -m commerceflow.evaluation --dataset ../../da
 python deploy/local.py exec python -m commerceflow.evaluation --dataset ../../data/eval/v2/test.jsonl --provider deepseek --subset --output ../../eval/reports/v2/deepseek.json
 ```
 
-报告保存原始事件、模型实际名称、数据哈希、代码提交、失败案例、分子分母、延迟及费用。DeepSeek 仅比较预选的 30 条样本。固定工作流仅为评测基线，不接入产品运行时。
+报告保存原始事件、模型实际名称、数据哈希、代码提交、失败案例、分子分母、延迟及费用。以上命令是历史基线的复现方式；已有结果文件不能覆盖。新一轮采用完整DeepSeek测试，见[冻结的改进实验](docs/architecture/v2-improvement-protocol.md)。固定工作流仅为评测基线，不接入产品运行时。
 
 当前政策知识库聚焦两项完整售后政策；政策召回成绩只能说明这两项政策的接入情况，不代表大规模知识库 RAG 能力。多轮对话与换单失效另外通过工程测试验证，单轮合成集成绩不能替代多轮能力指标。
 

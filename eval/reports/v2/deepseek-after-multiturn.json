@@ -1,0 +1,4312 @@
+{
+  "started_at": "2026-09-18T12:06:55.422730+00:00",
+  "synthetic_acceptance": true,
+  "dataset_sha256": "60f44eb424d9eb80fa295bed22dac7dc49356b3e17f05ff43ad294438b9c8b82",
+  "runner_sha256": "137d27d02e87cbc24010f45fbc4f1c05f6d20d01e52d25c7e7a07d175ae933f2",
+  "git_commit": "d7853a0416d356ad4ca1a99af886931ed9ffb80f",
+  "results": [
+    {
+      "scenario_id": "multi-01",
+      "kind": "missing_order",
+      "case_id": "356979ec-a79b-4811-8156-3251e1898134",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "9abb7d7c-4524-42ae-b991-5ca446309963",
+            "checksum": "c7ab0abed622daebaf7c1f37f8c32af02ad4089b898888a7fe00859a6f2ea36a",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTB0ECC122F5",
+            "item_id": "EVMTB0ECC122F5-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTB0ECC122F5-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:08.139993+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "302b6fde-951e-48c5-8ce4-50ad8664015f",
+              "2596c70e-26e3-4407-9125-5f271eabe41b",
+              "cd1394c5-716c-4486-9b0d-fbd7d47c21d5"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a35d6516-45fa-48a7-83c3-4253068e4945"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "98bd6e00-2833-4bf3-b9bf-d3b22b961eca",
+          "amount_fen": 17800,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 18.128,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 10528,
+      "output_tokens": 471,
+      "cost_upper_yuan": 0.024824,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "17b89381-dd9f-4102-a481-9ceefcfd9d10",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "请提供需要申请质量退款的便携音箱订单号，我才能查询并核实该商品行。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "6be836f0-3671-40bc-a124-e647b3c855b2",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTB0ECC122F5"
+            },
+            "evidence_id": "302b6fde-951e-48c5-8ce4-50ad8664015f",
+            "result": {
+              "order_no": "EVMTB0ECC122F5",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:07.161527+08:00",
+              "delivered_at": "2026-09-16T20:07:07.161527+08:00",
+              "promised_at": "2026-09-15T20:07:07.161527+08:00",
+              "tracking_no": "TRACK-EVMTB0ECC122F5",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:07.161527+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:07.161527+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTB0ECC122F5-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTB0ECC122F5-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTB0ECC122F5"
+            },
+            "evidence_id": "2596c70e-26e3-4407-9125-5f271eabe41b",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱 无法开机 质量退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "cd1394c5-716c-4486-9b0d-fbd7d47c21d5",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5523134038541738
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTB0ECC122F5",
+              "item_id": "EVMTB0ECC122F5-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "a35d6516-45fa-48a7-83c3-4253068e4945",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTB0ECC122F5",
+              "item_id": "EVMTB0ECC122F5-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTB0ECC122F5-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:08.139993+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "302b6fde-951e-48c5-8ce4-50ad8664015f",
+                "2596c70e-26e3-4407-9125-5f271eabe41b",
+                "cd1394c5-716c-4486-9b0d-fbd7d47c21d5"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "9abb7d7c-4524-42ae-b991-5ca446309963",
+            "checksum": "c7ab0abed622daebaf7c1f37f8c32af02ad4089b898888a7fe00859a6f2ea36a",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTB0ECC122F5",
+            "item_id": "EVMTB0ECC122F5-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTB0ECC122F5-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:08.139993+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "302b6fde-951e-48c5-8ce4-50ad8664015f",
+              "2596c70e-26e3-4407-9125-5f271eabe41b",
+              "cd1394c5-716c-4486-9b0d-fbd7d47c21d5"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a35d6516-45fa-48a7-83c3-4253068e4945"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "9abb7d7c-4524-42ae-b991-5ca446309963",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "98bd6e00-2833-4bf3-b9bf-d3b22b961eca",
+            "plan_id": "9abb7d7c-4524-42ae-b991-5ca446309963",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "98bd6e00-2833-4bf3-b9bf-d3b22b961eca",
+            "order_no": "EVMTB0ECC122F5",
+            "item_id": "EVMTB0ECC122F5-1",
+            "amount_fen": 17800,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "669327fe-ee99-49ac-8666-673b466bcf3f",
+            "coupon_code": null,
+            "order_refunded_fen": 17800,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-02",
+      "kind": "missing_order",
+      "case_id": "65c0f5f9-1b70-4887-adef-568402006dbb",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "327278c3-f981-4acc-984d-e00cdd775f96",
+            "checksum": "94aac7e7c8727f183fb4594afa6b672a95a4cb5c9e91d36f7422f8fabc2d6607",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTA148A1CC03",
+            "item_id": "EVMTA148A1CC03-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTA148A1CC03-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:08.140744+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "af91c4c0-998a-415c-86cb-d16fca854dfa",
+              "83b84532-c00f-4a6a-b4f6-cf1684931495",
+              "c9b8f8b0-162c-4c30-bf86-3a4ea62b9e90"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "8e78294b-7b06-4a5c-84f9-5751056db4ac"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "ebc35bbb-c34d-4f73-a048-74dcadad2b29",
+          "amount_fen": 23600,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 19.167,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 10481,
+      "output_tokens": 423,
+      "cost_upper_yuan": 0.024346,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "6b1d95a9-3517-45df-a274-1bce00779c2b",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "请提供需要申请质量退款的订单号，以便我查询该订单中的桌面音箱商品行。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "c5cc01eb-093e-4d12-a355-3d2dee5d3659",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTA148A1CC03"
+            },
+            "evidence_id": "af91c4c0-998a-415c-86cb-d16fca854dfa",
+            "result": {
+              "order_no": "EVMTA148A1CC03",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:07.172558+08:00",
+              "delivered_at": "2026-09-16T20:07:07.172558+08:00",
+              "promised_at": "2026-09-15T20:07:07.172558+08:00",
+              "tracking_no": "TRACK-EVMTA148A1CC03",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:07.172558+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:07.172558+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTA148A1CC03-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTA148A1CC03-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTA148A1CC03"
+            },
+            "evidence_id": "83b84532-c00f-4a6a-b4f6-cf1684931495",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱无法开机 质量退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "c9b8f8b0-162c-4c30-bf86-3a4ea62b9e90",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.560815155506134
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTA148A1CC03",
+              "item_id": "EVMTA148A1CC03-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "8e78294b-7b06-4a5c-84f9-5751056db4ac",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTA148A1CC03",
+              "item_id": "EVMTA148A1CC03-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTA148A1CC03-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:08.140744+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "af91c4c0-998a-415c-86cb-d16fca854dfa",
+                "83b84532-c00f-4a6a-b4f6-cf1684931495",
+                "c9b8f8b0-162c-4c30-bf86-3a4ea62b9e90"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "327278c3-f981-4acc-984d-e00cdd775f96",
+            "checksum": "94aac7e7c8727f183fb4594afa6b672a95a4cb5c9e91d36f7422f8fabc2d6607",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTA148A1CC03",
+            "item_id": "EVMTA148A1CC03-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTA148A1CC03-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:08.140744+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "af91c4c0-998a-415c-86cb-d16fca854dfa",
+              "83b84532-c00f-4a6a-b4f6-cf1684931495",
+              "c9b8f8b0-162c-4c30-bf86-3a4ea62b9e90"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "8e78294b-7b06-4a5c-84f9-5751056db4ac"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "327278c3-f981-4acc-984d-e00cdd775f96",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "ebc35bbb-c34d-4f73-a048-74dcadad2b29",
+            "plan_id": "327278c3-f981-4acc-984d-e00cdd775f96",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "ebc35bbb-c34d-4f73-a048-74dcadad2b29",
+            "order_no": "EVMTA148A1CC03",
+            "item_id": "EVMTA148A1CC03-1",
+            "amount_fen": 23600,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "7b5dd4c6-795c-457f-a04f-7d3a97c7a249",
+            "coupon_code": null,
+            "order_refunded_fen": 23600,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-04",
+      "kind": "missing_defect",
+      "case_id": "8319a333-d50c-4839-9e49-bd4f1572abb7",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "d7a57eec-b8f5-41bd-87b9-f96d854fd695",
+            "checksum": "c064da03fe4fef308b31f35098e6732bef97dc3094752d70bddeffc78678b582",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT709A322176",
+            "item_id": "EVMT709A322176-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT709A322176-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:33.706870+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "5eaad862-e103-4a72-883a-c39745870b00",
+              "109b6218-dcc8-4ca0-a6f4-ab45583c5469",
+              "0794b68d-ea4d-4159-8318-59376415d2e7"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "35d64430-5243-4439-a933-ca485bf6b630"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "b900f543-4039-4e0d-9cb6-cc606a3746a3",
+          "amount_fen": 23600,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 18.132,
+      "model_calls": 5,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 9697,
+      "output_tokens": 593,
+      "cost_upper_yuan": 0.024138,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "221a463f-c4df-4a27-a248-75f6aca950e7",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT709A322176"
+            },
+            "evidence_id": "d9f5ca08-8cec-4960-b6e0-69f13728cc20",
+            "result": {
+              "order_no": "EVMT709A322176",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:26.340213+08:00",
+              "delivered_at": "2026-09-16T20:07:26.340213+08:00",
+              "promised_at": "2026-09-15T20:07:26.340213+08:00",
+              "tracking_no": "TRACK-EVMT709A322176",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:26.340213+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:26.340213+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT709A322176-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT709A322176-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT709A322176"
+            },
+            "evidence_id": "e2e37dc0-c26f-41d1-9cee-a0dfb35d68a4",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱质量退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "004ec6fa-e6fd-4530-8e9d-f820d9aaa49c",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5507087975317966
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "请具体描述一下桌面音箱出现的故障情况（例如：无法开机、有杂音、破音等），以便我为您提交质量退款校验。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "7473a1a0-bda3-4b04-9e8d-8885f479484f",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT709A322176"
+            },
+            "evidence_id": "5eaad862-e103-4a72-883a-c39745870b00",
+            "result": {
+              "order_no": "EVMT709A322176",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:26.340213+08:00",
+              "delivered_at": "2026-09-16T20:07:26.340213+08:00",
+              "promised_at": "2026-09-15T20:07:26.340213+08:00",
+              "tracking_no": "TRACK-EVMT709A322176",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:26.340213+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:26.340213+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT709A322176-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT709A322176-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT709A322176"
+            },
+            "evidence_id": "109b6218-dcc8-4ca0-a6f4-ab45583c5469",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱 无法开机 质量退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "0794b68d-ea4d-4159-8318-59376415d2e7",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.560815155506134
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT709A322176",
+              "item_id": "EVMT709A322176-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "35d64430-5243-4439-a933-ca485bf6b630",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT709A322176",
+              "item_id": "EVMT709A322176-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT709A322176-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:33.706870+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "5eaad862-e103-4a72-883a-c39745870b00",
+                "109b6218-dcc8-4ca0-a6f4-ab45583c5469",
+                "0794b68d-ea4d-4159-8318-59376415d2e7"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "d7a57eec-b8f5-41bd-87b9-f96d854fd695",
+            "checksum": "c064da03fe4fef308b31f35098e6732bef97dc3094752d70bddeffc78678b582",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT709A322176",
+            "item_id": "EVMT709A322176-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT709A322176-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:33.706870+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "5eaad862-e103-4a72-883a-c39745870b00",
+              "109b6218-dcc8-4ca0-a6f4-ab45583c5469",
+              "0794b68d-ea4d-4159-8318-59376415d2e7"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "35d64430-5243-4439-a933-ca485bf6b630"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "d7a57eec-b8f5-41bd-87b9-f96d854fd695",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "b900f543-4039-4e0d-9cb6-cc606a3746a3",
+            "plan_id": "d7a57eec-b8f5-41bd-87b9-f96d854fd695",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "b900f543-4039-4e0d-9cb6-cc606a3746a3",
+            "order_no": "EVMT709A322176",
+            "item_id": "EVMT709A322176-1",
+            "amount_fen": 23600,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "a6e28ff8-67c5-486f-a8df-2e08e2b18697",
+            "coupon_code": null,
+            "order_refunded_fen": 23600,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-03",
+      "kind": "missing_defect",
+      "case_id": "a0939a9c-b0d3-4a9a-b661-ee779fad772a",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "ab9399f9-15e5-4b9d-9625-aa34729378be",
+            "checksum": "f09eb2a7135eed6a53c72b729650345d6d3037f8d8391cac0dcfce11cade0fbf",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTA5E8403752",
+            "item_id": "EVMTA5E8403752-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTA5E8403752-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:32.491205+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "99c2b716-3f82-4c66-b2e9-99955447c957",
+              "e87cfbe6-07f7-443b-a7cd-79ae43a39099",
+              "5ee24cb6-99bf-4445-b577-7bb56196d14a"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "db4711e0-b8fa-49a2-83c8-b8bdf935e460"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "a84b3e79-5996-41c4-8e81-ad5bfaacb385",
+          "amount_fen": 17800,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 19.348,
+      "model_calls": 5,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 9797,
+      "output_tokens": 598,
+      "cost_upper_yuan": 0.024378,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "bd408208-d1f0-448b-9cd6-8b68fe0ed6aa",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTA5E8403752"
+            },
+            "evidence_id": "1e875cec-7643-4698-8763-aedbe7a47cc4",
+            "result": {
+              "order_no": "EVMTA5E8403752",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:25.289740+08:00",
+              "delivered_at": "2026-09-16T20:07:25.289740+08:00",
+              "promised_at": "2026-09-15T20:07:25.289740+08:00",
+              "tracking_no": "TRACK-EVMTA5E8403752",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:25.289740+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:25.289740+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTA5E8403752-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTA5E8403752-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTA5E8403752"
+            },
+            "evidence_id": "4a56e1dc-4523-438e-b74e-fc17b328c2bc",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱 质量退款 政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "ee5abc25-0046-46a5-b370-6444d79d7394",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5275892019271851
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "请描述一下这台便携音箱（订单 EVMTA5E8403752 中的商品行 EVMTA5E8403752-1）具体出现了什么故障？例如无法开机、有杂音、蓝牙连不上等。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "ba75638b-4e3d-4d2a-b22c-bf64d56965bf",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTA5E8403752"
+            },
+            "evidence_id": "99c2b716-3f82-4c66-b2e9-99955447c957",
+            "result": {
+              "order_no": "EVMTA5E8403752",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:25.289740+08:00",
+              "delivered_at": "2026-09-16T20:07:25.289740+08:00",
+              "promised_at": "2026-09-15T20:07:25.289740+08:00",
+              "tracking_no": "TRACK-EVMTA5E8403752",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:25.289740+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:25.289740+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTA5E8403752-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTA5E8403752-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTA5E8403752"
+            },
+            "evidence_id": "e87cfbe6-07f7-443b-a7cd-79ae43a39099",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱 无法开机 质量退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "5ee24cb6-99bf-4445-b577-7bb56196d14a",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.546876847743988
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTA5E8403752",
+              "item_id": "EVMTA5E8403752-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "db4711e0-b8fa-49a2-83c8-b8bdf935e460",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTA5E8403752",
+              "item_id": "EVMTA5E8403752-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTA5E8403752-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:32.491205+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "99c2b716-3f82-4c66-b2e9-99955447c957",
+                "e87cfbe6-07f7-443b-a7cd-79ae43a39099",
+                "5ee24cb6-99bf-4445-b577-7bb56196d14a"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "ab9399f9-15e5-4b9d-9625-aa34729378be",
+            "checksum": "f09eb2a7135eed6a53c72b729650345d6d3037f8d8391cac0dcfce11cade0fbf",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTA5E8403752",
+            "item_id": "EVMTA5E8403752-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTA5E8403752-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:32.491205+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "99c2b716-3f82-4c66-b2e9-99955447c957",
+              "e87cfbe6-07f7-443b-a7cd-79ae43a39099",
+              "5ee24cb6-99bf-4445-b577-7bb56196d14a"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "db4711e0-b8fa-49a2-83c8-b8bdf935e460"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "ab9399f9-15e5-4b9d-9625-aa34729378be",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "a84b3e79-5996-41c4-8e81-ad5bfaacb385",
+            "plan_id": "ab9399f9-15e5-4b9d-9625-aa34729378be",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "a84b3e79-5996-41c4-8e81-ad5bfaacb385",
+            "order_no": "EVMTA5E8403752",
+            "item_id": "EVMTA5E8403752-1",
+            "amount_fen": 17800,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "e349a95c-72d1-4c05-b954-00624358d134",
+            "coupon_code": null,
+            "order_refunded_fen": 17800,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-05",
+      "kind": "choose_item",
+      "case_id": "b7fd1d0a-fe7f-4aad-8657-c9044e3f936a",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "88e2df08-73a2-497b-91f0-22f9d8531c8c",
+            "checksum": "9f3dd1a3eb7b53e02e28056890ef41db0cb216a4013b7245b8828fb86b618c67",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT23F32394D8",
+            "item_id": "EVMT23F32394D8-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT23F32394D8-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:51.351709+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "935a3235-8617-439f-aa3e-fd437abedf3e",
+              "e8bb7574-de0e-4981-b714-9995e013bfec",
+              "19302c17-e48b-40ea-aa2c-0562ea9a3b9e"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a5fc7ea8-619f-49e5-95a5-7eabdf053dd8"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "623750a9-d6f5-48e3-80fa-0f8c3b11959f",
+          "amount_fen": 17800,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 18.889,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 11371,
+      "output_tokens": 502,
+      "cost_upper_yuan": 0.026758,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "b50d20c6-788b-4cda-8eef-c8aa24c173aa",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT23F32394D8"
+            },
+            "evidence_id": "04eb20d3-df8e-418b-a570-ee1ec633bbb6",
+            "result": {
+              "order_no": "EVMT23F32394D8",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:44.472118+08:00",
+              "delivered_at": "2026-09-16T20:07:44.472118+08:00",
+              "promised_at": "2026-09-15T20:07:44.472118+08:00",
+              "tracking_no": "TRACK-EVMT23F32394D8",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:44.472118+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:44.472118+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT23F32394D8-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT23F32394D8-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "您的订单 EVMT23F32394D8 包含两个商品：1）便携音箱，2）无线鼠标。请问是哪一个商品损坏了？请同时具体描述一下损坏的情况（例如无法开机、外壳破裂等），以便为您核实处理。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "774cea7a-0de0-4a65-96f4-fbda2bc32d20",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT23F32394D8"
+            },
+            "evidence_id": "935a3235-8617-439f-aa3e-fd437abedf3e",
+            "result": {
+              "order_no": "EVMT23F32394D8",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:44.472118+08:00",
+              "delivered_at": "2026-09-16T20:07:44.472118+08:00",
+              "promised_at": "2026-09-15T20:07:44.472118+08:00",
+              "tracking_no": "TRACK-EVMT23F32394D8",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:44.472118+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:44.472118+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT23F32394D8-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT23F32394D8-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT23F32394D8"
+            },
+            "evidence_id": "e8bb7574-de0e-4981-b714-9995e013bfec",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "质量退款 无法开机 便携音箱 售后期限",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "19302c17-e48b-40ea-aa2c-0562ea9a3b9e",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.6091490983963013
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT23F32394D8",
+              "item_id": "EVMT23F32394D8-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "a5fc7ea8-619f-49e5-95a5-7eabdf053dd8",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT23F32394D8",
+              "item_id": "EVMT23F32394D8-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT23F32394D8-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:51.351709+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "935a3235-8617-439f-aa3e-fd437abedf3e",
+                "e8bb7574-de0e-4981-b714-9995e013bfec",
+                "19302c17-e48b-40ea-aa2c-0562ea9a3b9e"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "88e2df08-73a2-497b-91f0-22f9d8531c8c",
+            "checksum": "9f3dd1a3eb7b53e02e28056890ef41db0cb216a4013b7245b8828fb86b618c67",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT23F32394D8",
+            "item_id": "EVMT23F32394D8-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT23F32394D8-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:51.351709+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "935a3235-8617-439f-aa3e-fd437abedf3e",
+              "e8bb7574-de0e-4981-b714-9995e013bfec",
+              "19302c17-e48b-40ea-aa2c-0562ea9a3b9e"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a5fc7ea8-619f-49e5-95a5-7eabdf053dd8"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "88e2df08-73a2-497b-91f0-22f9d8531c8c",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "623750a9-d6f5-48e3-80fa-0f8c3b11959f",
+            "plan_id": "88e2df08-73a2-497b-91f0-22f9d8531c8c",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "623750a9-d6f5-48e3-80fa-0f8c3b11959f",
+            "order_no": "EVMT23F32394D8",
+            "item_id": "EVMT23F32394D8-1",
+            "amount_fen": 17800,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "d2cb94ea-8374-4b57-9fc0-974283e8629d",
+            "coupon_code": null,
+            "order_refunded_fen": 17800,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-06",
+      "kind": "choose_item",
+      "case_id": "2322b56a-c9e4-4b06-a966-e60b6c925461",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "needs_information",
+          "plan": null
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "7ea9912e-8e3d-403d-9503-ca653a10b8d5",
+            "checksum": "feaabf28415319fbcd95f30682e9e031bc1cd7a3cf1d5a8dc29cf18487c00b89",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTD4AD6D7FB1",
+            "item_id": "EVMTD4AD6D7FB1-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTD4AD6D7FB1-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:50.906955+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "61d77a84-eb04-46bf-bd23-0614349cebe6",
+              "f26ebee0-f502-4f8e-9233-d96be321897f",
+              "41874ca6-5a7d-4477-828f-0222b8200d34"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "726ebafa-8c93-4723-b939-536f7e4ed03e"
+          }
+        },
+        {
+          "business_results": 1,
+          "execution_id": "a6efc30f-e755-4526-8b3e-00f39f03a76c",
+          "amount_fen": 23600,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 18.772,
+      "model_calls": 5,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 9803,
+      "output_tokens": 644,
+      "cost_upper_yuan": 0.024758,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "5cc636fe-2983-43e6-8401-15b4cdffa6a8",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTD4AD6D7FB1"
+            },
+            "evidence_id": "220b702e-4d1a-4af4-808d-af3ec1eee40a",
+            "result": {
+              "order_no": "EVMTD4AD6D7FB1",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:44.638082+08:00",
+              "delivered_at": "2026-09-16T20:07:44.638082+08:00",
+              "promised_at": "2026-09-15T20:07:44.638082+08:00",
+              "tracking_no": "TRACK-EVMTD4AD6D7FB1",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:44.638082+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:44.638082+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTD4AD6D7FB1-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTD4AD6D7FB1-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTD4AD6D7FB1"
+            },
+            "evidence_id": "89b0d0fb-b32b-4c23-9cc2-4009ec9094e6",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "订单 EVMTD4AD6D7FB1 中有两件商品：桌面音箱（EVMTD4AD6D7FB1-1）和 无线鼠标（EVMTD4AD6D7FB1-2）。请问是哪一件坏了？另外请具体描述一下故障情况（例如无法开机、破损、异响等），以便我核实是否符合质量退款政策。",
+            "status": "needs_information"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "9c41883e-4c66-42b0-aa35-53c93096d77a",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTD4AD6D7FB1"
+            },
+            "evidence_id": "61d77a84-eb04-46bf-bd23-0614349cebe6",
+            "result": {
+              "order_no": "EVMTD4AD6D7FB1",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:07:44.638082+08:00",
+              "delivered_at": "2026-09-16T20:07:44.638082+08:00",
+              "promised_at": "2026-09-15T20:07:44.638082+08:00",
+              "tracking_no": "TRACK-EVMTD4AD6D7FB1",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:07:44.638082+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:07:44.638082+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTD4AD6D7FB1-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTD4AD6D7FB1-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTD4AD6D7FB1"
+            },
+            "evidence_id": "f26ebee0-f502-4f8e-9233-d96be321897f",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱无法开机 质量退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "41874ca6-5a7d-4477-828f-0222b8200d34",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5578106641769409
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTD4AD6D7FB1",
+              "item_id": "EVMTD4AD6D7FB1-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无法开机"
+            },
+            "evidence_id": "726ebafa-8c93-4723-b939-536f7e4ed03e",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTD4AD6D7FB1",
+              "item_id": "EVMTD4AD6D7FB1-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTD4AD6D7FB1-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无法开机",
+              "reported_at": "2026-09-18T20:07:50.906955+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "61d77a84-eb04-46bf-bd23-0614349cebe6",
+                "f26ebee0-f502-4f8e-9233-d96be321897f",
+                "41874ca6-5a7d-4477-828f-0222b8200d34"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "7ea9912e-8e3d-403d-9503-ca653a10b8d5",
+            "checksum": "feaabf28415319fbcd95f30682e9e031bc1cd7a3cf1d5a8dc29cf18487c00b89",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTD4AD6D7FB1",
+            "item_id": "EVMTD4AD6D7FB1-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTD4AD6D7FB1-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无法开机",
+            "reported_at": "2026-09-18T20:07:50.906955+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "61d77a84-eb04-46bf-bd23-0614349cebe6",
+              "f26ebee0-f502-4f8e-9233-d96be321897f",
+              "41874ca6-5a7d-4477-828f-0222b8200d34"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "726ebafa-8c93-4723-b939-536f7e4ed03e"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "7ea9912e-8e3d-403d-9503-ca653a10b8d5",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "a6efc30f-e755-4526-8b3e-00f39f03a76c",
+            "plan_id": "7ea9912e-8e3d-403d-9503-ca653a10b8d5",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "a6efc30f-e755-4526-8b3e-00f39f03a76c",
+            "order_no": "EVMTD4AD6D7FB1",
+            "item_id": "EVMTD4AD6D7FB1-1",
+            "amount_fen": 23600,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "c2a7aa9a-eb45-434c-bcd8-ecdd3ef3016a",
+            "coupon_code": null,
+            "order_refunded_fen": 23600,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-08",
+      "kind": "change_order",
+      "case_id": "fc203a23-9ce1-46c9-a0be-66616a2f9a37",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "579e1889-32f3-4cac-80fb-70c381a59e69",
+            "checksum": "653db21fc056dd3d586c62d65e3ca80f75eef131546f7aaac9ad7cca5373b67f",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTC7AAC679C0",
+            "item_id": "EVMTC7AAC679C0-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTC7AAC679C0-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "桌面音箱无法开机",
+            "reported_at": "2026-09-18T20:08:03.753030+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "17083d5e-78d6-41a1-8de3-54a73182cc31",
+              "4b7ba278-0bbb-4b13-920a-cbece93d0f43",
+              "665bfc9a-7ad7-4a7c-a0b1-8f9719647051"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a29e8715-bba6-4720-b04d-c875e4e14223"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "671066c6-e5ca-4853-b611-b1b1ad89eb11",
+            "checksum": "f4fd152c009bf2527ad5e6aea3b0cc57b95b9702729dc50b212d5d280fa456c5",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTC7AAC679C0B",
+            "item_id": "EVMTC7AAC679C0B-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTC7AAC679C0B-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "这个商品无法开机",
+            "reported_at": "2026-09-18T20:08:12.955633+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "abbcd308-e0a5-4cac-8d4b-bb90bf9cf087",
+              "4f9ea820-8ef9-4490-b845-06888296f32d",
+              "59ae1940-162f-41ea-9c3f-580c65744284"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "4c44b60a-87c7-484a-9013-c604fe4f93db"
+          }
+        },
+        {
+          "stale_approval_blocked": true
+        },
+        {
+          "business_results": 1,
+          "execution_id": "43b414a5-7d1e-4e96-9d91-e59d64f768d0",
+          "amount_fen": 23600,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 21.467,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 12522,
+      "output_tokens": 720,
+      "cost_upper_yuan": 0.030804,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "8d82b76f-c3e2-46dc-85cd-2bf84cd23c98",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0"
+            },
+            "evidence_id": "17083d5e-78d6-41a1-8de3-54a73182cc31",
+            "result": {
+              "order_no": "EVMTC7AAC679C0",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:03.410513+08:00",
+              "delivered_at": "2026-09-16T20:08:03.410513+08:00",
+              "promised_at": "2026-09-15T20:08:03.410513+08:00",
+              "tracking_no": "TRACK-EVMTC7AAC679C0",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:03.410513+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:03.410513+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTC7AAC679C0-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTC7AAC679C0-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0"
+            },
+            "evidence_id": "4b7ba278-0bbb-4b13-920a-cbece93d0f43",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱无法开机 质量问题退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "665bfc9a-7ad7-4a7c-a0b1-8f9719647051",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5768171205033599
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0",
+              "item_id": "EVMTC7AAC679C0-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "桌面音箱无法开机"
+            },
+            "evidence_id": "a29e8715-bba6-4720-b04d-c875e4e14223",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTC7AAC679C0",
+              "item_id": "EVMTC7AAC679C0-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTC7AAC679C0-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "桌面音箱无法开机",
+              "reported_at": "2026-09-18T20:08:03.753030+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "17083d5e-78d6-41a1-8de3-54a73182cc31",
+                "4b7ba278-0bbb-4b13-920a-cbece93d0f43",
+                "665bfc9a-7ad7-4a7c-a0b1-8f9719647051"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "579e1889-32f3-4cac-80fb-70c381a59e69",
+            "checksum": "653db21fc056dd3d586c62d65e3ca80f75eef131546f7aaac9ad7cca5373b67f",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTC7AAC679C0",
+            "item_id": "EVMTC7AAC679C0-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTC7AAC679C0-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "桌面音箱无法开机",
+            "reported_at": "2026-09-18T20:08:03.753030+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "17083d5e-78d6-41a1-8de3-54a73182cc31",
+              "4b7ba278-0bbb-4b13-920a-cbece93d0f43",
+              "665bfc9a-7ad7-4a7c-a0b1-8f9719647051"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a29e8715-bba6-4720-b04d-c875e4e14223"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "579e1889-32f3-4cac-80fb-70c381a59e69",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "87f543a7-1db6-4fd0-9805-a2d9907e42bd",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0B"
+            },
+            "evidence_id": "abbcd308-e0a5-4cac-8d4b-bb90bf9cf087",
+            "result": {
+              "order_no": "EVMTC7AAC679C0B",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:03.624557+08:00",
+              "delivered_at": "2026-09-16T20:08:03.624557+08:00",
+              "promised_at": "2026-09-15T20:08:03.624557+08:00",
+              "tracking_no": "TRACK-EVMTC7AAC679C0B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:03.624557+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:03.624557+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTC7AAC679C0B-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTC7AAC679C0B-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0B"
+            },
+            "evidence_id": "4f9ea820-8ef9-4490-b845-06888296f32d",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱无法开机 质量问题退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "59ae1940-162f-41ea-9c3f-580c65744284",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5768171205033599
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTC7AAC679C0B",
+              "item_id": "EVMTC7AAC679C0B-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "这个商品无法开机"
+            },
+            "evidence_id": "4c44b60a-87c7-484a-9013-c604fe4f93db",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTC7AAC679C0B",
+              "item_id": "EVMTC7AAC679C0B-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTC7AAC679C0B-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "这个商品无法开机",
+              "reported_at": "2026-09-18T20:08:12.955633+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "abbcd308-e0a5-4cac-8d4b-bb90bf9cf087",
+                "4f9ea820-8ef9-4490-b845-06888296f32d",
+                "59ae1940-162f-41ea-9c3f-580c65744284"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "671066c6-e5ca-4853-b611-b1b1ad89eb11",
+            "checksum": "f4fd152c009bf2527ad5e6aea3b0cc57b95b9702729dc50b212d5d280fa456c5",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTC7AAC679C0B",
+            "item_id": "EVMTC7AAC679C0B-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTC7AAC679C0B-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "这个商品无法开机",
+            "reported_at": "2026-09-18T20:08:12.955633+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "abbcd308-e0a5-4cac-8d4b-bb90bf9cf087",
+              "4f9ea820-8ef9-4490-b845-06888296f32d",
+              "59ae1940-162f-41ea-9c3f-580c65744284"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "4c44b60a-87c7-484a-9013-c604fe4f93db"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "671066c6-e5ca-4853-b611-b1b1ad89eb11",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "43b414a5-7d1e-4e96-9d91-e59d64f768d0",
+            "plan_id": "671066c6-e5ca-4853-b611-b1b1ad89eb11",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "43b414a5-7d1e-4e96-9d91-e59d64f768d0",
+            "order_no": "EVMTC7AAC679C0B",
+            "item_id": "EVMTC7AAC679C0B-1",
+            "amount_fen": 23600,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "6b12971e-93dd-46f4-9b91-0ef69c26f624",
+            "coupon_code": null,
+            "order_refunded_fen": 23600,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-07",
+      "kind": "change_order",
+      "case_id": "0f8db4f3-cb91-4396-8f45-53505acb0b42",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "0c8dd42d-5091-4e56-a222-40db27b2055c",
+            "checksum": "3a272c426dd16911bc6ca5d92eed52ac52d85292528a0a9bc6d9e6a743aebd90",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT7C5D4E0272",
+            "item_id": "EVMT7C5D4E0272-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT7C5D4E0272-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "便携音箱无法开机",
+            "reported_at": "2026-09-18T20:08:03.755086+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "6a2599ba-d667-4b4a-b0a7-5fb1e774779f",
+              "29adf77b-13fd-4471-a351-159d7a841a34",
+              "d4ca486a-9c1f-44b3-81d8-de7467bc7d70"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "e1f4f3dc-461f-4ffc-ab0f-ee6a0d49546b"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "01847499-76c5-4976-9995-a9751cfa23be",
+            "checksum": "d7d2ec2786b3a3c5eecab38b16fa3f26c2dfd990289267e2315863ab5c529e90",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT7C5D4E0272B",
+            "item_id": "EVMT7C5D4E0272B-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT7C5D4E0272B-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "这个商品无法开机",
+            "reported_at": "2026-09-18T20:08:12.406568+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "b23680de-0a07-419c-b44f-02cb1299a390",
+              "56ce359d-844c-423d-a919-c7fe556c0b9c",
+              "a13908df-b438-46ba-8ce6-f2a603af6efd"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "b95904fb-da48-4157-9982-1f6179245924"
+          }
+        },
+        {
+          "stale_approval_blocked": true
+        },
+        {
+          "business_results": 1,
+          "execution_id": "921f9a8d-0bf4-45db-a545-e3eb22957fc6",
+          "amount_fen": 17800,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 22.509,
+      "model_calls": 7,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 15060,
+      "output_tokens": 838,
+      "cost_upper_yuan": 0.036824,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "18ed846d-b647-46f5-a8d6-d5f26b56c72a",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272"
+            },
+            "evidence_id": "6a2599ba-d667-4b4a-b0a7-5fb1e774779f",
+            "result": {
+              "order_no": "EVMT7C5D4E0272",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:03.361492+08:00",
+              "delivered_at": "2026-09-16T20:08:03.361492+08:00",
+              "promised_at": "2026-09-15T20:08:03.361492+08:00",
+              "tracking_no": "TRACK-EVMT7C5D4E0272",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:03.361492+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:03.361492+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT7C5D4E0272-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT7C5D4E0272-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272"
+            },
+            "evidence_id": "29adf77b-13fd-4471-a351-159d7a841a34",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱无法开机 质量问题退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "d4ca486a-9c1f-44b3-81d8-de7467bc7d70",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5730608018564263
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272",
+              "item_id": "EVMT7C5D4E0272-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "便携音箱无法开机"
+            },
+            "evidence_id": "e1f4f3dc-461f-4ffc-ab0f-ee6a0d49546b",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT7C5D4E0272",
+              "item_id": "EVMT7C5D4E0272-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT7C5D4E0272-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "便携音箱无法开机",
+              "reported_at": "2026-09-18T20:08:03.755086+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "6a2599ba-d667-4b4a-b0a7-5fb1e774779f",
+                "29adf77b-13fd-4471-a351-159d7a841a34",
+                "d4ca486a-9c1f-44b3-81d8-de7467bc7d70"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "0c8dd42d-5091-4e56-a222-40db27b2055c",
+            "checksum": "3a272c426dd16911bc6ca5d92eed52ac52d85292528a0a9bc6d9e6a743aebd90",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT7C5D4E0272",
+            "item_id": "EVMT7C5D4E0272-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT7C5D4E0272-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "便携音箱无法开机",
+            "reported_at": "2026-09-18T20:08:03.755086+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "6a2599ba-d667-4b4a-b0a7-5fb1e774779f",
+              "29adf77b-13fd-4471-a351-159d7a841a34",
+              "d4ca486a-9c1f-44b3-81d8-de7467bc7d70"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "e1f4f3dc-461f-4ffc-ab0f-ee6a0d49546b"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "0c8dd42d-5091-4e56-a222-40db27b2055c",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "fa239ee8-bbfe-49d9-80fe-92e918b33f67",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272B"
+            },
+            "evidence_id": "b23680de-0a07-419c-b44f-02cb1299a390",
+            "result": {
+              "order_no": "EVMT7C5D4E0272B",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:03.588516+08:00",
+              "delivered_at": "2026-09-16T20:08:03.588516+08:00",
+              "promised_at": "2026-09-15T20:08:03.588516+08:00",
+              "tracking_no": "TRACK-EVMT7C5D4E0272B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:03.588516+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:03.588516+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT7C5D4E0272B-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT7C5D4E0272B-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272B"
+            },
+            "evidence_id": "56ce359d-844c-423d-a919-c7fe556c0b9c",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱无法开机 质量退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "a13908df-b438-46ba-8ce6-f2a603af6efd",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5523134038541738
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_rejected",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT7C5D4E0272B",
+              "item_id": "EVMT7C5D4E0272B-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "便携音箱无法开机"
+            },
+            "error": "ungrounded_defect",
+            "message": "请描述当前商品的故障，不能沿用其他处理目标的证据"
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "defect_quote": "这个商品无法开机",
+              "intent": "quality_issue_refund",
+              "item_id": "EVMT7C5D4E0272B-1",
+              "order_no": "EVMT7C5D4E0272B"
+            },
+            "evidence_id": "b95904fb-da48-4157-9982-1f6179245924",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT7C5D4E0272B",
+              "item_id": "EVMT7C5D4E0272B-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT7C5D4E0272B-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "这个商品无法开机",
+              "reported_at": "2026-09-18T20:08:12.406568+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "b23680de-0a07-419c-b44f-02cb1299a390",
+                "56ce359d-844c-423d-a919-c7fe556c0b9c",
+                "a13908df-b438-46ba-8ce6-f2a603af6efd"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "01847499-76c5-4976-9995-a9751cfa23be",
+            "checksum": "d7d2ec2786b3a3c5eecab38b16fa3f26c2dfd990289267e2315863ab5c529e90",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT7C5D4E0272B",
+            "item_id": "EVMT7C5D4E0272B-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT7C5D4E0272B-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "这个商品无法开机",
+            "reported_at": "2026-09-18T20:08:12.406568+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "b23680de-0a07-419c-b44f-02cb1299a390",
+              "56ce359d-844c-423d-a919-c7fe556c0b9c",
+              "a13908df-b438-46ba-8ce6-f2a603af6efd"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "b95904fb-da48-4157-9982-1f6179245924"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "01847499-76c5-4976-9995-a9751cfa23be",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "921f9a8d-0bf4-45db-a545-e3eb22957fc6",
+            "plan_id": "01847499-76c5-4976-9995-a9751cfa23be",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "921f9a8d-0bf4-45db-a545-e3eb22957fc6",
+            "order_no": "EVMT7C5D4E0272B",
+            "item_id": "EVMT7C5D4E0272B-1",
+            "amount_fen": 17800,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "889797b0-9e88-44ee-99af-4148d0063543",
+            "coupon_code": null,
+            "order_refunded_fen": 17800,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-09",
+      "kind": "change_item",
+      "case_id": "b04b0c51-91f7-4a03-a98c-480504ea0422",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "17372fa4-95f9-454f-9ab3-9465ba69e98b",
+            "checksum": "fa81bbd1bce986befebb7fcf45ccd724589de915417871079a4839668e0370c9",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTF778ED3F3F",
+            "item_id": "EVMTF778ED3F3F-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTF778ED3F3F-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "便携音箱无法开机",
+            "reported_at": "2026-09-18T20:08:25.203267+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "68c3e0fa-e138-4525-b8a9-b96e9b78566b",
+              "afa7c5f2-f715-4878-a40f-063028b32b61",
+              "bc75301e-1c5f-42db-827f-2f5ff29d76cb"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "1c84e790-146e-4b6b-af93-6de225186a29"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "59acf77a-d17d-421f-a005-90fc32dd0288",
+            "checksum": "09a5177edfc7620b01dc53dc7ce6f0f650db3dbac2a32af64978bb52dfcd8e04",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTF778ED3F3F",
+            "item_id": "EVMTF778ED3F3F-2",
+            "amount_fen": 5000,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTF778ED3F3F-2",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无线鼠标无法开机",
+            "reported_at": "2026-09-18T20:08:32.228399+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "d6660154-a5f5-4828-a390-b03500d46bad",
+              "5ead6992-13cc-4aa9-828a-f2208c05567a",
+              "27decb77-e3cc-4563-bf93-40b15d64e7d5"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a0edc49a-2151-4a85-8dec-c164d01a3949"
+          }
+        },
+        {
+          "stale_approval_blocked": true
+        },
+        {
+          "business_results": 1,
+          "execution_id": "0399fbfa-8585-4280-9055-31fc75a420e2",
+          "amount_fen": 5000,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 20.963,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 12451,
+      "output_tokens": 700,
+      "cost_upper_yuan": 0.030502,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "328c956c-b374-4864-a8d0-fc2bb97a8f02",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F"
+            },
+            "evidence_id": "68c3e0fa-e138-4525-b8a9-b96e9b78566b",
+            "result": {
+              "order_no": "EVMTF778ED3F3F",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:24.877770+08:00",
+              "delivered_at": "2026-09-16T20:08:24.877770+08:00",
+              "promised_at": "2026-09-15T20:08:24.877770+08:00",
+              "tracking_no": "TRACK-EVMTF778ED3F3F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:24.877770+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:24.877770+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTF778ED3F3F-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTF778ED3F3F-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F"
+            },
+            "evidence_id": "afa7c5f2-f715-4878-a40f-063028b32b61",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "便携音箱无法开机 质量问题退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "bc75301e-1c5f-42db-827f-2f5ff29d76cb",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.5661317706108093
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F",
+              "item_id": "EVMTF778ED3F3F-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "便携音箱无法开机"
+            },
+            "evidence_id": "1c84e790-146e-4b6b-af93-6de225186a29",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTF778ED3F3F",
+              "item_id": "EVMTF778ED3F3F-1",
+              "amount_fen": 17800,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTF778ED3F3F-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "便携音箱无法开机",
+              "reported_at": "2026-09-18T20:08:25.203267+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "68c3e0fa-e138-4525-b8a9-b96e9b78566b",
+                "afa7c5f2-f715-4878-a40f-063028b32b61",
+                "bc75301e-1c5f-42db-827f-2f5ff29d76cb"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "17372fa4-95f9-454f-9ab3-9465ba69e98b",
+            "checksum": "fa81bbd1bce986befebb7fcf45ccd724589de915417871079a4839668e0370c9",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTF778ED3F3F",
+            "item_id": "EVMTF778ED3F3F-1",
+            "amount_fen": 17800,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTF778ED3F3F-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "便携音箱无法开机",
+            "reported_at": "2026-09-18T20:08:25.203267+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "68c3e0fa-e138-4525-b8a9-b96e9b78566b",
+              "afa7c5f2-f715-4878-a40f-063028b32b61",
+              "bc75301e-1c5f-42db-827f-2f5ff29d76cb"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "1c84e790-146e-4b6b-af93-6de225186a29"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "17372fa4-95f9-454f-9ab3-9465ba69e98b",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "9f1a4202-b13f-4af3-bd2e-3daaadd12304",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F"
+            },
+            "evidence_id": "d6660154-a5f5-4828-a390-b03500d46bad",
+            "result": {
+              "order_no": "EVMTF778ED3F3F",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:24.877770+08:00",
+              "delivered_at": "2026-09-16T20:08:24.877770+08:00",
+              "promised_at": "2026-09-15T20:08:24.877770+08:00",
+              "tracking_no": "TRACK-EVMTF778ED3F3F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:24.877770+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:24.877770+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMTF778ED3F3F-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMTF778ED3F3F-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F"
+            },
+            "evidence_id": "5ead6992-13cc-4aa9-828a-f2208c05567a",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "商品质量故障退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "27decb77-e3cc-4563-bf93-40b15d64e7d5",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.6650116643302653
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMTF778ED3F3F",
+              "item_id": "EVMTF778ED3F3F-2",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无线鼠标无法开机"
+            },
+            "evidence_id": "a0edc49a-2151-4a85-8dec-c164d01a3949",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMTF778ED3F3F",
+              "item_id": "EVMTF778ED3F3F-2",
+              "amount_fen": 5000,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMTF778ED3F3F-2",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无线鼠标无法开机",
+              "reported_at": "2026-09-18T20:08:32.228399+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "d6660154-a5f5-4828-a390-b03500d46bad",
+                "5ead6992-13cc-4aa9-828a-f2208c05567a",
+                "27decb77-e3cc-4563-bf93-40b15d64e7d5"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "59acf77a-d17d-421f-a005-90fc32dd0288",
+            "checksum": "09a5177edfc7620b01dc53dc7ce6f0f650db3dbac2a32af64978bb52dfcd8e04",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMTF778ED3F3F",
+            "item_id": "EVMTF778ED3F3F-2",
+            "amount_fen": 5000,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMTF778ED3F3F-2",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无线鼠标无法开机",
+            "reported_at": "2026-09-18T20:08:32.228399+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "d6660154-a5f5-4828-a390-b03500d46bad",
+              "5ead6992-13cc-4aa9-828a-f2208c05567a",
+              "27decb77-e3cc-4563-bf93-40b15d64e7d5"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "a0edc49a-2151-4a85-8dec-c164d01a3949"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "59acf77a-d17d-421f-a005-90fc32dd0288",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "0399fbfa-8585-4280-9055-31fc75a420e2",
+            "plan_id": "59acf77a-d17d-421f-a005-90fc32dd0288",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "0399fbfa-8585-4280-9055-31fc75a420e2",
+            "order_no": "EVMTF778ED3F3F",
+            "item_id": "EVMTF778ED3F3F-2",
+            "amount_fen": 5000,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "4f645f59-0d72-4e78-9a11-65d0f3d8a14b",
+            "coupon_code": null,
+            "order_refunded_fen": 5000,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-10",
+      "kind": "change_item",
+      "case_id": "e77ee726-e723-44ac-89d0-b095d62714de",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "18ced72a-0792-42e4-9e46-496c7d2ac3ee",
+            "checksum": "e7648563e4aa699612de35a3fa60ef0d0d7dc6acaf603b6afad277fce8e1ba93",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT718E24FA64",
+            "item_id": "EVMT718E24FA64-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT718E24FA64-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "桌面音箱无法开机",
+            "reported_at": "2026-09-18T20:08:25.930688+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "928e2f09-c5b5-402b-a1c9-515f4562d7e6",
+              "3c549d84-a91b-4af5-8559-10386e23dc59",
+              "00e16382-6687-4263-8d22-c982be5326ec"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "c2c6554f-1fb8-4a28-bdb9-48a2bdb594a0"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "waiting_approval",
+          "plan": {
+            "id": "8e244cc0-77b3-4497-b874-10339d394988",
+            "checksum": "fe414b319499660ca8e1fc0d9e71f3de8d5869b9ae10d59cca4d98551a8a526f",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT718E24FA64",
+            "item_id": "EVMT718E24FA64-2",
+            "amount_fen": 5000,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT718E24FA64-2",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无线鼠标无法开机",
+            "reported_at": "2026-09-18T20:08:33.901705+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "52ecee5c-8baa-49d8-8b8d-50a577550f7d",
+              "24a058ab-ac5d-4ed1-91a9-3ebe0657a850",
+              "2a99cddc-0b36-4bb1-a99e-ac1eeea0623c"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "476248f7-3702-41dd-b4d5-7d3bf9d2dbaf"
+          }
+        },
+        {
+          "stale_approval_blocked": true
+        },
+        {
+          "business_results": 1,
+          "execution_id": "5bc4d1d9-e277-4345-8bdb-9ae93a49efc3",
+          "amount_fen": 5000,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 20.532,
+      "model_calls": 6,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 12424,
+      "output_tokens": 723,
+      "cost_upper_yuan": 0.030632,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "fc435a5f-55a0-43ab-bdb2-e0bdb7ee08de",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT718E24FA64"
+            },
+            "evidence_id": "928e2f09-c5b5-402b-a1c9-515f4562d7e6",
+            "result": {
+              "order_no": "EVMT718E24FA64",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:25.870694+08:00",
+              "delivered_at": "2026-09-16T20:08:25.870694+08:00",
+              "promised_at": "2026-09-15T20:08:25.870694+08:00",
+              "tracking_no": "TRACK-EVMT718E24FA64",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:25.870694+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:25.870694+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT718E24FA64-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT718E24FA64-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT718E24FA64"
+            },
+            "evidence_id": "3c549d84-a91b-4af5-8559-10386e23dc59",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "桌面音箱无法开机 质量退款",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "00e16382-6687-4263-8d22-c982be5326ec",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.560815155506134
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT718E24FA64",
+              "item_id": "EVMT718E24FA64-1",
+              "intent": "quality_issue_refund",
+              "defect_quote": "桌面音箱无法开机"
+            },
+            "evidence_id": "c2c6554f-1fb8-4a28-bdb9-48a2bdb594a0",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT718E24FA64",
+              "item_id": "EVMT718E24FA64-1",
+              "amount_fen": 23600,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT718E24FA64-1",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "桌面音箱无法开机",
+              "reported_at": "2026-09-18T20:08:25.930688+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "928e2f09-c5b5-402b-a1c9-515f4562d7e6",
+                "3c549d84-a91b-4af5-8559-10386e23dc59",
+                "00e16382-6687-4263-8d22-c982be5326ec"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "18ced72a-0792-42e4-9e46-496c7d2ac3ee",
+            "checksum": "e7648563e4aa699612de35a3fa60ef0d0d7dc6acaf603b6afad277fce8e1ba93",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT718E24FA64",
+            "item_id": "EVMT718E24FA64-1",
+            "amount_fen": 23600,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT718E24FA64-1",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "桌面音箱无法开机",
+            "reported_at": "2026-09-18T20:08:25.930688+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "928e2f09-c5b5-402b-a1c9-515f4562d7e6",
+              "3c549d84-a91b-4af5-8559-10386e23dc59",
+              "00e16382-6687-4263-8d22-c982be5326ec"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "c2c6554f-1fb8-4a28-bdb9-48a2bdb594a0"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "18ced72a-0792-42e4-9e46-496c7d2ac3ee",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "a9168959-3fc2-484d-bc72-d676ed1dbf1c",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT718E24FA64"
+            },
+            "evidence_id": "52ecee5c-8baa-49d8-8b8d-50a577550f7d",
+            "result": {
+              "order_no": "EVMT718E24FA64",
+              "customer_id": "EVAL",
+              "status": "delivered",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:25.870694+08:00",
+              "delivered_at": "2026-09-16T20:08:25.870694+08:00",
+              "promised_at": "2026-09-15T20:08:25.870694+08:00",
+              "tracking_no": "TRACK-EVMT718E24FA64",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:25.870694+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:25.870694+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT718E24FA64-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT718E24FA64-2",
+                  "name": "无线鼠标",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT718E24FA64"
+            },
+            "evidence_id": "24a058ab-ac5d-4ed1-91a9-3ebe0657a850",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "商品质量故障 无法开机 退款政策",
+              "intent": "quality_issue_refund"
+            },
+            "evidence_id": "2a99cddc-0b36-4bb1-a99e-ac1eeea0623c",
+            "result": {
+              "hits": [
+                {
+                  "id": "QUALITY-ELECTRONICS-2",
+                  "version": "2",
+                  "checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+                  "content": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+                  "score": 0.6719059543665686
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT718E24FA64",
+              "item_id": "EVMT718E24FA64-2",
+              "intent": "quality_issue_refund",
+              "defect_quote": "无线鼠标无法开机"
+            },
+            "evidence_id": "476248f7-3702-41dd-b4d5-7d3bf9d2dbaf",
+            "result": {
+              "intent": "quality_issue_refund",
+              "order_no": "EVMT718E24FA64",
+              "item_id": "EVMT718E24FA64-2",
+              "amount_fen": 5000,
+              "currency": "CNY",
+              "entitlement_key": "refund:EVMT718E24FA64-2",
+              "policy_id": "QUALITY-ELECTRONICS-2",
+              "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+              "defect_quote": "无线鼠标无法开机",
+              "reported_at": "2026-09-18T20:08:33.901705+08:00",
+              "requires_approval": true,
+              "evidence_ids": [
+                "52ecee5c-8baa-49d8-8b8d-50a577550f7d",
+                "24a058ab-ac5d-4ed1-91a9-3ebe0657a850",
+                "2a99cddc-0b36-4bb1-a99e-ac1eeea0623c"
+              ],
+              "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "8e244cc0-77b3-4497-b874-10339d394988",
+            "checksum": "fe414b319499660ca8e1fc0d9e71f3de8d5869b9ae10d59cca4d98551a8a526f",
+            "intent": "quality_issue_refund",
+            "order_no": "EVMT718E24FA64",
+            "item_id": "EVMT718E24FA64-2",
+            "amount_fen": 5000,
+            "currency": "CNY",
+            "entitlement_key": "refund:EVMT718E24FA64-2",
+            "policy_id": "QUALITY-ELECTRONICS-2",
+            "policy_checksum": "9c482563335ee6d30142ccef9a024a91edb91202dd93e7ba46cc60c89bd75d75",
+            "defect_quote": "无线鼠标无法开机",
+            "reported_at": "2026-09-18T20:08:33.901705+08:00",
+            "requires_approval": true,
+            "evidence_ids": [
+              "52ecee5c-8baa-49d8-8b8d-50a577550f7d",
+              "24a058ab-ac5d-4ed1-91a9-3ebe0657a850",
+              "2a99cddc-0b36-4bb1-a99e-ac1eeea0623c"
+            ],
+            "policy_text": "标准电子商品签收后7天（168小时，含边界）内首次报告质量问题，可申请受影响商品行剩余实付金额退款。必须提供清楚的故障描述并由审核员核实证据。人为损坏、擅自维修或证据不足进入人工处理。退款必须审核通过并由客服确认执行。",
+            "eligibility_evidence_id": "476248f7-3702-41dd-b4d5-7d3bf9d2dbaf"
+          }
+        },
+        {
+          "kind": "approval_decided",
+          "payload": {
+            "plan_id": "8e244cc0-77b3-4497-b874-10339d394988",
+            "approved": true,
+            "reviewer": "reviewer",
+            "comment": "评测审核员核实当前商品缺陷"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "5bc4d1d9-e277-4345-8bdb-9ae93a49efc3",
+            "plan_id": "8e244cc0-77b3-4497-b874-10339d394988",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "5bc4d1d9-e277-4345-8bdb-9ae93a49efc3",
+            "order_no": "EVMT718E24FA64",
+            "item_id": "EVMT718E24FA64-2",
+            "amount_fen": 5000,
+            "status": "succeeded",
+            "resolution": "refund_succeeded",
+            "ticket_id": "2b6885fd-cad7-422b-b663-c2607baf360d",
+            "coupon_code": null,
+            "order_refunded_fen": 5000,
+            "simulated": true
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-11",
+      "kind": "repeat_coupon",
+      "case_id": "4ff18145-4fdd-4a2c-835b-afad640b3f48",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_confirmation",
+          "plan": {
+            "id": "d14043aa-ebd8-48a2-9a7c-cd6d4a69f355",
+            "checksum": "60a18f442ed87f0488c3cbbeec9145ecf02caf437660985541d4ba96b6d43acd",
+            "intent": "logistics_delay_compensation",
+            "order_no": "EVMT7CDE1E119B",
+            "item_id": null,
+            "amount_fen": 1000,
+            "currency": "CNY",
+            "entitlement_key": "delay:EVMT7CDE1E119B",
+            "policy_id": "LOGISTICS-DELAY-2",
+            "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+            "defect_quote": "",
+            "reported_at": "2026-09-18T20:08:45.944133+08:00",
+            "requires_approval": false,
+            "evidence_ids": [
+              "99154ea7-80c2-4da5-ac75-8b12e3fd6be9",
+              "1959cdfb-8f5c-4a91-8215-f23b92756527",
+              "17c803af-61c7-4ccb-a307-8ae1c61e64c3",
+              "9b60981a-17aa-4a9a-a882-46ad0a4121b9"
+            ],
+            "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+            "eligibility_evidence_id": "db672118-befc-486e-ba71-df775b5d78c5"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "no_action",
+          "plan": null
+        },
+        {
+          "business_results": 1,
+          "execution_id": "77de0930-34a9-4634-bbd4-c8eb039c43d8",
+          "amount_fen": 1000,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 25.479,
+      "model_calls": 7,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 16004,
+      "output_tokens": 973,
+      "cost_upper_yuan": 0.039792,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "67f7695e-9757-4eb7-a292-0851de0774ff",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "99154ea7-80c2-4da5-ac75-8b12e3fd6be9",
+            "result": {
+              "order_no": "EVMT7CDE1E119B",
+              "customer_id": "EVAL",
+              "status": "in_transit",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:45.840675+08:00",
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:45.840675+08:00",
+              "tracking_no": "TRACK-EVMT7CDE1E119B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:45.840675+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:45.840675+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT7CDE1E119B-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT7CDE1E119B-2",
+                  "name": "收纳包",
+                  "category": "accessories",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_shipment",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "1959cdfb-8f5c-4a91-8215-f23b92756527",
+            "result": {
+              "order_no": "EVMT7CDE1E119B",
+              "tracking_no": "TRACK-EVMT7CDE1E119B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:45.840675+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:45.840675+00:00"
+                }
+              ],
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:45.840675+08:00"
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "17c803af-61c7-4ccb-a307-8ae1c61e64c3",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "物流延误补偿政策与标准",
+              "intent": "logistics_delay_compensation"
+            },
+            "evidence_id": "9b60981a-17aa-4a9a-a882-46ad0a4121b9",
+            "result": {
+              "hits": [
+                {
+                  "id": "LOGISTICS-DELAY-2",
+                  "version": "2",
+                  "checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+                  "content": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+                  "score": 0.6181056499481201
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B",
+              "item_id": "",
+              "intent": "logistics_delay_compensation",
+              "defect_quote": ""
+            },
+            "evidence_id": "db672118-befc-486e-ba71-df775b5d78c5",
+            "result": {
+              "intent": "logistics_delay_compensation",
+              "order_no": "EVMT7CDE1E119B",
+              "item_id": null,
+              "amount_fen": 1000,
+              "currency": "CNY",
+              "entitlement_key": "delay:EVMT7CDE1E119B",
+              "policy_id": "LOGISTICS-DELAY-2",
+              "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+              "defect_quote": "",
+              "reported_at": "2026-09-18T20:08:45.944133+08:00",
+              "requires_approval": false,
+              "evidence_ids": [
+                "99154ea7-80c2-4da5-ac75-8b12e3fd6be9",
+                "1959cdfb-8f5c-4a91-8215-f23b92756527",
+                "17c803af-61c7-4ccb-a307-8ae1c61e64c3",
+                "9b60981a-17aa-4a9a-a882-46ad0a4121b9"
+              ],
+              "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "d14043aa-ebd8-48a2-9a7c-cd6d4a69f355",
+            "checksum": "60a18f442ed87f0488c3cbbeec9145ecf02caf437660985541d4ba96b6d43acd",
+            "intent": "logistics_delay_compensation",
+            "order_no": "EVMT7CDE1E119B",
+            "item_id": null,
+            "amount_fen": 1000,
+            "currency": "CNY",
+            "entitlement_key": "delay:EVMT7CDE1E119B",
+            "policy_id": "LOGISTICS-DELAY-2",
+            "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+            "defect_quote": "",
+            "reported_at": "2026-09-18T20:08:45.944133+08:00",
+            "requires_approval": false,
+            "evidence_ids": [
+              "99154ea7-80c2-4da5-ac75-8b12e3fd6be9",
+              "1959cdfb-8f5c-4a91-8215-f23b92756527",
+              "17c803af-61c7-4ccb-a307-8ae1c61e64c3",
+              "9b60981a-17aa-4a9a-a882-46ad0a4121b9"
+            ],
+            "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+            "eligibility_evidence_id": "db672118-befc-486e-ba71-df775b5d78c5"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "77de0930-34a9-4634-bbd4-c8eb039c43d8",
+            "plan_id": "d14043aa-ebd8-48a2-9a7c-cd6d4a69f355",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "77de0930-34a9-4634-bbd4-c8eb039c43d8",
+            "order_no": "EVMT7CDE1E119B",
+            "item_id": null,
+            "amount_fen": 1000,
+            "status": "succeeded",
+            "resolution": "coupon_issued",
+            "ticket_id": "a6c8df98-c698-422b-9139-bdc8114c1ca4",
+            "coupon_code": "CF-77de0930-34a",
+            "order_refunded_fen": 0,
+            "simulated": true
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "10e66cc0-327f-4231-88b2-9418257e8862",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "8571f274-91c7-422c-8d3c-b4d0065fd3d3",
+            "result": {
+              "order_no": "EVMT7CDE1E119B",
+              "customer_id": "EVAL",
+              "status": "in_transit",
+              "paid_fen": 22800,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:45.840675+08:00",
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:45.840675+08:00",
+              "tracking_no": "TRACK-EVMT7CDE1E119B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:45.840675+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:45.840675+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT7CDE1E119B-1",
+                  "name": "便携音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 17800,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT7CDE1E119B-2",
+                  "name": "收纳包",
+                  "category": "accessories",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_shipment",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "a252f535-7445-43a9-9015-62e7212b19f9",
+            "result": {
+              "order_no": "EVMT7CDE1E119B",
+              "tracking_no": "TRACK-EVMT7CDE1E119B",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:45.840675+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:45.840675+00:00"
+                }
+              ],
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:45.840675+08:00"
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B"
+            },
+            "evidence_id": "295d0b41-fa6a-4e96-b930-164f8b3d8c59",
+            "result": {
+              "results": [
+                {
+                  "entitlement_key": "delay:EVMT7CDE1E119B",
+                  "execution_id": "77de0930-34a9-4634-bbd4-c8eb039c43d8",
+                  "order_no": "EVMT7CDE1E119B",
+                  "item_id": null,
+                  "amount_fen": 1000,
+                  "status": "succeeded",
+                  "resolution": "coupon_issued",
+                  "ticket_id": "a6c8df98-c698-422b-9139-bdc8114c1ca4",
+                  "coupon_code": "CF-77de0930-34a",
+                  "order_refunded_fen": 0,
+                  "simulated": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "物流延误补偿标准与排除条款",
+              "intent": "logistics_delay_compensation"
+            },
+            "evidence_id": "3b6945d9-7500-41ce-8e5f-44d8125c1c9f",
+            "result": {
+              "hits": [
+                {
+                  "id": "LOGISTICS-DELAY-2",
+                  "version": "2",
+                  "checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+                  "content": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+                  "score": 0.6238304600816702
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_rejected",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT7CDE1E119B",
+              "item_id": "",
+              "intent": "logistics_delay_compensation",
+              "defect_quote": ""
+            },
+            "error": "already_processed",
+            "message": "该售后权益已经处理，不能重复申请"
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "订单 EVMT7CDE1E119B 的物流延误补偿无法再次办理。工具核实事实：订单处于运输中、未签收；售后历史显示该订单延误权益（delay:EVMT7CDE1E119B）已处理成功，已发放 10 元优惠券（券码 CF-77de0930-34a）。政策 LOGISTICS-DELAY-2 规定每订单同类延误只补偿一次，校验返回 already_processed。如需核查该券是否到账，请转人工客服处理。",
+            "status": "no_action"
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "multi-12",
+      "kind": "repeat_coupon",
+      "case_id": "9d420a35-d477-4739-af25-74da9d543044",
+      "passed": true,
+      "failure": null,
+      "stages": [
+        {
+          "turn": 1,
+          "status": "waiting_confirmation",
+          "plan": {
+            "id": "07606ffc-67b3-4cf5-898b-91ac2a6c0fb8",
+            "checksum": "c0d9a6b4349ab565f29596bc40eb73a561f166a2a12d93c7b23b31dc87d657ac",
+            "intent": "logistics_delay_compensation",
+            "order_no": "EVMT842C416C5F",
+            "item_id": null,
+            "amount_fen": 1000,
+            "currency": "CNY",
+            "entitlement_key": "delay:EVMT842C416C5F",
+            "policy_id": "LOGISTICS-DELAY-2",
+            "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+            "defect_quote": "",
+            "reported_at": "2026-09-18T20:08:46.787733+08:00",
+            "requires_approval": false,
+            "evidence_ids": [
+              "4c897ff6-9f1d-4d5e-a211-ffa3daba544c",
+              "6bdbc0fe-145c-4774-b589-9414788960bb",
+              "f8a56b18-fe8d-4550-9837-68bc7ae3e37a",
+              "cfb3f6f7-5082-4f24-b8d5-6d451726f0f7"
+            ],
+            "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+            "eligibility_evidence_id": "06fc0261-44ad-401b-a095-a90b57a794ea"
+          }
+        },
+        {
+          "turn": 2,
+          "status": "no_action",
+          "plan": null
+        },
+        {
+          "business_results": 1,
+          "execution_id": "2910fd7b-cdb1-444e-a755-85db85093d71",
+          "amount_fen": 1000,
+          "untargeted_items_unchanged": true
+        }
+      ],
+      "latency_seconds": 27.07,
+      "model_calls": 7,
+      "actual_models": [
+        "deepseek-flash"
+      ],
+      "input_tokens": 15893,
+      "output_tokens": 1000,
+      "cost_upper_yuan": 0.039786,
+      "events": [
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "a0f9a8e4-767c-4970-83e7-5e2e9b3d3a75",
+            "actor": "evaluation",
+            "generation": 1
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "4c897ff6-9f1d-4d5e-a211-ffa3daba544c",
+            "result": {
+              "order_no": "EVMT842C416C5F",
+              "customer_id": "EVAL",
+              "status": "in_transit",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:46.402873+08:00",
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:46.402873+08:00",
+              "tracking_no": "TRACK-EVMT842C416C5F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:46.402873+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:46.402873+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT842C416C5F-2",
+                  "name": "收纳包",
+                  "category": "accessories",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT842C416C5F-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_shipment",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "6bdbc0fe-145c-4774-b589-9414788960bb",
+            "result": {
+              "order_no": "EVMT842C416C5F",
+              "tracking_no": "TRACK-EVMT842C416C5F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:46.402873+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:46.402873+00:00"
+                }
+              ],
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:46.402873+08:00"
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "f8a56b18-fe8d-4550-9837-68bc7ae3e37a",
+            "result": {
+              "results": []
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "物流延误补偿标准 延误时长 补偿金额",
+              "intent": "logistics_delay_compensation"
+            },
+            "evidence_id": "cfb3f6f7-5082-4f24-b8d5-6d451726f0f7",
+            "result": {
+              "hits": [
+                {
+                  "id": "LOGISTICS-DELAY-2",
+                  "version": "2",
+                  "checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+                  "content": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+                  "score": 0.6802259683609009
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT842C416C5F",
+              "item_id": "",
+              "intent": "logistics_delay_compensation",
+              "defect_quote": ""
+            },
+            "evidence_id": "06fc0261-44ad-401b-a095-a90b57a794ea",
+            "result": {
+              "intent": "logistics_delay_compensation",
+              "order_no": "EVMT842C416C5F",
+              "item_id": null,
+              "amount_fen": 1000,
+              "currency": "CNY",
+              "entitlement_key": "delay:EVMT842C416C5F",
+              "policy_id": "LOGISTICS-DELAY-2",
+              "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+              "defect_quote": "",
+              "reported_at": "2026-09-18T20:08:46.787733+08:00",
+              "requires_approval": false,
+              "evidence_ids": [
+                "4c897ff6-9f1d-4d5e-a211-ffa3daba544c",
+                "6bdbc0fe-145c-4774-b589-9414788960bb",
+                "f8a56b18-fe8d-4550-9837-68bc7ae3e37a",
+                "cfb3f6f7-5082-4f24-b8d5-6d451726f0f7"
+              ],
+              "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。"
+            }
+          }
+        },
+        {
+          "kind": "plan_submitted",
+          "payload": {
+            "plan_id": "07606ffc-67b3-4cf5-898b-91ac2a6c0fb8",
+            "checksum": "c0d9a6b4349ab565f29596bc40eb73a561f166a2a12d93c7b23b31dc87d657ac",
+            "intent": "logistics_delay_compensation",
+            "order_no": "EVMT842C416C5F",
+            "item_id": null,
+            "amount_fen": 1000,
+            "currency": "CNY",
+            "entitlement_key": "delay:EVMT842C416C5F",
+            "policy_id": "LOGISTICS-DELAY-2",
+            "policy_checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+            "defect_quote": "",
+            "reported_at": "2026-09-18T20:08:46.787733+08:00",
+            "requires_approval": false,
+            "evidence_ids": [
+              "4c897ff6-9f1d-4d5e-a211-ffa3daba544c",
+              "6bdbc0fe-145c-4774-b589-9414788960bb",
+              "f8a56b18-fe8d-4550-9837-68bc7ae3e37a",
+              "cfb3f6f7-5082-4f24-b8d5-6d451726f0f7"
+            ],
+            "policy_text": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+            "eligibility_evidence_id": "06fc0261-44ad-401b-a095-a90b57a794ea"
+          }
+        },
+        {
+          "kind": "execution_confirmed",
+          "payload": {
+            "execution_id": "2910fd7b-cdb1-444e-a755-85db85093d71",
+            "plan_id": "07606ffc-67b3-4cf5-898b-91ac2a6c0fb8",
+            "actor": "operator"
+          }
+        },
+        {
+          "kind": "execution_succeeded",
+          "payload": {
+            "execution_id": "2910fd7b-cdb1-444e-a755-85db85093d71",
+            "order_no": "EVMT842C416C5F",
+            "item_id": null,
+            "amount_fen": 1000,
+            "status": "succeeded",
+            "resolution": "coupon_issued",
+            "ticket_id": "57ed23b8-8877-4fb9-8c75-085cd93c6735",
+            "coupon_code": "CF-2910fd7b-cdb",
+            "order_refunded_fen": 0,
+            "simulated": true
+          }
+        },
+        {
+          "kind": "message_received",
+          "payload": {
+            "message_id": "b9431fff-acd8-4a41-908d-553db6834201",
+            "actor": "evaluation",
+            "generation": 2
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_order",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "81e2437e-45b9-45ab-b213-930859890777",
+            "result": {
+              "order_no": "EVMT842C416C5F",
+              "customer_id": "EVAL",
+              "status": "in_transit",
+              "paid_fen": 28600,
+              "refunded_fen": 0,
+              "paid_at": "2026-09-03T20:08:46.402873+08:00",
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:46.402873+08:00",
+              "tracking_no": "TRACK-EVMT842C416C5F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:46.402873+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:46.402873+00:00"
+                }
+              ],
+              "items": [
+                {
+                  "id": "EVMT842C416C5F-2",
+                  "name": "收纳包",
+                  "category": "accessories",
+                  "aftersales_type": "standard",
+                  "paid_fen": 5000,
+                  "refunded_fen": 0
+                },
+                {
+                  "id": "EVMT842C416C5F-1",
+                  "name": "桌面音箱",
+                  "category": "electronics",
+                  "aftersales_type": "standard",
+                  "paid_fen": 23600,
+                  "refunded_fen": 0
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_shipment",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "0a2eddd0-718c-43a4-bec4-d9db4d5c2add",
+            "result": {
+              "order_no": "EVMT842C416C5F",
+              "tracking_no": "TRACK-EVMT842C416C5F",
+              "carrier_events": [
+                {
+                  "kind": "picked_up",
+                  "at": "2026-09-04T12:08:46.402873+00:00"
+                },
+                {
+                  "kind": "movement",
+                  "at": "2026-09-13T12:08:46.402873+00:00"
+                }
+              ],
+              "delivered_at": null,
+              "promised_at": "2026-09-15T20:08:46.402873+08:00"
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "get_aftersales_history",
+            "arguments": {
+              "order_no": "EVMT842C416C5F"
+            },
+            "evidence_id": "15ef493f-a95c-4bec-a0e7-e55d3a24b9bd",
+            "result": {
+              "results": [
+                {
+                  "entitlement_key": "delay:EVMT842C416C5F",
+                  "execution_id": "2910fd7b-cdb1-444e-a755-85db85093d71",
+                  "order_no": "EVMT842C416C5F",
+                  "item_id": null,
+                  "amount_fen": 1000,
+                  "status": "succeeded",
+                  "resolution": "coupon_issued",
+                  "ticket_id": "57ed23b8-8877-4fb9-8c75-085cd93c6735",
+                  "coupon_code": "CF-2910fd7b-cdb",
+                  "order_refunded_fen": 0,
+                  "simulated": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_completed",
+          "payload": {
+            "tool": "search_policy",
+            "arguments": {
+              "query": "物流延误补偿政策",
+              "intent": "logistics_delay_compensation"
+            },
+            "evidence_id": "d89cfda4-e137-4f51-8c5a-ca92bd342ace",
+            "result": {
+              "hits": [
+                {
+                  "id": "LOGISTICS-DELAY-2",
+                  "version": "2",
+                  "checksum": "b4e52fa61591ae127e02e86cd11d18cb3ada7bb1f2fb8788787bc4a7cc44b7f4",
+                  "content": "已支付且未取消的订单须有有效运单及一致的承运轨迹。运输中超过72小时没有移动，或超过承诺送达时间，符合延误补偿。已签收按实际签收时间判断迟到。默认补偿10元优惠券，每订单同类延误只补偿一次。超过10元须审核，所有补偿须确认执行。",
+                  "score": 0.6322125196456909
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "tool_rejected",
+          "payload": {
+            "tool": "check_eligibility",
+            "arguments": {
+              "order_no": "EVMT842C416C5F",
+              "item_id": "",
+              "intent": "logistics_delay_compensation",
+              "defect_quote": ""
+            },
+            "error": "already_processed",
+            "message": "该售后权益已经处理，不能重复申请"
+          }
+        },
+        {
+          "kind": "assistant_message",
+          "payload": {
+            "content": "订单 EVMT842C416C5F 的物流延误补偿已处理完毕，无法重复申请。事实与依据：该订单已支付、未取消，运单 TRACK-EVMT842C416C5F 有有效轨迹（2026-09-04 揽收、2026-09-13 移动），当前运输中未签收；售后历史显示该订单延误权益已执行成功，已发放 10 元优惠券（券码 CF-2910fd7b-cdb）。政策 LOGISTICS-DELAY-2 规定“每订单同类延误只补偿一次”，资格校验返回 already_processed。故本轮不提交方案。如需处理其他订单或其他类型售后，请提供订单号。",
+            "status": "no_action"
+          }
+        }
+      ]
+    }
+  ],
+  "finished_at": "2026-09-18T12:09:13.478000+00:00",
+  "successes": 12
+}

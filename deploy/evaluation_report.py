@@ -43,7 +43,11 @@ def main():
     expected_counts = {"qwen": 450, "fixed": 150, "deepseek": 30}
     for name, report in reports.items():
         assert report.get("finished_at"), f"{name} is incomplete"
-        assert report["dataset_sha256"] == sha
+        normalized = dataset.replace(b"\r\n", b"\n")
+        assert report["dataset_sha256"] in {
+            hashlib.sha256(normalized).hexdigest(),
+            hashlib.sha256(normalized.replace(b"\n", b"\r\n")).hexdigest(),
+        }, "Dataset content changed (only platform line endings may differ)"
         assert len(report["results"]) == expected_counts[name]
         assert (
             len({(r["repeat"], r["scenario_id"]) for r in report["results"]})
