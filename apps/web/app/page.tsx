@@ -3,6 +3,11 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 type Role = "operator" | "reviewer";
+type Budget = {
+  committed_yuan: number;
+  admission_limit_yuan: number;
+  task_budget_yuan: number;
+};
 type Event = {
   id: number;
   kind: string;
@@ -113,7 +118,7 @@ export default function Workbench() {
     [checked, setChecked] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [spent, setSpent] = useState(0);
+    [budget, setBudget] = useState<Budget | null>(null);
   function selectCase(id: string | null) {
     setCaseId(id);
     setCurrent(null);
@@ -124,6 +129,7 @@ export default function Workbench() {
   const refresh = useCallback(async () => {
     const list = await api<typeof cases>("/cases");
     setCases(list);
+    setBudget(await api<Budget>("/budget"));
     if (caseId) {
       const view = await api<Case>(`/cases/${caseId}`);
       setCurrent(view);
@@ -141,9 +147,7 @@ export default function Workbench() {
     if (!role) return;
     api<typeof cases>("/cases").then(setCases).catch((e) => setError(e.message));
     if (caseId) api<Case>(`/cases/${caseId}`).then(setCurrent).catch((e) => setError(e.message));
-    api<{ committed_yuan: number }>("/budget")
-      .then((b) => setSpent(b.committed_yuan))
-      .catch(() => {});
+    api<Budget>("/budget").then(setBudget).catch(() => setBudget(null));
     const timer = setInterval(() => refresh().catch(() => {}), 3000);
     return () => clearInterval(timer);
   }, [role, refresh, caseId]);
@@ -320,9 +324,9 @@ export default function Workbench() {
               <p>{model}</p>
               <small>
                 DeepSeek 已结算及预留
-                <br />¥{spent.toFixed(3)} / ¥25
+                <br />{budget ? `¥${budget.committed_yuan.toFixed(3)} / ¥${budget.admission_limit_yuan.toFixed(2)}` : "预算账本暂不可用"}
                 <br />
-                总预算 ¥30 · 无自动模型切换
+                {budget ? `总预算 ¥${budget.task_budget_yuan}` : "总预算待查询"} · 无自动模型切换
               </small>
             </div>
           </aside>

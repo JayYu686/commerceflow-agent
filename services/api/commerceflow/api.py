@@ -310,7 +310,7 @@ def budget(_role=Depends(actor)):
         )
         return {
             "committed_yuan": amount / 1_000_000,
-            "admission_limit_yuan": 25,
+            "admission_limit_yuan": settings().budget_admission_fen / 100,
             "task_budget_yuan": 30,
             "calls": len(rows),
         }

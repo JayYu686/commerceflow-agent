@@ -8,6 +8,14 @@ from commerceflow.llm import reserve
 from commerceflow.models import BudgetAccount, ModelCall
 
 
+def test_budget_api_reports_the_configured_lower_ceiling(clients, monkeypatch):
+    monkeypatch.setattr(settings(), "budget_admission_fen", 1234)
+    response = clients[0].get("/api/budget")
+    assert response.status_code == 200
+    assert response.json()["admission_limit_yuan"] == 12.34
+    assert response.json()["task_budget_yuan"] == 30
+
+
 def test_budget_admission_is_atomic_and_unknown_usage_stays_reserved(db, monkeypatch):
     monkeypatch.setenv("CF_MODEL_PROVIDER", "deepseek")
     monkeypatch.setenv("CF_BUDGET_ADMISSION_FEN", "1")
